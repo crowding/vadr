@@ -1,0 +1,9 @@
+Package: ptools
+Type: Package
+Title: Various data manipulation and programming utilities
+Version: 0.01
+Date: 2012-04-05
+Author: Peter Meilstrup
+Maintainer: Peter Meilstrup <peter.meilstrup@gmail.com>
+Description: An unthemed colleciton of functions.
+License: GPL (>= 2)
