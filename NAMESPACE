@@ -1,7 +1,0 @@
-exportPattern("^[[:alpha:]]+")
-
-export(index)
-export(`index<-`)
-
-S3method(index, data.frame)
-S3method(`index<-`, data.frame)

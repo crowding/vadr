@@ -7,3 +7,7 @@ Author: Peter Meilstrup
 Maintainer: Peter Meilstrup <peter.meilstrup@gmail.com>
 Description: An unthemed colleciton of functions.
 License: GPL (>= 2)
+Collate:
+    'chain.R'
+    'indexing.R'
+    'programming.R'
