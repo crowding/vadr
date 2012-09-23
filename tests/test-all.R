@@ -1,5 +1,4 @@
-library(ptools)
-library(plyr)
 library(testthat)
+library(ptools)
 
 test_package("ptools")

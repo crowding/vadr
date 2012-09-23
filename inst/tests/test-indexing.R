@@ -1,7 +1,4 @@
-require(testthat)
-#require(ptools)
-
-context("data frame indexing")
+context("index")
 
 df <- data.frame(  A = c(1,4,2,6,7,3,6)
                  , B = c(3,7,2,7,3,5,4)
@@ -65,7 +62,7 @@ test_that("output type ascends hierarchy", {
   expect_that( index(df, c(4,5), c("A", "letter")), equals(c("6", "k")))
   expect_that( index(df, c(4,5,6), c("A", "letter", "lletter")), equals(list("6", "k", 5)))
 })
-          
+
 test_that("can specify output type", {
   expect_that( index(df, "bar", "A", value=character()), equals("4"))
   expect_that( index(df, c(2,3), c("A", "letter"), value=list()), equals(list(4, "i")))

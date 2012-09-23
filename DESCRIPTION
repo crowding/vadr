@@ -1,13 +1,20 @@
 Package: ptools
 Type: Package
-Title: Various data manipulation and programming utilities
+Title: Tools for compact programming
 Version: 0.01
-Date: 2012-04-05
-Author: Peter Meilstrup
+Date: 2012-09-21
+Author: Peter Meilstrup <peter.meilstrup@gmail.com>
 Maintainer: Peter Meilstrup <peter.meilstrup@gmail.com>
-Description: An unthemed colleciton of functions.
-License: GPL (>= 2)
+Description: Functions for expressing ideas while saving
+    keystrokes. There is a funtion for creating pipelines, a function for
+    creating functions, a function for indexing data frames, and a function for
+License: MIT
+Imports:
+    plyr (>= 1.7.0),
+    codetools (>= 0.2)
 Collate:
     'chain.R'
     'indexing.R'
     'programming.R'
+    'ptools-description.R'
+    'fun.R'
