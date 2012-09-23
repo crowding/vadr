@@ -6,8 +6,10 @@ Date: 2012-09-21
 Author: Peter Meilstrup <peter.meilstrup@gmail.com>
 Maintainer: Peter Meilstrup <peter.meilstrup@gmail.com>
 Description: Functions for expressing ideas while saving
-    keystrokes. There is a funtion for creating pipelines, a function for
-    creating functions, a function for indexing data frames, and a function for
+    keystrokes. There is a funtion for creating pipelines, a function
+    for creating functions, a function for indexing data frames, and
+    (soon) functions for fast split-apply-combine operations on data
+    frames.
 License: MIT
 Imports:
     plyr (>= 1.7.0),
