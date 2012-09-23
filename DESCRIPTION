@@ -9,7 +9,8 @@ Description: Functions for expressing ideas while saving
     keystrokes. There is a function for creating pipelines, a function
     for creating functions, a function for indexing data frames, and
     (soon) functions for fast split-apply-combine operations on data
-    frames.
+    frames. Now there is a destructuring bind for easy splitting of
+    data structures across several lvalues.
 License: MIT
 Imports:
     plyr (>= 1.7.0),
@@ -20,3 +21,4 @@ Collate:
     'programming.R'
     'ptools-description.R'
     'fun.R'
+    'bind.R'

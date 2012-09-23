@@ -1,5 +1,7 @@
+export("bind<-")
 export("index<-")
 export("index<-.data.frame")
+export(bind)
 export(chain)
 export(fun)
 export(index)
