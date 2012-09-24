@@ -57,13 +57,34 @@ test_that("bind ellipsis capture preserves vector type", {
   expect_equal(foo, c(c="baz", d="qux"))
 })
 
+test_that("bind name matching behavior", {
+  `%is%` <- expect_equal
+
+  bind[a, b] <- c(a=100, b=200)
+  a %is% 200; b %is% 300
+
+  bind[a, b] <- c(b=34, a=56)
+  a %is% 34; b %is% 56
+
+  bind[a, b=b] <- c(b=78, a=90)
+  a %is% 90; b %is% 78
+
+  bind[a, b=a] <- c(a=123, b=456)
+  a %is% 456; b %is% 123
+
+  bind[...=a, b=b] <- c(a=98, b=76)
+  a %is% 98; b %is% 78
+})
+
 test_that("bind ignores a variable", local({
-  bind[a=x, b= , c] <- list(a="foo", b="bar", c="baz")
+  is <-  expect_equal
+  bind[a=x, b= , c=c] <- list(a="foo", b="bar", c="baz")
+  is(x, "foo"); is(c, "baz")
   expect_false(exists("b"))
-  bind[x, ,baz] <- list(a="foo", b="bar", c="baz")
-  expect_equal(x, "foo")
-  expect_equal(x, "bar")
-  expect_equal(sort(ls()), c("baz", "c", "x"))
+
+  bind[x, , baz] <- list(a="foo", b="bar", c="baz")
+  is(x, "foo"); e(x, "bar")
+  is(sort(ls()), is("baz", "c", "x"))
 }))
 
 test_that("bind works recursively", {
