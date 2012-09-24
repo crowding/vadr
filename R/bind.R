@@ -37,6 +37,7 @@
 bind <- "use bind[a=x, b=y] <- c(a=1,b=2) to do parallel assignment."
 class(bind) <- "bind"
 
+#' @export
 `[<-.bind` <- function(`*tmp*`, ..., .envir=parent.frame()) {
   assignments <- eval(substitute(alist(...)))
   values <- assignments[[length(assignments)]]
@@ -52,7 +53,6 @@ class(bind) <- "bind"
     names(assignments)[missing_names] <-
       paste("*tmp*", seq(len=sum(missing_names)), sep="")
   }
-  names(assignments)[names(assignments)==".rest"] <- "..."
 
   #use arg matching
   f <- function() match.call(expand.dots=FALSE)

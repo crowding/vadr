@@ -35,21 +35,21 @@ test_that("bind happens left to right in bind arguments", {
 
 test_that("bind can ignore a 'rest' argument", local({
   #can't
-  bind[a=x, .rest=, c=y] <- list(a="foo", b="bar", c="baz", d="qux")
+  bind[a=x, ...=, c=y] <- list(a="foo", b="bar", c="baz", d="qux")
   expect_equal(x, "foo")
   expect_equal(y, "baz")
   expect_false(exists("..."))
 }))
 
 test_that("bind captures rest", {
-  bind[a=x, .rest=foo, b=y] <- list(a="foo", b="bar", c="baz", d="qux")
+  bind[a=x, ...=foo, b=y] <- list(a="foo", b="bar", c="baz", d="qux")
   expect_equal(x, "foo")
   expect_equal(y, "bar")
   expect_equal(foo, list(c="baz", d="qux"))
 })
 
 test_that("bind ellipsis capture preserves vector type", {
-  bind[a=x, .rest=foo, b=y] <- list(a="foo", b="bar", c="baz", d="qux")
+  bind[a=x, ...=foo, b=y] <- list(a="foo", b="bar", c="baz", d="qux")
   expect_equal(x, "foo")
   expect_equal(y, "bar")
   expect_equal(foo, list(c="baz", d="qux"))
@@ -74,7 +74,7 @@ test_that("bind works recursively", {
 })
 
 test_that("bind works recursively with ellipses", {
-  bind[a=x, .rest=bind[aa=xx, bb=yy], b=y] <-
+  bind[a=x, ...=bind[aa=xx, bb=yy], b=y] <-
     list(a=1, b="two", aa="eleven", bb=22)
   expect_equal(x, 1)
   expect_equal(y, "two")
