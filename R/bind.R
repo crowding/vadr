@@ -37,11 +37,42 @@
 bind <- "use bind[a=x, b=y] <- c(a=1,b=2) to do parallel assignment."
 class(bind) <- "bind"
 
-`[<-.bind` <- function(..., .envir=parent.frame()) {
+`[<-.bind` <- function(`*tmp*`, ..., .envir=parent.frame()) {
   #now the problem is to get the "calling frame" all the way thorough
   #whatever dispatch mechanism is in place.
-  print(eval(substitute(alist(...))))
-  stop("not written!")
+  assignments <- eval(substitute(alist(...)))
+  values <- assignments[[length(assignments)]]
+  values <- eval(values, .envir)
+  assignments[length(assignments)] <- NULL
+
+  #make temp names.
+  if (is.null(names(assignments))) {
+    missing.names <- rep(TRUE, length(assignments))
+    names(assignments) <- rep("", length(assignments))
+  } else {
+    missing_names <- names(assignments) == ""
+    names(assignments)[missing_names] <-
+      paste("*tmp*", seq(len=sum(missing_names)), sep="")
+  }
+
+  #use arg matching
+  f <- function() match.call(expand.dots=FALSE)
+  formals(f) <- assignments
+  matched.values <- do.call("f", as.list(values))
+
+  #assign matched values.
+  for (n in names(assignments)) {
+    assignTo <- assignments[[n]]
+    if (!missing(assignTo)) {
+      print(assignments[[n]])
+      eval(substitute(target <- value,
+                      list(target=assignFrom,
+                           value=matched.values[[n]])),
+           .envir)
+    }
+  }
+
+  bind
 }
 
 ##' @export

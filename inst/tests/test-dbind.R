@@ -1,6 +1,6 @@
 test_that("bind of a list", {
   #Assign to parallel variables!"
-  bind <- list(1, 2)
+  bind[a,b] <- list(1, 2)
   expect_equal(a, 1)
   expect_equal(b, 2)
 })
@@ -15,7 +15,7 @@ test_that("bind named list", {
   #Yes, it is somewhat awkward to have the assigned-to variables on the
   #right sides of the equals, but that's how it best parallels
   #R's argument-binding syntax
-  bind[x=a, y=b] <- list(a="foo", b="bar")
+  bind[a=x, b=y] <- list(a="foo", b="bar")
   expect_equal(x, "foo")
   expect_equal(y, "bar")
 })
