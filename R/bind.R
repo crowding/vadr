@@ -15,10 +15,10 @@
 ##' # way to remain consistent with R's argument-binding semantics.
 ##'
 ##' # Element to variable matching happens according to R's argument
-##' # binding rules, can be nested, and complicated assignemnt targets
+##' # binding rules, can be nested, and complicated assignment targets
 ##' # can be used. The following shows off a complicated unpacking:
 ##'
-##' bind[a=x, ...=bind[aa=xx, bb=yy], b=y, cc=bind[a=zz[2], b=zz[1]]] <-
+##' bind[a=x, .rest=bind[aa=xx, bb=yy], b=y, cc=bind[a=zz[2], b=zz[1]]] <-
 ##'   list(a=1, b="two", aa="eleven", bb=22, cc=c(a=1, b=2))
 ##' x
 ##' y
@@ -38,8 +38,6 @@ bind <- "use bind[a=x, b=y] <- c(a=1,b=2) to do parallel assignment."
 class(bind) <- "bind"
 
 `[<-.bind` <- function(`*tmp*`, ..., .envir=parent.frame()) {
-  #now the problem is to get the "calling frame" all the way thorough
-  #whatever dispatch mechanism is in place.
   assignments <- eval(substitute(alist(...)))
   values <- assignments[[length(assignments)]]
   values <- eval(values, .envir)
@@ -54,6 +52,7 @@ class(bind) <- "bind"
     names(assignments)[missing_names] <-
       paste("*tmp*", seq(len=sum(missing_names)), sep="")
   }
+  names(assignments)[names(assignments)==".rest"] <- "..."
 
   #use arg matching
   f <- function() match.call(expand.dots=FALSE)
@@ -61,13 +60,15 @@ class(bind) <- "bind"
   matched.values <- do.call("f", as.list(values))
 
   #assign matched values.
-  for (n in names(assignments)) {
-    assignTo <- assignments[[n]]
+  if ("..." %in% names(assignments)) {
+    mode(matched.values$...) <- mode(values)
+  }
+  for (assignFrom in names(assignments)) {
+    assignTo <- assignments[[assignFrom]]
     if (!missing(assignTo)) {
-      print(assignments[[n]])
       eval(substitute(target <- value,
-                      list(target=assignFrom,
-                           value=matched.values[[n]])),
+                      list(target=assignTo,
+                           value=matched.values[[assignFrom]])),
            .envir)
     }
   }

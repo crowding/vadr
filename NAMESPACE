@@ -1,4 +1,4 @@
-export("bind<-")
+export("[.bind")
 export("index<-")
 export("index<-.data.frame")
 export(bind)
