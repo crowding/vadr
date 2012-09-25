@@ -5,31 +5,32 @@
 \title{Tools for compact programming.}
 \description{
   This package collects a few otherwise unrelated tools
-  around the theme "these things make my code shorter."
+  around the theme of compact coding -- things that save
+  you keystrokes.
 }
 \details{
   Of note are:
 
   \itemize{
 
-  \item \link[chain], a function for saving typing by
-  carrying the output of one function into the input of the
-  next, akin to UNIX shell pipelines, the arrow monad of
-  Haskell or the \code{->} macro of Clojure.
+  \item{\code{\link{chain}}, a function for saving typing
+  by carrying the output of one function into the input of
+  the next, akin to UNIX shell pipelines, the arrow monad
+  of Haskell or the \code{->} macro of Clojure.}
 
-  \item \link[dbind], an R-ish implementation of
-  "destructuring bind" or parallel argument assignment.
+  \item{\code{\link{dbind}}, an R-ish implementation of
+  "destructuring bind" or parallel argument assignment.}
 
-  \item \link[index], which provides some "missing"
-  indexing operations on \code{data.frame}s;
+  \item{\code{\link{index}}, which provides some "missing"
+  indexing operations on \code{data.frame}s;}
 
-  \item \link[fun], which is the shortest possible way to
-  define a throwaway function;
+  \item{\code{\link{fun}}, which is the shortest possible
+  way to define a throwaway function;}
 
-  \item \link[dm_ply] which meshes with the \link[plyr]
-  package to provide intuitive and compact, but ultimately
-  faster ways of split-apply-combine operations on data
-  frames.
+  \item{\code{\link{dm_ply}} which meshes with the
+  \code{\link{plyr}} package to provide intuitive, compact,
+  and fast ways of split-apply-combine operations on data
+  frames.}
 
   }
 }

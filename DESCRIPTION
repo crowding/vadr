@@ -6,11 +6,13 @@ Date: 2012-09-21
 Author: Peter Meilstrup <peter.meilstrup@gmail.com>
 Maintainer: Peter Meilstrup <peter.meilstrup@gmail.com>
 Description: Functions for expressing ideas while saving
-    keystrokes. There is a function for creating pipelines, a function
-    for creating functions, a function for indexing data frames, and
-    (soon) functions for fast split-apply-combine operations on data
-    frames.
+    keystrokes. There is a function for creating pipelines, a
+    destructuring bind, a function for creating functions, a function
+    for indexing data frames, and (soon) functions for fast
+    split-apply-combine operations on data frames.
 License: MIT
+Suggests:
+    testthat (>= 0.2)
 Imports:
     plyr (>= 1.7.0),
     codetools (>= 0.2)
@@ -20,3 +22,4 @@ Collate:
     'programming.R'
     'ptools-description.R'
     'fun.R'
+    'bind.R'

@@ -1,3 +1,5 @@
+context("functions")
+
 test_that("func captures expressions", {
   f <- fun(x + y)
   expect_equal(f(x=2,y=3), 5)
