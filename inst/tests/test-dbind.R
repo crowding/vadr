@@ -1,3 +1,5 @@
+`%is%` <- expect_equal
+
 test_that("bind of a list", {
   #Assign to parallel variables!"
   bind[a,b] <- list(1, 2)
@@ -34,7 +36,6 @@ test_that("bind happens left to right in bind arguments", {
 })
 
 test_that("bind can ignore a 'rest' argument", local({
-  #can't
   bind[a=x, ...=, c=y] <- list(a="foo", b="bar", c="baz", d="qux")
   expect_equal(x, "foo")
   expect_equal(y, "baz")
@@ -48,6 +49,36 @@ test_that("bind captures rest", {
   expect_equal(foo, list(c="baz", d="qux"))
 })
 
+test_that("bind rest capture is positional", {
+  bind[...=, last] <- 1:10
+  last %is% 10
+
+  bind[first, ...=, last] <- 2:20
+  first %is% 2; last %is% 20
+
+  bind[first=, ...=middle, last=] <- 1:10
+  middle %is% 2:8
+})
+
+test_that("bind works with =", {
+  #ah, yes, '=' is a distinct operator in R
+  bind[a,b] = c(1,2)
+  a %is% 1; b %is% 2
+})
+
+test_that("bind works with <<-", {
+  # (for god-knows-what reason you might want to do that)
+  x <- 1
+  y <- 2
+  local({
+    bind[x, y] <<- c(3, 4)
+    ls() %is% c()
+  })
+  x %is% 3
+  y %is% 4
+})
+
+
 test_that("bind ellipsis capture preserves vector type", {
   bind[a=x, ...=foo, b=y] <- list(a="foo", b="bar", c="baz", d="qux")
   expect_equal(x, "foo")
@@ -55,6 +86,14 @@ test_that("bind ellipsis capture preserves vector type", {
   expect_equal(foo, list(c="baz", d="qux"))
   bind[a=x, ...=foo, b=y] <- c(a="foo", b="bar", c="baz", d="qux")
   expect_equal(foo, c(c="baz", d="qux"))
+})
+
+test_that("bind complains of unmatchable or unmatched arguments", {
+  expect_error( bind[a=x, b=y] <- c(a=1,b=2,c=3) )
+  expect_error( bind[w,x,y,z] <- c(1,2,3,4,5) )
+  expect_error( bind[a=x, b=y] <- c(a=1, r=2) )
+  expect_error( bind[a=x, b=y] <- c(a=1, r=2) )
+  expect_error( bind[a=x, b=y, ...=rest] <- c(a=1, c=2, d=3, e=4) )
 })
 
 test_that("bind name matching behavior", {
@@ -82,6 +121,9 @@ test_that("bind ignores a variable", local({
   is(x, "foo"); is(c, "baz")
   expect_false(exists("b"))
 
+  #check that bind does not assign to the empty name!!!
+  expect_false("" %in% ls())
+
   bind[x, , baz] <- list(a="foo", b="bar", c="baz")
   is(x, "foo"); e(x, "bar")
   is(sort(ls()), is("baz", "c", "x"))
@@ -103,5 +145,8 @@ test_that("bind works recursively with ellipses", {
   expect_equal(yy, 22)
 })
 
+# some interesting test cases to think about / play with.
 # bind[names=colnames, colnames=row.names, ...] <- attributes(data.frame(a=1))
 # bind[a, names(a)] <- list(names(a), names(a))
+# bind[a=x, aa, ...=foo, b=y, zz] <- c(a="foo", b="bar", c="baz", d="qux", "quux", "quux", "quuux", "grauply")
+
