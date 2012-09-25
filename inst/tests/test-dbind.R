@@ -1,3 +1,5 @@
+context("bind")
+
 `%is%` <- expect_equal
 
 test_that("bind of a list", {
@@ -59,7 +61,7 @@ test_that("bind rest capture is positional", {
   bind[first, ...=, last] <- 2:20
   first %is% 2; last %is% 20
 
-  bind[first=, ...=middle, last=] <- 1:10
+  bind[, ...=middle,] <- 1:10
   middle %is% 2:9
 })
 
@@ -110,7 +112,7 @@ test_that("bind name matching behavior", {
   `%is%` <- expect_equal
 
   bind[a, b] <- c(a=100, b=200)
-  a %is% 200; b %is% 300
+  a %is% 100; b %is% 200
 
   bind[a, b] <- c(b=34, a=56)
   a %is% 34; b %is% 56
@@ -118,26 +120,32 @@ test_that("bind name matching behavior", {
   bind[a, b=b] <- c(b=78, a=90)
   a %is% 90; b %is% 78
 
-  bind[a, b=a] <- c(a=123, b=456)
+  bind[b=a, b] <- c(a=123, b=456)
   a %is% 456; b %is% 123
 
+  #this is interesting, the dots argument remembers names.  I wonder
+  #if it's possible for other arguments to remember names, could do
+  #that for binding a vector, but seem not possible for unbinding a
+  #list.
   bind[...=a, b=b] <- c(a=98, b=76)
-  a %is% 98; b %is% 78
+  a %is% c(a=98); b %is% 76
 })
 
-test_that("bind ignores a variable", local({
-  is <-  expect_equal
-  bind[a=x, b= , c=c] <- list(a="foo", b="bar", c="baz")
-  is(x, "foo"); is(c, "baz")
-  expect_false(exists("b"))
+test_that("bind ignores a variable", {
+  local({
+    bind[a=x, b= , c=c] <- list(a="foo", b="bar", c="baz")
+    x %is% "foo"; c %is% "baz"
+    expect_false(exists("b"))
 
-  #check that bind does not assign to the empty name!!!
-  expect_false("" %in% ls())
-
-  bind[x, , baz] <- list(a="foo", b="bar", c="baz")
-  is(x, "foo"); e(x, "bar")
-  is(sort(ls()), is("baz", "c", "x"))
-}))
+    ##check that bind does not assign to the empty name!!!
+    expect_false("" %in% ls())
+  })
+  local({
+    bind[x, , baz] <- list(a="foo", b="bar", c="baz")
+    x %is% "foo"; baz %is% "baz"
+    expect_false("c" %in% ls())
+  })
+})
 
 test_that("bind works recursively", {
   bind[a=x, b=bind[xx, yy]] <- list(a="foo", b=c("bar", "baz"))

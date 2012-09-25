@@ -72,13 +72,16 @@ class(bind) <- "bind"
 bind_match <- function(nOut, vIn) {
   ##Match according to name, and compute the values to assign to the outputs.
 
+  ##You know, this might be a whole lot of easier If I didn't support
+  ##partial matching.
+
   ##First, match all names.
   i_in_out <- pmatch(nOut, names(vIn))
 
   if (any(is.na(i_in_out) & !(nOut %in% c("", "...")))) {
     stop(sprintf("no matches found for %s",
                  paste("\"",
-                       nOut[any(is.na(i_in_out) & !(nOut %in% c("", "...")))],
+                       nOut[is.na(i_in_out) & !(nOut %in% c("", "..."))],
                        "\"", sep="", collapse=", ")))
   }
   #From the front, assign inputs to outputs until you hit "..."
