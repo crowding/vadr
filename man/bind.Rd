@@ -1,7 +1,9 @@
 \docType{data}
 \name{bind}
 \alias{<-.bind}
+\alias{<<-.bind,}
 \alias{[<-.bind}
+\alias{[<<-.bind}
 \alias{bind}
 \alias{bind<-}
 \title{Unpack a list and assign to multiple variables.}

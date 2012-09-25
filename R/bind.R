@@ -37,22 +37,13 @@
 bind <- "use bind[a=x, b=y] <- c(a=1,b=2) to do parallel assignment."
 class(bind) <- "bind"
 
-#' @export
-`[<-.bind` <- function(`*temp*`, ..., .envir=parent.frame()) {
-  bind_core(`*temp*`, ..., .envir=.envir, .binder=`<-`)
-}
-
-##' @export
-`[<<-.bind` <- function(`*temp*`, ..., .envir=parent.frame()) {
-  bind_core(`*temp*`, ..., .envir=.envir, .binder=`<<-`)
-}
-
 ##' @export
 `[.bind` <- function(tmp) {
   stop("bind[...] must be used as the target of an assignment.");
 }
 
-bind_core <- function(`*temp*`, ..., .envir, .binder) {
+#' @export
+`[<-.bind` <- function(`*temp*`, ..., .envir=parent.frame()) {
   ##for instance this could be written
   ## bind[...=eIn, eOut] <- eval(substitute(alist(...)))
   eOut <- eval(substitute(alist(...)))
@@ -67,14 +58,14 @@ bind_core <- function(`*temp*`, ..., .envir, .binder) {
   for (i in seq(len=length(nOut))) {
     to <- eOut[[i]]
     if (!missing(to)) {
-      eval(substitute(binder(target, value),
-                      list(target=to, value=vOut[[i]], binder=.binder)),
+      eval(substitute(target <- value,
+                      list(target=to, value=vOut[[i]])),
            .envir)
     }
   }
 
-  #a side effect of this abuse of [<- dispatch is that it clobbers a
-  #variable named "bind" in the local workspace. Meh.
+  #a side effect is that this creates a variable named "bind" in local
+  #workspace.
   `*temp*`
 }
 
@@ -84,8 +75,14 @@ bind_match <- function(nOut, vIn) {
   ##First, match all names.
   i_in_out <- pmatch(nOut, names(vIn))
 
+  if (any(is.na(i_in_out) & !(nOut %in% c("", "...")))) {
+    stop(sprintf("no matches found for %s",
+                 paste("\"",
+                       nOut[any(is.na(i_in_out) & !(nOut %in% c("", "...")))],
+                       "\"", sep="", collapse=", ")))
+  }
   #From the front, assign inputs to outputs until you hit "..."
-  i_out_unmatched <- which(is.na(i_in_out))
+  i_out_unmatched <- which(is.na(i_in_out) & nOut %in% c("", "..."))
   i_in_unmatched <- na.omit(`[<-`(seq(length(vIn)), i_in_out, NA))
   for (i in seq(len=length(i_in_unmatched))) {
     if (i > length(i_out_unmatched)) {
@@ -97,8 +94,8 @@ bind_match <- function(nOut, vIn) {
     i_in_out[i_out_unmatched[i]] <- i_in_unmatched[i]
   }
 
-  #from the back
-  i_out_unmatched <- rev(which(is.na(i_in_out)))
+  #same from the back
+  i_out_unmatched <- rev(which(is.na(i_in_out) & nOut %in% c("", "...")))
   i_in_unmatched <- rev(na.omit(`[<-`(seq(length(vIn)), i_in_out, NA)))
   for (i in seq(len=length(i_in_unmatched))) {
     if (i > length(i_out_unmatched)) {
@@ -114,7 +111,7 @@ bind_match <- function(nOut, vIn) {
 
   #then put the rest into dots.
   if (!is.null(i) && nOut[i_out_unmatched[i]] == "...") {
-    i_out_unmatched <- which(is.na(i_in_out))
+    i_out_unmatched <- which(is.na(i_in_out) & nOut %in% c("", "..."))
     i_in_unmatched <- na.omit(`[<-`(seq(length(vIn)), i_in_out, NA))
     if (length(i_out_unmatched) > i) {
       stop("")
