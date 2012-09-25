@@ -50,14 +50,17 @@ test_that("bind captures rest", {
 })
 
 test_that("bind rest capture is positional", {
-  bind[...=, last] <- 1:10
-  last %is% 10
+  bind[first, ...=rest] <- 1:10
+  first %is% 1; rest %is% 2:10
+
+  bind[...=rest, last] <- 1:10
+  rest %is% 1:9; last %is% 10
 
   bind[first, ...=, last] <- 2:20
   first %is% 2; last %is% 20
 
   bind[first=, ...=middle, last=] <- 1:10
-  middle %is% 2:8
+  middle %is% 2:9
 })
 
 test_that("bind works with =", {

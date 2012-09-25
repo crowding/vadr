@@ -30,7 +30,7 @@
 ##'
 ##' @param ...
 ##' @param .envir The environment to bind in (defaults to the caller).
-##' @aliases bind<- [<-.bind <-.bind
+##' @aliases bind<- [<-.bind <-.bind <<-.bind, [<<-.bind
 ##' @return The list that was originally unpacked.
 ##' @author Peter Meilstrup
 ##' @export
@@ -38,9 +38,23 @@ bind <- "use bind[a=x, b=y] <- c(a=1,b=2) to do parallel assignment."
 class(bind) <- "bind"
 
 #' @export
-`[<-.bind` <- function(`*tmp*`, ..., .envir=parent.frame()) {
-  #for instance this could be written
-  # bind[...=eIn, eOut] <- eval(substitute(alist(...)))
+`[<-.bind` <- function(`*temp*`, ..., .envir=parent.frame()) {
+  bind_core(`*temp*`, ..., .envir=.envir, .binder=`<-`)
+}
+
+##' @export
+`[<<-.bind` <- function(`*temp*`, ..., .envir=parent.frame()) {
+  bind_core(`*temp*`, ..., .envir=.envir, .binder=`<<-`)
+}
+
+##' @export
+`[.bind` <- function(tmp) {
+  stop("bind[...] must be used as the target of an assignment.");
+}
+
+bind_core <- function(`*temp*`, ..., .envir, .binder) {
+  ##for instance this could be written
+  ## bind[...=eIn, eOut] <- eval(substitute(alist(...)))
   eOut <- eval(substitute(alist(...)))
   eIn <- eOut[[length(eOut)]]
   eOut[length(eOut)] <- NULL
@@ -53,15 +67,15 @@ class(bind) <- "bind"
   for (i in seq(len=length(nOut))) {
     to <- eOut[[i]]
     if (!missing(to)) {
-      eval(substitute(target <- value,
-                      list(target=to, value=vOut[[i]])),
+      eval(substitute(binder(target, value),
+                      list(target=to, value=vOut[[i]], binder=.binder)),
            .envir)
     }
   }
 
   #a side effect of this abuse of [<- dispatch is that it clobbers a
   #variable named "bind" in the local workspace. Meh.
-  bind
+  `*temp*`
 }
 
 bind_match <- function(nOut, vIn) {
@@ -100,11 +114,12 @@ bind_match <- function(nOut, vIn) {
 
   #then put the rest into dots.
   if (!is.null(i) && nOut[i_out_unmatched[i]] == "...") {
+    i_out_unmatched <- which(is.na(i_in_out))
+    i_in_unmatched <- na.omit(`[<-`(seq(length(vIn)), i_in_out, NA))
     if (length(i_out_unmatched) > i) {
       stop("")
     }
-    i_in_unmatched <- na.omit(`[<-`(seq(length(vIn)), i_in_out, NA))
-    vOut[[i]] <- vIn[i_in_unmatched]
+    vOut[[i_out_unmatched]] <- vIn[i_in_unmatched]
   } else {
     if (any(!is.na(`[<-`(seq(length(vIn)), i_in_out, NA)))) {
       stop("More items supplied than names to bind")
@@ -112,9 +127,4 @@ bind_match <- function(nOut, vIn) {
   }
 
   vOut
-}
-
-##' @export
-`[.bind` <- function(tmp) {
-  stop("bind[...] must be used as the target of an assignment.");
 }
