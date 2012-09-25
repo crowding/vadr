@@ -39,41 +39,79 @@ class(bind) <- "bind"
 
 #' @export
 `[<-.bind` <- function(`*tmp*`, ..., .envir=parent.frame()) {
-  assignments <- eval(substitute(alist(...)))
-  values <- assignments[[length(assignments)]]
-  values <- eval(values, .envir)
-  assignments[length(assignments)] <- NULL
+  #for instance this could be written
+  # bind[...=eIn, eOut] <- eval(substitute(alist(...)))
+  eOut <- eval(substitute(alist(...)))
+  eIn <- eOut[[length(eOut)]]
+  eOut[length(eOut)] <- NULL
 
-  #make temp names.
-  if (is.null(names(assignments))) {
-    missing.names <- rep(TRUE, length(assignments))
-    names(assignments) <- rep("", length(assignments))
-  } else {
-    missing_names <- names(assignments) == ""
-    names(assignments)[missing_names] <-
-      paste("*tmp*", seq(len=sum(missing_names)), sep="")
-  }
+  vIn <- eval(eIn, .envir)
+  nOut <- if(is.null(names(eOut))) rep("", length(eOut)) else names(eOut)
 
-  #use arg matching
-  f <- function() match.call(expand.dots=FALSE)
-  formals(f) <- assignments
-  matched.values <- do.call("f", as.list(values))
+  vOut <- bind_match(nOut, vIn)
 
-  #assign matched values.
-  if ("..." %in% names(assignments)) {
-    mode(matched.values$...) <- mode(values)
-  }
-  for (assignFrom in names(assignments)) {
-    assignTo <- assignments[[assignFrom]]
-    if (!missing(assignTo)) {
+  for (i in seq(len=length(nOut))) {
+    to <- eOut[[i]]
+    if (!missing(to)) {
       eval(substitute(target <- value,
-                      list(target=assignTo,
-                           value=matched.values[[assignFrom]])),
+                      list(target=to, value=vOut[[i]])),
            .envir)
     }
   }
 
+  #a side effect of this abuse of [<- dispatch is that it clobbers a
+  #variable named "bind" in the local workspace. Meh.
   bind
+}
+
+bind_match <- function(nOut, vIn) {
+  ##Match according to name, and compute the values to assign to the outputs.
+
+  ##First, match all names.
+  i_in_out <- pmatch(nOut, names(vIn))
+
+  #From the front, assign inputs to outputs until you hit "..."
+  i_out_unmatched <- which(is.na(i_in_out))
+  i_in_unmatched <- na.omit(`[<-`(seq(length(vIn)), i_in_out, NA))
+  for (i in seq(len=length(i_in_unmatched))) {
+    if (i > length(i_out_unmatched)) {
+      stop("Not enough items to bind")
+    }
+    if (nOut[i_out_unmatched[i]] == "...") {
+      break
+    }
+    i_in_out[i_out_unmatched[i]] <- i_in_unmatched[i]
+  }
+
+  #from the back
+  i_out_unmatched <- rev(which(is.na(i_in_out)))
+  i_in_unmatched <- rev(na.omit(`[<-`(seq(length(vIn)), i_in_out, NA)))
+  for (i in seq(len=length(i_in_unmatched))) {
+    if (i > length(i_out_unmatched)) {
+      stop("Not enough items to bind")
+    }
+    if (nOut[i_out_unmatched[i]] == "...") {
+      break
+    }
+    i_in_out[i_out_unmatched[i]] <- i_in_unmatched[i]
+  }
+
+  vOut <- as.list(vIn[i_in_out])
+
+  #then put the rest into dots.
+  if (!is.null(i) && nOut[i_out_unmatched[i]] == "...") {
+    if (length(i_out_unmatched) > i) {
+      stop("")
+    }
+    i_in_unmatched <- na.omit(`[<-`(seq(length(vIn)), i_in_out, NA))
+    vOut[[i]] <- vIn[i_in_unmatched]
+  } else {
+    if (any(!is.na(`[<-`(seq(length(vIn)), i_in_out, NA)))) {
+      stop("More items supplied than names to bind")
+    }
+  }
+
+  vOut
 }
 
 ##' @export
