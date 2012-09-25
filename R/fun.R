@@ -151,7 +151,9 @@ summariser <- function(..., .envir=parent.frame()) {
 ##' @export
 summarizer <- summariser
 
-##' Create a function of several arguments returning a data frame.
+##' Create a function of several arguments returning a data frame. The
+##' function evaluates all expressions with respect to all arguments
+##' given, then returns the data frame
 ##'
 ##' For example, mutate(a=b/c, b=a+mean(c)) returns a function taking
 ##' arguments 'a', 'b', 'c', and ellipsis, and returns a data frame
@@ -174,5 +176,37 @@ summarizer <- summariser
 ##' @export
 ##' @author Peter Meilstrup
 mutator <- function(..., `_envir`=parent.frame()) {
-  stop("not written")
+  #plyr's "mutate" doesn't do what summarise did about making up new
+  #column names is none are provided, so in mimicry of that, out
+  #mutator simpler. But one difference is that mutate() doesn't
+  #evaluate the unnamed arguments arguments, but this does. (you might
+  #want to insert a debugging print() after all, or use <- instead of
+  #==)
+  eIn <- eval(substitute(alist(...)));
+  nIn <- names(eIn)
+
+  if (is.null(nIn)) {
+    nIn <- rep("", length(eIn))
+  }
+  eOut <- eIn
+  for (i in seq_along(eIn)) {
+    if (nIn[[i]] != "") {
+      eOut[[i]] <- substitute(out <- expr,
+                            list(out=as.name(nIn[[i]]), expr=eIn[[i]]))
+    }
+  }
+
+  #we call fun() on this body, just to get the right formal arguments.
+  body1 <- as.call(c(quote({})[[1]], eIn, quote(quickdf(...))))
+  f <- do.call("fun", list(body1, .envir=`_envir`))
+
+  #but the actual body we use is a bit different.
+  nOut <- setdiff(union(nIn, names(formals(f))), "")
+  nOut <- structure(lapply(nOut, as.name), names=nOut)
+  names(nOut)[names(nOut)=="..."] <- ""
+  retcall <- as.call(c(quote(list),nOut))
+  retcall <- as.call(c(quote(quickdf), retcall))
+  body2 <- as.call(c(quote({})[[1]], eOut, retcall))
+  body(f) <- body2
+  f
 }

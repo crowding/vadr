@@ -65,13 +65,14 @@ test_that("summarizer with missing names", {
 test_that("mutator", {
   f <- mutator(xy=x+y, xxyy=xy^2, z+x)
   df <- data.frame(x=1:10, y=sqrt(1:10), z=11:20)
+  mf <- f(x=1:10, y=sqrt(1:10), z=11:20)
+  mf <- mf[order(names(mf))]
 
-  expect_equal(arrange(splat(f)(df)),
+  expect_equal(mf,
                data.frame(x=1:10,
                           xxyy = (1:10 + sqrt(1:10))^2,
                           xy = 1:10 + sqrt(1:10),
-                          y = 1:10,
-                          z=11:20,
-                          `z+x` = ))
+                          y = sqrt(1:10),
+                          z=11:20
+                          ))
 })
-
