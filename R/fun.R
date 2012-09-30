@@ -5,29 +5,11 @@
 ## accessor function because otherwise roxygen chokes on it!
 empty.name <- function() formals(function(...)list())$...
 
-##' A very compact way to define a function.
-##'
-##' \code{fun} captures its first argument unevaluated and turns it
-##' into a function. Every name used in the expression becomes an
-##' argument, unless it looks like a function call. If you don't
-##' intend to capture a particular variable, you can not provide it,
-##' and it will use a default value that pulls from the enclosing
-##' scope. For example:
-##'
-##' \code{ > f <- fun(x/y)
-##' > f(10,2)
-##' [1] 5
-##' > f
-##' function (x = evalq(x,parent.frame(), y = evalq(y,parent.frame())
-##' x/y}
+##' A very compact way to define a function. Generally, you can write
+##' \code{fun(x+y)} where you would have written \code{function(x,y) x+y}.
 ##'
 ##' "\code{fun}" is used with "\code{dm_ply}" the way that "\code{with}" is
 ##' used with  "\link[plyr]{d_ply}".
-##'
-##' "\code{...}" is supported in the function definitions and should
-##' behave as you expect.
-##'
-##' @param expr The expression to use as the function's body.
 ##'
 ##' @param .all.names Defaults to \code{FALSE}, in which case the
 ##' formal arguments of the function are only the parts of the
@@ -39,19 +21,18 @@ empty.name <- function() formals(function(...)list())$...
 ##' \code{"fun(x+y, .all.names=TRUE)"} will have arguments named "+",
 ##' "x" and "y" in that order.
 ##'
-##' @param .envir The environment the function should be enclosed
-##' in. Defaults to the environment that called \code{fun}.
-##'
-##' @return A newly constructed function.
-##'
+##' @family function creation
 ##' @author Peter Meilstrup
 ##'
-##' @seealso fsummarise fmutate dm_ply
-##'
 ##' @export
-fun <- function(expr, .all.names=FALSE, .envir=parent.frame()) {
+fun <- function(..., .all.names=FALSE, .envir=parent.frame()) {
   require(codetools)
-  expr <- substitute(expr)
+  exprs <- eval(substitute(alist(...)))
+  if (length(exprs) > 1) {
+    expr <- substitute({...});
+  } else {
+    expr <- substitute(...)
+  }
   if (.all.names) {
     varnames <- unique(all.names(expr))
   } else {
@@ -93,21 +74,12 @@ fun <- function(expr, .all.names=FALSE, .envir=parent.frame()) {
 ##'
 ##' For example, mutate(a=b/c, b=a+mean(c)) returns a function taking
 ##' arguments 'a', 'b', 'c', and ellipsis, and returns a data frame
-##' with columns "a", "b", "c" and any others provided in ...
-##'
-##' The contents of the arguemnts determine the new function's
-##' arguments in the same way that \link{fun} does. The arguments are
-##' evaluated in order. Any symbols not provided in the environment
-##' will be taken from the data frame.
+##' with columns "a", "b", "c" and any others provided in \code{"..."}.
 ##'
 ##' \code{fsummarise} is intended to be used with \link{dm_ply} in a
 ##' similar way that \code{summarize} is used with \link[plyr]{d_ply}
 ##'
-##' @param ... A series of named arguments.
-##' @param .envir The environment to create the function in; defaults
-##' to the caller.
-##' @return The newly created function.
-##' @seealso mutator fun dm_ply
+##' @template fun
 ##' @aliases summarizer
 ##' @export
 ##' @author Peter Meilstrup
@@ -168,10 +140,7 @@ summarizer <- summariser
 ##' \link{dm_ply} in a similar way that \code{mutate} is used with
 ##' \link[plyr]{d_ply}
 ##'
-##' @param ... A series of named arguments.
-##' @param .envir The environment to create the function in; defaults
-##' to the caller.
-##' @return The newly created function.
+##' @template fun
 ##' @seealso summariser fun dm_ply
 ##' @export
 ##' @author Peter Meilstrup
