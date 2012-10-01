@@ -1,8 +1,9 @@
-\name{dmdply}
-\alias{dmdply}
-\title{Split data frame, apply columns to arguments of a function, and return results in a data frame.}
+\name{dm_ply}
+\alias{dm_ply}
+\title{Split data frame, apply columns to arguments of a function, and discard results.
+For each subset of a data frame,}
 \usage{
-  dmdply(.data, .variables, .fun = NULL, ...,
+  dm_ply(.data, .variables, .fun = NULL, ...,
     .progress = "none", .drop = TRUE, .parallel = FALSE)
 }
 \arguments{
@@ -27,12 +28,12 @@
   \code{\link{create_progress_bar}}}
 }
 \value{
-  A data frame, as described in the output section.
+  NULL
 }
 \description{
-  For each subset of a data frame, apply a
-  multiple-argument function, then combine the results into
-  a data frame.
+  Split data frame, apply columns to arguments of a
+  function, and discard results. For each subset of a data
+  frame,
 }
 \section{Function Application}{
   The columns of \code{.data} will be matched against the
@@ -53,28 +54,9 @@
 }
 
 \section{Output}{
-  The most unambiguous behaviour is achieved when
-  \code{.fun} returns a data frame - in that case pieces
-  will be combined with \code{\link{rbind.fill}}.  If
-  \code{.fun} returns an atomic vector of fixed length, it
-  will be \code{rbind}ed together and converted to a data
-  frame. Any other values will result in an error.
-
-  If there are no results, then this function will return a
-  data frame with zero rows and columns
-  (\code{data.frame()}).
-}
-\examples{
-dmdply(baseball, .(year), function(year) length(year))
-#or equivalently
-dmdply(baseball, .(year), fun(length(year)))
-
-rbi <- dmdply(baseball, .(year),
-     summariser(mean_rbi = mean(rbi, na.rm=TRUE)))
-with(rbi, plot(year, mean_rbi, type="l"))
-
-base2 <- dmdply(baseball, .(id),
-    mutator(career_year=year - min(year) + 1))
+  This function discards its output. THis is useful for
+  functions that you are calling purely for their side
+  effects like display plots and saving output.
 }
 \references{
   Hadley Wickham (2011). The Split-Apply-Combine Strategy
@@ -84,11 +66,11 @@ base2 <- dmdply(baseball, .(id),
 \seealso{
   fun mutator summariser
 
-  Other data frame input: \code{\link{dm_ply}},
-  \code{\link{dmaply}}, \code{\link{dmlply}}
+  Other data frame input: \code{\link{dmaply}},
+  \code{\link{dmdply}}, \code{\link{dmlply}}
 
-  Other multiarg worker: \code{\link{dm_ply}},
-  \code{\link{dmaply}}, \code{\link{dmlply}}
+  Other multiarg worker: \code{\link{dmaply}},
+  \code{\link{dmdply}}, \code{\link{dmlply}}
 }
 \keyword{manip}
 

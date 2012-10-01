@@ -76,11 +76,11 @@ daply(baseball, .(year), argwise(mean, .args=names(df[6:9])))
 \seealso{
   fun mutator summariser
 
-  Other data frame input: \code{\link{dmdply}},
-  \code{\link{dmlply}}
+  Other data frame input: \code{\link{dm_ply}},
+  \code{\link{dmdply}}, \code{\link{dmlply}}
 
-  Other multiarg worker: \code{\link{dmdply}},
-  \code{\link{dmlply}}
+  Other multiarg worker: \code{\link{dm_ply}},
+  \code{\link{dmdply}}, \code{\link{dmlply}}
 }
 \keyword{manip}
 

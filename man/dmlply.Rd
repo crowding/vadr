@@ -2,8 +2,8 @@
 \alias{dmlply}
 \title{Split data frame, apply columns to arguments of a function, and return results in a list.}
 \usage{
-  dmlply(.data, .variables, fun = NULL, ...,
-    .progress = "none")
+  dmlply(.data, .variables, .fun = NULL, ...,
+    .progress = "none", drop = TRUE, .parallel = TRYE)
 }
 \arguments{
   \item{.data}{data frame to be processed}
@@ -64,11 +64,11 @@
 \seealso{
   fun mutator summariser
 
-  Other data frame input: \code{\link{dmaply}},
-  \code{\link{dmdply}}
+  Other data frame input: \code{\link{dm_ply}},
+  \code{\link{dmaply}}, \code{\link{dmdply}}
 
-  Other multiarg worker: \code{\link{dmaply}},
-  \code{\link{dmdply}}
+  Other multiarg worker: \code{\link{dm_ply}},
+  \code{\link{dmaply}}, \code{\link{dmdply}}
 }
 \keyword{manip}
 
