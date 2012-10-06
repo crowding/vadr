@@ -14,8 +14,7 @@ License: MIT
 Suggests:
     testthat (>= 0.2)
 Imports:
-    plyr (>= 1.7.0),
-    codetools (>= 0.2)
+    plyr (>= 1.7.0)
 Collate:
     'chain.R'
     'indexing.R'

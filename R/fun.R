@@ -34,26 +34,9 @@ fun <- function(..., .all.names=FALSE, .envir=parent.frame()) {
     expr <- substitute(...)
   }
   if (.all.names) {
-    varnames <- unique(all.names(expr))
+    varnames <- all.names(expr, unique=TRUE)
   } else {
-    ##the default case is a bit more complicated
-
-    ##walk over the code extracting all "name" that is not the first
-    ##element of a "call"
-    varnames <- character(0)
-    walkCode(expr, makeCodeWalker(
-                  leaf=function(x, w) {
-                    if (is.name(x)) {
-                      varnames <<- c(varnames, as.character(x))
-                    }
-                  },
-                  call=function(e,w) {
-                    for (ee in as.list(e)[-1]) {
-                      if (!missing(ee)) walkCode(ee, w)
-                    }
-                  }
-                  ))
-    varnames <- unique(varnames)
+    varnames <- all.names(expr, functions=FALSE, unique=TRUE)
   }
   args <- lapply(varnames,
                  #should "env" be parent.env(environment())?
