@@ -74,8 +74,8 @@ quoting.env <- function(names, parent=emptyenv(), call.names=names) {
 ##' \code{function(a,b)(array[a*b, ])(4,2*e)}. It is also used in
 ##' \code{\link{expandmacro()}} and for other computing-on-the-language purposes.
 ##' @param ... Objects, possibly named, possibly missing.
-##' @param `*default*` What to fill. Should be an expression that will be
-##' evaluated to fill in missing values. Default is an expression that
+##' @param `*default*` What to fill. Should be an _expression_ that will be
+##' _evaluated_ to fill in missing values. Default is an expression that
 ##' evaluates to the empty symbol.
 ##' @param `*envir*` The environment in which *default* will be evaluated.
 ##' @return A list, with any non-missing arguments evaluated, any
@@ -110,6 +110,8 @@ list_with_missing <- function(...,
   #and build a list.
 
   uneval.args <- substitute(alist(...))[-1]
+  lexically.missing <- lapply(uneval.args,
+                              function(x) is.name(x) && as.character(x) == "")
   orig.argnames <- names(uneval.args)
   if (is.null(orig.argnames)) orig.argnames <- rep("", length(uneval.args))
   empty.names <- orig.argnames == ""
@@ -120,12 +122,16 @@ list_with_missing <- function(...,
                structure(rep(list(quote(expr= )),
                              length(uneval.args)),
                          names=argnames))
-  body <- lapply(argnames,
-                 function(name)
-                 substitute(if (missing(x)) default else x,
-                            list(x = as.name(name),
-                                 default = `*default*`)))
-  names(body) <- orig.argnames;
+  body <- mapply(
+            function(name, miss) {
+              if (miss) `*default*` else
+              substitute(if (missing(x)) {print("jackpot!"); default} else x,
+                         list(x = as.name(name),
+                              default = `*default*`)
+                         )
+            },
+            argnames, lexically.missing)
+  names(body) <- orig.argnames
   body <- as.call(c(base:::list, body))
   f <- eval(call('function', arglist, body), `*envir*`)
   f(...)

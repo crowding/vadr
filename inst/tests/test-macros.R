@@ -33,11 +33,11 @@ test_that("list_with_missing evaluates arguments in the original scopes", {
   fOne <- function(...) {
     fThree <- function(...) {
       x <- "three"
-      list_with_missing(...)
+      list_with_missing(..., three=x)
     }
     fTwo <- function(...) {
       x <- "two"
-      fThree(..., one=x)
+      fThree(..., two=x)
     }
     x <- "one"
     fTwo(..., one=x)
@@ -45,7 +45,7 @@ test_that("list_with_missing evaluates arguments in the original scopes", {
 
   x <- "four"
   expect_equal(fOne(four=x),
-               list(four="four", three="three", two="two", one="one"))
+               list(four="four", one="one", two="two", three="three"))
 })
 
 test_that("quoting.env and missings", {
