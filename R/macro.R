@@ -110,7 +110,7 @@ list_with_missing <- function(...,
   #and build a list.
 
   uneval.args <- substitute(alist(...))[-1]
-  lexically.missing <- lapply(uneval.args,
+  lexically.missing <- sapply(uneval.args,
                               function(x) is.name(x) && as.character(x) == "")
   orig.argnames <- names(uneval.args)
   if (is.null(orig.argnames)) orig.argnames <- rep("", length(uneval.args))
@@ -122,15 +122,8 @@ list_with_missing <- function(...,
                structure(rep(list(quote(expr= )),
                              length(uneval.args)),
                          names=argnames))
-  body <- mapply(
-            function(name, miss) {
-              if (miss) `*default*` else
-              substitute(if (missing(x)) {print("jackpot!"); default} else x,
-                         list(x = as.name(name),
-                              default = `*default*`)
-                         )
-            },
-            argnames, lexically.missing)
+  body <- mapply(FUN=`if`, !lexically.missing, lapply(argnames, as.name),
+                 moreArgs=list(`*default*`))
   names(body) <- orig.argnames
   body <- as.call(c(base:::list, body))
   f <- eval(call('function', arglist, body), `*envir*`)
