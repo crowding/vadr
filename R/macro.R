@@ -11,7 +11,7 @@
 ##'
 ##' @note This will cause errors when the expression has missing
 ##' arguments. The expression might be preprocessed (somewhow?) to take missing
-##' arguments out. This also doesn't yet do the right thing with dots.
+##' arguments out.
 ##'
 ##' @param names The names the environment should define.
 ##' @param parent The parent environment (defaults to the empty environment)
@@ -38,13 +38,13 @@
 ##'
 ##' ersatz.substitute(quote(a+b+c), list(b=quote(q+y))) # returns a+(q+y)+c
 ##'
-recapitulating.env <- function(names, parent=emptyenv(), call.names=names) {
+quoting.env <- function(names, parent=emptyenv(), call.names=names) {
   #There probably needs to be special handling
   #for function() to get the elements of the pairlist evaluated, too.
   callenv <- new.env(parent=parent)
   for (n in as.character(call.names)) {
     f <- eval(substitute(
-                function(...) as.call(list(quote(x), ...)),
+                function(...) as.call(c(quote(x), list_with_missing(...))),
                 list(x=as.name(n))))
     assign(n, f, envir=callenv)
   }
@@ -63,12 +63,84 @@ recapitulating.env <- function(names, parent=emptyenv(), call.names=names) {
   nameenv
 }
 
-#like all.names, but filter out only the words that are used "bare" in
-#a particular expression. That is, leave out words that are used as calls.
-all.bare.names <- function(expr) {
-  callenv <- new.env(parent=emptyenv)
-  for(n in call.names) {
-    namecollector <- function(...)
-      Filter(unlist(list(...)), is.name)
-  }
+##' Construct a list, but allow missing arguments.
+##'
+##' This is particularly useful for supporting array-indexing
+##' functions, that work like built-in \code{\link{`[`}}; it allows
+##' you to tell when arguments are missing, but also evaluate
+##' non-missing arguments in their correct environments without
+##' choking on missing arguments. That is, it lets you implement a
+##' \code{`[`} accessor that currectly supports usage like
+##' \code{function(a,b)(array[a*b, ])(4,2*e)}. It is also used in
+##' \code{\link{expandmacro()}} and for other computing-on-the-language purposes.
+##' @param ... Objects, possibly named, possibly missing.
+##' @param `*default*` What to fill. Should be an expression that will be
+##' evaluated to fill in missing values. Default is an expression that
+##' evaluates to the empty symbol.
+##' @param `*envir*` The environment in which *default* will be evaluated.
+##' @return A list, with any non-missing arguments evaluated, any
+##' other arguments substituted with the default expression and
+##' evaluated.
+##' @export
+##' @author Peter Meilstrup
+##' @examples
+##' #unlike alist, arguments are evaluated in context.
+##' y <- 4
+##' alist(2*y, , x=12+24, d=)
+##' list.with.missing(2*y, , x=12+24, d=)
+##'
+##' #unlike with `list`, missing arguments are detected and handled.
+##' \dontrun{
+##' list(2*y, , x=12+24, d=) #produces an error.
+##' }
+list_with_missing <- function(...,
+                              `*default*`=quote(quote(expr= )),
+                              `*envir*`=parent.frame()) {
+  #We need to check each element of "..." for missingness.
+  #
+  #'...' is functionally a list of promises, but it's an opaque object
+  #of class '...' that is a given special treatment bu the
+  #interpreter. We would like to inspect each elment of '...' to see
+  #if it is missing.
+  #
+  #But the only thing you can do with a '...' is pass it to a call. So
+  #we build a function that takes arguments whose names match those of
+  #'...' (inspected wtih substitute()) and pass in; then we can check
+  #each argument for missingness, eval the ones that aren't missing
+  #and build a list.
+
+  uneval.args <- substitute(alist(...))[-1]
+  orig.argnames <- names(uneval.args)
+  if (is.null(orig.argnames)) orig.argnames <- rep("", length(uneval.args))
+  empty.names <- orig.argnames == ""
+  argnames <- orig.argnames
+  argnames[empty.names] <- make_unique_names(rep("...anon", sum(empty.names)),
+                                             argnames[!empty.names])
+  arglist <- as.pairlist(
+               structure(rep(list(quote(expr= )),
+                             length(uneval.args)),
+                         names=argnames))
+  body <- lapply(argnames,
+                 function(name)
+                 substitute(if (missing(x)) default else x,
+                            list(x = as.name(name),
+                                 default = `*default*`)))
+  names(body) <- orig.argnames;
+  body <- as.call(c(base:::list, body))
+  f <- eval(call('function', arglist, body), `*envir*`)
+  f(...)
+}
+
+##' Modify some character strings unique with respect with an
+##' existing set of (unmodified) character strings.
+##'
+##' A convenience extension of \code{\link{make.unique}}.
+##'
+##' @param new Initial values for the new nmes
+##' @param context Existing names to avoid collisions with.
+##' @return the values of \code{new} in order modified to avoid collisions.
+##' @author Peter
+make_unique_names <- function(new, context, sep=".") {
+  uniq <- make.unique(c(context, make.names(new)))
+  uniq[(length(context)+1):(length(context)+length(new))]
 }
