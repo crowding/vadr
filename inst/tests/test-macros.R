@@ -2,8 +2,8 @@ context("macros")
 
 #test_that("registering a macro applies a code transformation on the fly,")
 
-test_that("recapitulating environment", {
-  en <- recapitulating.environment(c('+', '(', 'a', 'b', '*'), environment())
+test_that("quoting.env", {
+  en <- quoting.env(c('+', '(', 'a', 'b', '*'), environment())
 
   expect_equal(evalq(a+b, en), quote(a+b))
   expect_equal(evalq(a+(b*a), en), quote(a+(b*a)))
@@ -11,21 +11,48 @@ test_that("recapitulating environment", {
   expect_equal(evalq(a+(b*a)*z, en), quote(a+(b*a)*100))
 })
 
-test_that("recapitulating environment and '...'"), {
+test_that("quoting.env and '...'", {
   #some special casing is needed to make "..." eval to itself.
-  en <- recapitulating.env(c("a","b","c","list","..."))
-  expect_equal(evalq(c(a, list(sdf=b,...)), en), quote(c(a, list(sdf=b,...))))
+  en <- quoting.env(c("a", "b", "c", "list", "..."))
+  expect_equal(evalq(c(a, list(sdf = b, ...)), en),
+               quote(c(a, list(sdf = b, ...))))
 })
 
-test_that("recapitulating environment and missings"), {
+test_that("list_with_missing", {
+  expect_equal(list_with_missing(1, 2, 3),
+               list(1,2,3))
 
+  expect_equal(list_with_missing(1, 2, , "three"),
+               alist(1, 2, , "three"))
+
+  expect_equal(list_with_missing(a="one", b=, "three"),
+               alist(a="one", b=, "three"))
 })
 
-test_that("recapitulating environment and missings", {
-  #this doesn't work yet. Some other special handling needed...
-  en <- recapitulating.env(
+test_that("list_with_missing evaluates arguments in the original scopes", {
+  fOne <- function(...) {
+    fThree <- function(...) {
+      x <- "three"
+      list_with_missing(...)
+    }
+    fTwo <- function(...) {
+      x <- "two"
+      fThree(..., one=x)
+    }
+    x <- "one"
+    fTwo(..., one=x)
+  }
+
+  x <- "four"
+  expect_equal(fOne(four=x),
+               list(four="four", three="three", two="two", one="one"))
 })
 
+test_that("quoting.env and missings", {
+  en <- quoting.env(c('[', '<-', 'a', 'b', 'c'))
+  expect_equal(evalq(a[1, ] <- b[, 2], en),
+               quote(a[1, ] <- b[, 2]))
+})
 
 #test_that("substitutor makes a nice substitution-macro")
 
