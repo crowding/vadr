@@ -69,7 +69,7 @@ mkchain <- function(..., .dwim=TRUE, .envir=parent.frame()) {
   arg.list <- lapply(arg.list, fn(substitute(a<-b, list(a=quote(`_data`),b=.))))
   pipe.call <- do.call(call, c(list("{"), lapply(arg.list, enquote), quote(quote(`_data`))))
   pipe.fn <- substitute(function(`_data`) ., list(.=pipe.call))
-  out <- eval.parent(pipe.fn)
+  out <- eval(pipe.fn, .envir)
   attr(out, "source") <- NULL
   attr(out, "srcref") <- NULL
   out
