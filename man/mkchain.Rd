@@ -1,4 +1,5 @@
 \name{mkchain}
+\alias{chain}
 \alias{mkchain}
 \title{Chain the output of one expression into the input of another.}
 \usage{

@@ -61,6 +61,7 @@
 ##' argument and return the result.
 ##' @note \code{chain} is a bit like the arrow monad of Haskell or the
 ##' \code{->} macro of Clojure.
+##' @aliases chain
 ##' @author Peter Meilstrup
 mkchain <- function(..., .dwim=TRUE, .envir=parent.frame()) {
   arg.list <- eval(substitute(alist(...)))
@@ -79,14 +80,6 @@ mkchain <- function(..., .dwim=TRUE, .envir=parent.frame()) {
 chain <- function(data, ..., .dwim=TRUE, .envir=parent.frame()) {
   fn <- mkchain(..., .dwim=.dwim, .envir=.envir)
   fn(data)
-}
-
-remove.returning <- function(sym) {
-##this slightly ugly hack is required by the current way that pipe works.
-  q <- substitute(sym)
-  val <- force(sym)
-  rm(list=as.character(q), envir=parent.frame())
-  val
 }
 
 chain.dwim <- function(arg.list) {

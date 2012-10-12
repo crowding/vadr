@@ -25,6 +25,7 @@
 ##' errors during execution will naturally result in a nonzero exit
 ##' code.
 ##' @author Peter Meilstrup
+##' @export
 run_as_command <- function(  func=parent.frame()$main
                 , arguments=commandArgs(trailingOnly=TRUE)
                 , require.toplevel=TRUE) {

@@ -27,6 +27,7 @@
 ##' conflict. Default is FALSE.
 ##' @return The results of the evaluated calls, collected using \code{.collect}.
 ##' @author Peter Meilstrup
+##' @export
 with_arg <- function(..., .collect=list, .envir=parent.frame(), .override=FALSE)  {
   dots <- as.list(substitute(quote(...)))[-1]
   calls <- dots[names(dots) == '']
