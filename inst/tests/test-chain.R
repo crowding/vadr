@@ -32,8 +32,9 @@ test_that('chain immediate', {
 })
 
 test_that('chain lexical scope', {
-  pow <- 3
-  dist <- chain(path, apply(2,diff), .^2, rowSums, sqrt, cumsum)
+  pow <- 2
+  dist <- chain(path, apply(2,diff), .^pow, rowSums, sqrt, cumsum)
+  expect_equal(dist, check)
 })
 
 test_that('chain intermediate result', {
