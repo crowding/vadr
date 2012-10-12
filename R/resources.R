@@ -8,13 +8,14 @@
 with_resources <- function(...) {
   # there is a problem with using ..., in that we have to split it apart in order to
   names <- names(eval(substitute(alist(...))))
+  stop("not written")
 }
 
 ##similar to the above except instead of assigning to local variable,
 ##each argument that evals to a function handle is then called with
 ##the result; taking all the previous results as arguments.  Use this
 ##to pass R CMD CHECK.
-with_resources_call <- function {
-  
+with_resources_call <- function() {
+  stop("not written")
 }
 

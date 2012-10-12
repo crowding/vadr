@@ -23,3 +23,6 @@ Collate:
     'ptools-description.R'
     'fun.R'
     'bind.R'
+    'resources.R'
+    'run_as_script.R'
+    'with_args.R'
