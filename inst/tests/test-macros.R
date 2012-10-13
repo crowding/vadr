@@ -54,5 +54,71 @@ test_that("quoting.env and missings", {
                quote(a[1, ] <- b[, 2]))
 })
 
-#test_that("substitutor makes a nice substitution-macro")
+test_that("macro() turns a lexical substitutor function into a macro", {
+  d <- function(expr_a, expr_b, expr_c) {
+    as.call(as.name("+"), b, b)
+  }
+
+  double <- macro(d)
+  expect_equal(double(5), 10)
+  x <- 5
+
+  side_effect <- function(){
+    x <<- x+1
+  }
+  expect_equal(double(side_effect(), 13))
+
+  #
+  expect_that("macro" %in% class(double))
+
+  expect_equal(getAttribute(macro, "orig"), double)
+})
+
+test_that("template", {
+  #"template" is intended to be a stronger version of backquote.
+
+  a <- quote(a+b)
+  b <- quote(b+c)
+  c <- quote(c+d)
+  default = quote(a+z)
+
+  expect_equal(template( .(a) + .(b)    + .(c)),
+               quote(   a + b + (b + c) + (c + d)))
+
+  expect_equal(template( .(a) + b + .(template( .(a) + b ) ) ),
+               quote(   a + b + b + (a + b + b) ) )
+
+  expect_equal( template( function (a, b=.(default)) force(b) ),
+                 function(a, b = a + z) force(b) )
+})
+
+test_that("interpolationtemplate in argument names", {
+  achar <- "a"
+  aname <- quote(a)
+  bchar <- "b"
+
+  expect_equal(template( list(".(achar)"=foobar) ),
+                  quote( list(         a=foobar) ))
+  expect_equal(template( list(`.(aname)`=baz   ) ),
+                  quote( list(         a=baz   ) ))
+  expect_equal(template( list(`.(paste(achar, bchar, sep=""))` = foobar ) ),
+                  quote( list(                              ab = foobar ) ))
+  #also in formal argument lists.
+  expect_equal(template( function( `.(achar)`, `.(bchar)` = default) body ),
+                  quote( function(          a,          b = default) body ))
+})
+
+test_that("multiple element template interpolation", {
+  arglist <- alist(aa, bb, cc)
+  namedlist <- alist(aa=a, bb=b, ccc=)
+
+  expect_equal(template( list(z, b, ...(arglist)) ),
+                  quote( list(z, b, aa, bb, cc) ) )
+  expect_equal(template( list(z, ...(namedlist), q) ),
+                  quote( list(a, aa=a, bb=b, ccc=, q) ))
+  #and in argument lists. Note how ccc is on the name on the right side.
+  #note that the dot name is ignored.
+  expect_equal(template( function(q, .=...(namedlist), x) body ),
+                  quote( function(q, aa=b, bb=b, ccc, x) body ))
+})
 

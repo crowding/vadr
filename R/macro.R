@@ -143,3 +143,62 @@ make_unique_names <- function(new, context, sep=".") {
   uniq <- make.unique(c(context, make.names(new)))
   uniq[(length(context)+1):(length(context)+length(new))]
 }
+
+#' Turn an expression-substituting function into a
+#' nonstandard-evaluating function.
+#'
+#' This just places a wrapper around the function so that you do not
+#' have to remember how to substitute, and you are not tempted to mix
+#' nonstandard with standard evaluation(*).
+#'
+#' @param fn A function which takes some arguments and returns a trane
+#' @return the wrapper function. It will have an identical argument
+#' list to the wrapped function. It will transform all arguments into
+#' expressions, pass the expressions to the wrapped function, then
+#' evaluate the result it gets back.
+#'
+#' (*) The author believes that there is one way to properly do
+#' nonstandard evaluation in R, and that is to quote ALL of your
+#' arguments and perform purely lexical operations on them, evaluating
+#' the result in a data frame. In other words, to behave as a
+#' macro. Functions which evaluate some argument normally and others
+#' abnormally (e.g. \link{\link{transform}} cause headaches and other
+#' such faux-dynamic-scope operations.
+#'
+#' @author Peter Meilstrup
+macro <- function(fn, cache=TRUE) {
+  #here, we want a caching mechanism?
+  #
+  f <- function (...) {
+    args <- eval(substitute(alist(...)))
+
+    result <- do.call(fn, args)
+    eval(result, parent.frame())
+  }
+  source(f) <- paste("macro(", source(f), ")")
+  class(f) <- c(class(f), "macro")
+  attributes(f, "orig") <- function()
+}
+
+
+# the "longterm" example from match_df
+#longterm <- subset(count(baseball, "id"), freq > 25)
+#bb_longterm <- match_df(baseball, longterm, on="id")
+#bb_longterm[1:5,]
+
+#the above rewritten using chain
+#chain(df=baseball, count("id"), subset(freq>25), match_df(df, on="id"), head(5))
+
+template <- function(expr, env=parent.frame()) {
+  unquote <- function(expr) {
+    
+  }
+}
+
+expand_macros <- function(expr, .envir=parent.frame()) {
+  
+}
+
+expand_macros.function <- function(expr) {
+  
+}
