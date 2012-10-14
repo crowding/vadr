@@ -180,25 +180,8 @@ macro <- function(fn, cache=TRUE) {
   attributes(f, "orig") <- function()
 }
 
-
-# the "longterm" example from match_df
-#longterm <- subset(count(baseball, "id"), freq > 25)
-#bb_longterm <- match_df(baseball, longterm, on="id")
-#bb_longterm[1:5,]
-
-#the above rewritten using chain
-#chain(df=baseball, count("id"), subset(freq>25), match_df(df, on="id"), head(5))
-
 template <- function(expr, env=parent.frame()) {
   unquote <- function(expr) {
     
   }
-}
-
-expand_macros <- function(expr, .envir=parent.frame()) {
-  
-}
-
-expand_macros.function <- function(expr) {
-  
 }

@@ -92,7 +92,7 @@ test_that("template", {
                  function(a, b = a + z) force(b) )
 })
 
-test_that("interpolationtemplate in argument names", {
+test_that("template interpolation in names", {
   achar <- "a"
   aname <- quote(a)
   bchar <- "b"
@@ -106,6 +106,13 @@ test_that("interpolationtemplate in argument names", {
   #also in formal argument lists.
   expect_equal(template( function( `.(achar)`, `.(bchar)` = default) body ),
                   quote( function(          a,          b = default) body ))
+
+  #thius also covers some situations where nothing other than a name
+  #is allowed by the parser
+  expect_equal(template(a$`.(bchar)`),
+                  quote( a$b ))
+  expect_equal(template( for(`.(aname)` in seq_len(10)) NULL),
+               quote(    for(         a in seq_len(10)) NULL));
 })
 
 test_that("multiple element template interpolation", {
@@ -117,7 +124,7 @@ test_that("multiple element template interpolation", {
   expect_equal(template( list(z, ...(namedlist), q) ),
                   quote( list(a, aa=a, bb=b, ccc=, q) ))
   #and in argument lists. Note how ccc is on the name on the right side.
-  #note that the dot name is ignored.
+  #note that the name of the argument ... appears in is ignored at best.
   expect_equal(template( function(q, .=...(namedlist), x) body ),
                   quote( function(q, aa=b, bb=b, ccc, x) body ))
 })
