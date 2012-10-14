@@ -55,23 +55,22 @@ test_that("quoting.env and missings", {
 })
 
 test_that("macro() turns a lexical substitutor function into a macro", {
-  d <- function(expr_a, expr_b, expr_c) {
-    as.call(as.name("+"), b, b)
+  d <- function(expr_b) {
+    call("+", expr_b, expr_b)
   }
 
   double <- macro(d)
   expect_equal(double(5), 10)
-  x <- 5
 
+  x <- 5
   side_effect <- function(){
     x <<- x+1
   }
-  expect_equal(double(side_effect(), 13))
+  expect_equal(double(side_effect()), 13)
 
-  #
-  expect_that("macro" %in% class(double))
+  expect_true("macro" %in% class(double))
 
-  expect_equal(getAttribute(macro, "orig"), double)
+  expect_equal(attr(double, "orig"), d)
 })
 
 test_that("template", {

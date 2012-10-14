@@ -144,6 +144,8 @@ make_unique_names <- function(new, context, sep=".") {
   uniq[(length(context)+1):(length(context)+length(new))]
 }
 
+`%||%` <- function(a, b) if(is.null(a)) b else a
+
 #' Turn an expression-substituting function into a
 #' nonstandard-evaluating function.
 #'
@@ -170,18 +172,23 @@ macro <- function(fn, cache=TRUE) {
   #here, we want a caching mechanism?
   #
   f <- function (...) {
+    fr <- parent.frame()
     args <- eval(substitute(alist(...)))
-
+    args <- lapply(args, enquote)
     result <- do.call(fn, args)
-    eval(result, parent.frame())
+    eval(result, fr)
   }
-  source(f) <- paste("macro(", source(f), ")")
-  class(f) <- c(class(f), "macro")
-  attributes(f, "orig") <- fn
+#  attr(f, "srcref") <-
+#    paste("macro(", paste(attr(fn, "srcref") %||% deparse(fn), collapse="\n"), ")")
+
+  class(f) <- c("macro", class(f))
+  attr(f, "orig") <- fn
+  f
 }
+
 
 template <- function(expr, env=parent.frame()) {
   unquote <- function(expr) {
-    
+
   }
 }
