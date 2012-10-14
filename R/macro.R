@@ -177,7 +177,7 @@ macro <- function(fn, cache=TRUE) {
   }
   source(f) <- paste("macro(", source(f), ")")
   class(f) <- c(class(f), "macro")
-  attributes(f, "orig") <- function()
+  attributes(f, "orig") <- fn
 }
 
 template <- function(expr, env=parent.frame()) {

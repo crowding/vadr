@@ -59,7 +59,7 @@ test_that("summarizer", {
 
 test_that("summarizer with missing names", {
    f <- summarizer(x/y, 2*z)
-   expect_equal(f(10, 2, 3), quickdf(list(`x/y`=5, `2 * z`=6)))
+   expect_equal(f(10, 2, 3), plyr:::quickdf(list(`x/y`=5, `2 * z`=6)))
 })
 
 test_that("fun equivalent of mutate", {
