@@ -186,9 +186,43 @@ macro <- function(fn, cache=TRUE) {
   f
 }
 
-
-template <- function(expr, env=parent.frame()) {
-  unquote <- function(expr) {
-
+library(stringr)
+template <- function(expr, .envir=parent.frame()) {
+  unquote <- function(e) {
+    if (length(e) <= 1L) {
+      if (is.name(e)) {
+        as.name(unquote.char(as.character(e)))
+      } else {
+        e
+      }
+    } else if (e[[1L]] == as.name(".")) {
+      eval(e[[2L]], .envir)
+    } else if (is.pairlist(e)) {
+      as.pairlist(unquote.list(e))
+    } else {
+      as.call(unquote.list(e))
+    }
   }
+
+  unquote.list <- function(e) {
+    n <- names(e)
+    r <- lapply(e, unquote)
+    if (!is.null(n)) {
+      names(r) <- vapply(n, unquote.char, "")
+    }
+    r
+  }
+
+  unquote.char <- function(ch) {
+    match <- str_match(ch, "^\\.\\((.*)\\)$")
+    if (!is.na(match[2])) {
+      print(ch)
+      as.character(eval(parse(text=match[2]), .envir))
+    } else {
+      print(ch)
+      ch
+    }
+  }
+
+  unquote(substitute(expr))
 }
