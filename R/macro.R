@@ -191,7 +191,12 @@ template <- function(expr, .envir=parent.frame()) {
   unquote <- function(e) {
     if (length(e) <= 1L) {
       if (is.name(e)) {
-        as.name(unquote.char(as.character(e)))
+        ch = unquote.char(as.character(e))
+        if (ch == "") {
+          quote(expr=)
+        } else {
+          as.name(ch)
+        }
       } else {
         e
       }
@@ -216,10 +221,8 @@ template <- function(expr, .envir=parent.frame()) {
   unquote.char <- function(ch) {
     match <- str_match(ch, "^\\.\\((.*)\\)$")
     if (!is.na(match[2])) {
-      print(ch)
       as.character(eval(parse(text=match[2]), .envir))
     } else {
-      print(ch)
       ch
     }
   }
