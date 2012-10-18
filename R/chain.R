@@ -63,6 +63,7 @@
 ##' \code{->} macro of Clojure.
 ##' @aliases chain
 ##' @author Peter Meilstrup
+##' @export
 mkchain <- function(..., .dwim=TRUE, .envir=parent.frame()) {
   arg.list <- eval(substitute(alist(...)))
   if(.dwim) arg.list <- chain.dwim(arg.list)
