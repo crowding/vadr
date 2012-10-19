@@ -121,10 +121,10 @@ test_that("multiple element template interpolation", {
   expect_equal(template( list(z, b, ...(arglist)) ),
                   quote( list(z, b, aa, bb, cc) ) )
   expect_equal(template( list(z, ...(namedlist), q) ),
-                  quote( list(a, aa=a, bb=b, ccc=, q) ))
+                  quote( list(z, aa=a, bb=b, ccc=, q) ))
   #and in argument lists. Note how ccc is on the name on the right side.
   #note that the name of the argument ... appears in is ignored.
   expect_equal(template( function(q, .=...(namedlist), x) body ),
-                  quote( function(q, aa=b, bb=b, ccc, x) body ))
+                  quote( function(q, aa=a, bb=b, ccc, x) body ))
 })
 

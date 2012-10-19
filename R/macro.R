@@ -68,11 +68,12 @@ quoting.env <- function(names, parent=emptyenv(), call.names=names) {
 ##' This is particularly useful for supporting array-indexing
 ##' functions, that work like built-in \code{\link{`[`}}; it allows
 ##' you to tell when arguments are missing, but also evaluate
-##' non-missing arguments in their correct environments without
+##' any numnber of non-missing arguments in their correct environments.
 ##' choking on missing arguments. That is, it lets you implement a
 ##' \code{`[`} accessor that currectly supports usage like
 ##' \code{function(a,b)(array[a*b, ])(4,2*e)}. It is also used in
 ##' \code{\link{expandmacro()}} and for other computing-on-the-language purposes.
+##'
 ##' @param ... Objects, possibly named, possibly missing.
 ##' @param `*default*` What to fill. Should be an _expression_ that will be
 ##' _evaluated_ to fill in missing values. Default is an expression that
@@ -109,7 +110,7 @@ list_with_missing <- function(...,
   #each argument for missingness, eval the ones that aren't missing
   #and build a list.
 
-  uneval.args <- substitute(alist(...))[-1]
+  uneval.args <- eval(substitute(alist(...)))
   lexically.missing <- sapply(uneval.args,
                               function(x) is.name(x) && as.character(x) == "")
   orig.argnames <- names(uneval.args)
@@ -204,16 +205,28 @@ template <- function(expr, .envir=parent.frame()) {
       eval(e[[2L]], .envir)
     } else if (is.pairlist(e)) {
       as.pairlist(unquote.list(e))
+    } else if (e[[1L]] == as.name("...")) {
+      x <- eval(e[[2L]], .envir)
+      attr(x, "...") <- TRUE #out of band signaling
+      x
     } else {
       as.call(unquote.list(e))
     }
   }
 
   unquote.list <- function(e) {
-    n <- names(e)
     r <- lapply(e, unquote)
+    n <- names(e)
+    to.interpolate <- vapply(r, function(x) attr(x, '...') %||% FALSE, FALSE)
     if (!is.null(n)) {
-      names(r) <- vapply(n, unquote.char, "")
+      n[to.interpolate] <- ""
+      n <- vapply(n, unquote.char, "")
+      names(r) <- n
+    }
+    if (any(to.interpolate)) {
+      r[!to.interpolate] <- structure(lapply(r[!to.interpolate], list),
+                                      names = names(r)[!to.interpolate])
+      r <- unlist(r, recursive=FALSE)
     }
     r
   }
