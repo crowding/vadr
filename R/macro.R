@@ -22,7 +22,7 @@
 ##' @author Peter Meilstrup
 ##' @export
 ##' @examples
-##' en <- recapitulating.environment(c('+', '(', 'a', 'b', '*'), environment())
+##' en <- quoting.env(c('+', '(', 'a', 'b', '*'), environment())
 ##'
 ##' evalq(a+b, en) # a+b
 ##' evalq(a+(b*a), en) # a+(b*a)
@@ -356,6 +356,9 @@ missing.value <- function(n) {
   }
 }
 
+# below is speculative and should probably rather be saved into a branch.
+
+0 && {
 #' Expand any macros in the quoted expression.
 #'
 #' This searches for macro functions referred to in the quoted
@@ -369,9 +372,9 @@ missing.value <- function(n) {
 #' @return The expansion of the given expression.
 #' @author Peter Meilstrup
 #'
-#' This is intended for interactive/debugging use. Note that in
-#' searching for available macros, this will force promises in
-#' enclosing environments/.
+#' This is intended for interactive/debugging use; in general, its
+#' results are not correct. For example, expressions appearing inside
+#' of \code{link{quote}()} will get expanded anyway.
 expand_macros_q <- function(expr, .envir=parent.frame()) {
   eval(substitute(expand_macros_q(expr, .envir)))
   "not written"
@@ -384,8 +387,10 @@ expand_macros_q <- function(expr, .envir=parent.frame()) {
 #' @param macros A named list of macro functions. These are expected
 #' to have an "orig" attribute (as functions built using \link{macro}
 #' do.)
-#' @return Te expression with macros expanded.
+#' @return The expression with macros expanded.
 #' @author Peter Meilstrup
 expand_macros <- function(expr, macros) {
   "not written"
+}
+
 }
