@@ -64,6 +64,16 @@
 ##' @aliases chain
 ##' @author Peter Meilstrup
 ##' @export
+##' @examples
+##' # In help(match_df, package="plyr") there is this example:
+##' data(baseball)
+##' longterm <- subset(count(baseball, "id"), freq > 25)
+##' bb_longterm <- match_df(baseball, longterm, on="id")
+##' bb_longterm[1:5,]
+##'
+##' # Rewriting the above using chain:
+##' chain(df=baseball, count("id"), subset(freq>25), match_df(df, on="id"), head(5))
+
 mkchain <- function(..., .dwim=TRUE, .envir=parent.frame()) {
   arg.list <- eval(substitute(alist(...)))
   if(.dwim) arg.list <- chain.dwim(arg.list)
