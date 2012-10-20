@@ -72,7 +72,7 @@ quoting.env <- function(names, parent=emptyenv(), call.names=names) {
 ##' choking on missing arguments. That is, it lets you implement a
 ##' \code{`[`} accessor that currectly supports usage like
 ##' \code{function(a,b)(array[a*b, ])(4,2*e)}. It is also used in
-##' \code{\link{expandmacro()}} and for other computing-on-the-language purposes.
+##' \code{\link{expand_macros()}} and for other computing-on-the-language purposes.
 ##'
 ##' @param ... Objects, possibly named, possibly missing.
 ##' @param `*default*` What to fill. Should be an _expression_ that will be
@@ -139,20 +139,28 @@ list_with_missing <- function(...,
 ##' @param new Initial values for the new nmes
 ##' @param context Existing names to avoid collisions with.
 ##' @return the values of \code{new} in order modified to avoid collisions.
-##' @author Peter
+##' @author Peter Meilstrup
 make_unique_names <- function(new, context, sep=".") {
   uniq <- make.unique(c(context, make.names(new)))
   uniq[(length(context)+1):(length(context)+length(new))]
 }
 
+#' Evaluate the first argument; if null, evaluate and return the
+#' second argument.
+#'
+#' @param a The first argument to evaluate.
+#' @param b The second argument to evaluate. Only evaluated if
+#' \code{a} is null.
+#' @return the value of \code{a} if not null, else \code{b}
+#' @author Peter Meilstrup
 `%||%` <- function(a, b) if(is.null(a)) b else a
 
 #' Turn an expression-substituting function into a
 #' nonstandard-evaluating function.
 #'
 #' This just places a wrapper around the function so that you do not
-#' have to remember how to substitute, and you are not tempted to mix
-#' nonstandard with standard evaluation(*).
+#' have to remember how to use substitute, and you are not tempted to
+#' mix nonstandard with standard evaluation(*).
 #'
 #' @param fn A function which takes some arguments and returns a trane
 #' @return the wrapper function. It will have an identical argument
@@ -163,12 +171,19 @@ make_unique_names <- function(new, context, sep=".") {
 #' (*) The author believes that there is one way to properly do
 #' nonstandard evaluation in R, and that is to quote ALL of your
 #' arguments and perform purely lexical operations on them, evaluating
-#' the result in a data frame. In other words, to behave as a
-#' macro. Functions which evaluate some argument normally and others
-#' abnormally (e.g. \link{\link{transform}} cause headaches and other
-#' such faux-dynamic-scope operations.
+#' the result in the caller. In other words, to behave as a
+#' macro. Functions which evaluate different arguments in different
+#' scopes (e.g. \link{\link{transform}} cause problems; consider
+#' writing these as functors, or using formula objects or
+#' \code{\link[plyr]{.}()} to capture environments explicitly.
+#'
+#' As a future enhancement, we will cache the values of macro
+#' substitutions.
 #'
 #' @author Peter Meilstrup
+#' @seealso template
+#' @export
+
 macro <- function(fn, cache=TRUE) {
   #here, we want a caching mechanism?
   #
@@ -179,6 +194,7 @@ macro <- function(fn, cache=TRUE) {
     result <- do.call(fn, args)
     eval(result, fr)
   }
+# set the source to look reasonable?
 #  attr(f, "srcref") <-
 #    paste("macro(", paste(attr(fn, "srcref") %||% deparse(fn), collapse="\n"), ")")
 
@@ -187,10 +203,77 @@ macro <- function(fn, cache=TRUE) {
   f
 }
 
-library(stringr)
+#' Perform template substitutions on a quoted R expressions.
+#'
+#' This is an extended version of the \code{\link{backquote}}
+#' utility.  'template' quotes its first argument, then scans for
+#' terms erapped in \code{.()}, \code{...()}, or names that match
+#' \code{`.()`} The wrapped expressions or names are evaluated in the
+#' given environment.  Expressions wrapped in \code{...()} will be
+#' interpolated into the argument list in which they occur. Names
+#' wrapped in `.()` will be substituted and coerced to name.
+#'
+#' The contents of a name matching `.(  )` will be parsed and
+#'
+#' This can used recursively to build interesting code transformations.
+#'
+#' @title
+#' @param expr A language object.
+#' @param .envir An environment to evaluate the backquoted expressions in.
+#' @return A language object.
+#' @author Peter Meilstrup
+#' @seealso macro bquote substitute recpitulating.env
+#' @examples
+#'
+#' #Basic substitution
+#' default <- 1
+#' template( function(x, y = .(default)) x+y )
+#' #function(x, y = 1) x + y
+#'
+#' # interpolating substitution:
+#' paste.before <- alist("hello", "cool")
+#' paste.after <- alist("!", "Now is", date())
+#' template(cat(...(paste.before), "world", ...(paste.after), '\n'))
+#' #cat("hello", "cool", "world", "!", "Now is", date(), "\n")
+#'
+#' # Name substitution:
+#' element_to_access <- "x"
+#' template(function(data) data$`.(element_to_access)`)
+#' #function(data) data$x
+#'
+#' argument.name <- "x"
+#' template(
+#'   function(`.(argument.name)`)
+#'   cat(.(argument.name), " is ", `.(argument.name)`, "\n")
+#' )
+#' #function(x) cat("x", " is ", x, "\n"))
+#'
+#' # Note that in the argument list to a function, function argument
+#' # names are names, and defaults are values; that is
+#' function(x=1, y) x+y
+#' # is equivalent to
+#' function(...(alist(x=1, y=))) x+y
+#' # or
+#' function(...(list(x=1, y=missing.value()))) x+y
+#'
+#' # Building a function with an arbitrary list of arguments:
+#' argnames <- letters[1:4]
+#' template(function(.=...(setNames(missing.value(length(argnames)), argnames))) {
+#'   list(...(lapply(argnames, as.name)))
+#' })
+#' #function(a, b, c, d) list(a, b, c, d)
+#'
+#' #' The poor .() function is overloaded. You can escape it thus:
+#' dfname <- "baseball"
+#' template(ddply(.(as.name(dfname)), .(quote(.(id, team))), identity))
+#' #ddply(baseball, .(id.team), identity)
 template <- function(expr, .envir=parent.frame()) {
+  require(stringr)
+
   unquote <- function(e) {
-    if (length(e) <= 1L) {
+    if (is.pairlist(e)) {
+      as.pairlist(unquote.list(e))
+    } else if (length(e) <= 1L) {
       if (is.name(e)) {
         ch = unquote.char(as.character(e))
         if (ch == "") {
@@ -203,11 +286,9 @@ template <- function(expr, .envir=parent.frame()) {
       }
     } else if (e[[1L]] == as.name(".")) {
       eval(e[[2L]], .envir)
-    } else if (is.pairlist(e)) {
-      as.pairlist(unquote.list(e))
     } else if (e[[1L]] == as.name("...")) {
       x <- eval(e[[2L]], .envir)
-      attr(x, "...") <- TRUE #out of band signaling
+      attr(x, "...") <- TRUE #flag to be picked up by unquote.list
       x
     } else {
       as.call(unquote.list(e))
@@ -234,11 +315,77 @@ template <- function(expr, .envir=parent.frame()) {
   unquote.char <- function(ch) {
     match <- str_match(ch, "^\\.\\((.*)\\)$")
     if (!is.na(match[2])) {
-      as.character(eval(parse(text=match[2]), .envir))
+      as.character(eval(parse(text = match[2]), .envir))
     } else {
       ch
     }
   }
 
   unquote(substitute(expr))
+}
+
+
+#' Return an empty symbol.
+#'
+#' The empty symbol is used to represent missing values in the R
+#' language; for instance in the value slot of a function argument
+#' when there is no default; and in the expression slot of a promise
+#' when a missing argument is given.
+#'
+#' @param n Optional; a number. If provided, will return a list of
+#' missing values with this many elements.
+#' @return A symbol with empty name, or a list of such.
+#' @examples
+#' # These statements are equivalent:
+#' quote(function(x, y=1) x+y)
+#' call("function", as.pairlist(x=missing.value(), y=1), quote(x+y))
+#'
+#' # These statements are also equivalent:
+#' quote(df[,1])
+#' substitute(df[row,col], list(row = missing.value(), col = 1))
+#'
+#' # These statements are equivalent
+#' quote(function(a, b, c, d, e) print("hello"))
+#' call("function", as.pairlist(setNames(missing.value(5), letters[1:5])), quote(print("hello")))
+#' @export
+missing.value <- function(n) {
+  if (missing(n)) {
+    quote(expr=)
+  } else {
+    rep(list(quote(expr=)), n)
+  }
+}
+
+#' Expand any macros in the quoted expression.
+#'
+#' This searches for macro functions referred to in the quoted
+#' expression and substitutes their equivalent expansions.  Not
+#' guaranteed to give exact results.
+#'
+#' @param expr An expression. This is quoted and not evaluated.
+#' @param .envir An environment in which to look for macro functions,
+#' or a named list of macro functions. Defaults to the calling
+#' environment.
+#' @return The expansion of the given expression.
+#' @author Peter Meilstrup
+#'
+#' This is intended for interactive/debugging use. Note that in
+#' searching for available macros, this will force promises in
+#' enclosing environments/.
+expand_macros_q <- function(expr, .envir=parent.frame()) {
+  eval(substitute(expand_macros_q(expr, .envir)))
+  "not written"
+}
+
+#' Given a quoted expression and a list of macro functions, perform
+#' one level of macro expansion.
+#'
+#' @param expr A language object.
+#' @param macros A named list of macro functions. These are expected
+#' to have an "orig" attribute (as functions built using \link{macro}
+#' do.)
+#' @return Te expression with macros expanded.
+#' @author Peter Meilstrup
+expand_macros <- function(expr, macros) {
+  "not written"
 }

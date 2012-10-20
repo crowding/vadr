@@ -128,3 +128,39 @@ test_that("multiple element template interpolation", {
                   quote( function(q, aa=a, bb=b, ccc, x) body ))
 })
 
+test_that("template interpolation in first argument", {
+  #template() wasn't hitting the first element of function arg lists?
+  #turns out bquote() itself had this bug too.
+  argument.name <- "x"
+  expect_equal(
+    template(function(`.(argument.name)`) {
+      cat(.(argument.name), " is ", `(.argument.name)`, "\n")
+    })
+    ,
+    quote( function(x) {cat("x", " is ", x, "\n")})
+    )
+
+  argnames <- letters[1:4]
+  expect_equal(
+    template(function(
+                .=...(setNames(missing.value(length(argnames)), argnames)))
+             {
+               list(.=...(lapply(argnames, as.name)))
+             } )
+    ,
+    quote( function(a, b, c, d) { list(a, b, c, d) } )
+    )
+})
+
+test_that("expand_macro expands all visible macros (by one step)", {
+  local({
+    addmacro <- macro(function(x, y) template(.(x) + .(y)))
+    doublemacro <- macro(function(x, y) template(.(x) * addmacro(.(y), .(y))))
+
+    expect_equal(expand.macro(quote(addmacro(a, b)), quote(a+b)))
+    expect_equal(expand.macro(addmacro(a, b*y)), quote(a+b*y))
+    expect_equal(expand.macro(doublemacro(a, b), quote(a, b)))
+    #this rules out use of recapitulating.environment....
+    #expect_equal(expand.macro(addmacro(a, addmacro(b*c)), quote(a+addmacro(b*c))))
+  })
+})
