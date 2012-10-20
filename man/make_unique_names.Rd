@@ -18,6 +18,6 @@ existing set of (unmodified) character strings.}
   A convenience extension of \code{\link{make.unique}}.
 }
 \author{
-  Peter
+  Peter Meilstrup
 }
 

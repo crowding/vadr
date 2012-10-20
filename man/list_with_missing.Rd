@@ -25,13 +25,17 @@
   This is particularly useful for supporting array-indexing
   functions, that work like built-in \code{\link{`[`}}; it
   allows you to tell when arguments are missing, but also
-  evaluate non-missing arguments in their correct
-  environments without choking on missing arguments. That
+  evaluate any numnber of non-missing arguments in their
+  correct environments. choking on missing arguments. That
   is, it lets you implement a \code{`[`} accessor that
   currectly supports usage like
   \code{function(a,b)(array[a*b, ])(4,2*e)}. It is also
-  used in \code{\link{expandmacro()}} and for other
+  used in \code{\link{expand_macros()}} and for other
   computing-on-the-language purposes.
+}
+\section{Notes
+This is probably rather slow.}{
+
 }
 \examples{
 #unlike alist, arguments are evaluated in context.

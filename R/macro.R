@@ -63,37 +63,39 @@ quoting.env <- function(names, parent=emptyenv(), call.names=names) {
   nameenv
 }
 
-##' Construct a list, but allow missing arguments.
-##'
-##' This is particularly useful for supporting array-indexing
-##' functions, that work like built-in \code{\link{`[`}}; it allows
-##' you to tell when arguments are missing, but also evaluate
-##' any numnber of non-missing arguments in their correct environments.
-##' choking on missing arguments. That is, it lets you implement a
-##' \code{`[`} accessor that currectly supports usage like
-##' \code{function(a,b)(array[a*b, ])(4,2*e)}. It is also used in
-##' \code{\link{expand_macros()}} and for other computing-on-the-language purposes.
-##'
-##' @param ... Objects, possibly named, possibly missing.
-##' @param `*default*` What to fill. Should be an _expression_ that will be
-##' _evaluated_ to fill in missing values. Default is an expression that
-##' evaluates to the empty symbol.
-##' @param `*envir*` The environment in which *default* will be evaluated.
-##' @return A list, with any non-missing arguments evaluated, any
-##' other arguments substituted with the default expression and
-##' evaluated.
-##' @export
-##' @author Peter Meilstrup
-##' @examples
-##' #unlike alist, arguments are evaluated in context.
-##' y <- 4
-##' alist(2*y, , x=12+24, d=)
-##' list.with.missing(2*y, , x=12+24, d=)
-##'
-##' #unlike with `list`, missing arguments are detected and handled.
-##' \dontrun{
-##' list(2*y, , x=12+24, d=) #produces an error.
-##' }
+#' Construct a list, but allow missing arguments.
+#'
+#' This is particularly useful for supporting array-indexing
+#' functions, that work like built-in \code{\link{`[`}}; it allows
+#' you to tell when arguments are missing, but also evaluate
+#' any numnber of non-missing arguments in their correct environments.
+#' choking on missing arguments. That is, it lets you implement a
+#' \code{`[`} accessor that currectly supports usage like
+#' \code{function(a,b)(array[a*b, ])(4,2*e)}. It is also used in
+#' \code{\link{expand_macros()}} and for other computing-on-the-language purposes.
+#'
+#' @param ... Objects, possibly named, possibly missing.
+#' @param `*default*` What to fill. Should be an _expression_ that will be
+#' _evaluated_ to fill in missing values. Default is an expression that
+#' evaluates to the empty symbol.
+#' @param `*envir*` The environment in which *default* will be evaluated.
+#' @return A list, with any non-missing arguments evaluated, any
+#' other arguments substituted with the default expression and
+#' evaluated.
+#' @section Notes
+#' This is probably rather slow.
+#' @export
+#' @author Peter Meilstrup
+#' @examples
+#' #unlike alist, arguments are evaluated in context.
+#' y <- 4
+#' alist(2*y, , x=12+24, d=)
+#' list.with.missing(2*y, , x=12+24, d=)
+#'
+#' #unlike with `list`, missing arguments are detected and handled.
+#' \dontrun{
+#' list(2*y, , x=12+24, d=) #produces an error.
+#' }
 list_with_missing <- function(...,
                               `*default*`=quote(quote(expr= )),
                               `*envir*`=parent.frame()) {
@@ -153,6 +155,7 @@ make_unique_names <- function(new, context, sep=".") {
 #' \code{a} is null.
 #' @return the value of \code{a} if not null, else \code{b}
 #' @author Peter Meilstrup
+#' @export
 `%||%` <- function(a, b) if(is.null(a)) b else a
 
 #' Turn an expression-substituting function into a
@@ -173,7 +176,7 @@ make_unique_names <- function(new, context, sep=".") {
 #' arguments and perform purely lexical operations on them, evaluating
 #' the result in the caller. In other words, to behave as a
 #' macro. Functions which evaluate different arguments in different
-#' scopes (e.g. \link{\link{transform}} cause problems; consider
+#' scopes (e.g. \code{\link{transform}} cause problems; consider
 #' writing these as functors, or using formula objects or
 #' \code{\link[plyr]{.}()} to capture environments explicitly.
 #'
@@ -217,7 +220,6 @@ macro <- function(fn, cache=TRUE) {
 #'
 #' This can used recursively to build interesting code transformations.
 #'
-#' @title
 #' @param expr A language object.
 #' @param .envir An environment to evaluate the backquoted expressions in.
 #' @return A language object.
@@ -355,6 +357,9 @@ missing.value <- function(n) {
     rep(list(quote(expr=)), n)
   }
 }
+
+
+
 
 # below is speculative and should probably rather be saved into a branch.
 

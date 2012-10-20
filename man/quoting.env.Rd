@@ -35,7 +35,7 @@ back.}
   (somewhow?) to take missing arguments out.
 }
 \examples{
-en <- recapitulating.environment(c('+', '(', 'a', 'b', '*'), environment())
+en <- quoting.env(c('+', '(', 'a', 'b', '*'), environment())
 
 evalq(a+b, en) # a+b
 evalq(a+(b*a), en) # a+(b*a)

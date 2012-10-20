@@ -27,3 +27,4 @@ Collate:
     'resources.R'
     'run_as_script.R'
     'with_args.R'
+    'ammoc.R'
