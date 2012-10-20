@@ -61,7 +61,19 @@
 ##' argument and return the result.
 ##' @note \code{chain} is a bit like the arrow monad of Haskell or the
 ##' \code{->} macro of Clojure.
+##' @aliases chain
 ##' @author Peter Meilstrup
+##' @export
+##' @examples
+##' # In help(match_df, package="plyr") there is this example:
+##' data(baseball)
+##' longterm <- subset(count(baseball, "id"), freq > 25)
+##' bb_longterm <- match_df(baseball, longterm, on="id")
+##' bb_longterm[1:5,]
+##'
+##' # Rewriting the above using chain:
+##' chain(df=baseball, count("id"), subset(freq>25), match_df(df, on="id"), head(5))
+
 mkchain <- function(..., .dwim=TRUE, .envir=parent.frame()) {
   arg.list <- eval(substitute(alist(...)))
   if(.dwim) arg.list <- chain.dwim(arg.list)
@@ -69,7 +81,7 @@ mkchain <- function(..., .dwim=TRUE, .envir=parent.frame()) {
   arg.list <- lapply(arg.list, fn(substitute(a<-b, list(a=quote(`_data`),b=.))))
   pipe.call <- do.call(call, c(list("{"), lapply(arg.list, enquote), quote(quote(`_data`))))
   pipe.fn <- substitute(function(`_data`) ., list(.=pipe.call))
-  out <- eval.parent(pipe.fn)
+  out <- eval(pipe.fn, .envir)
   attr(out, "source") <- NULL
   attr(out, "srcref") <- NULL
   out
@@ -79,14 +91,6 @@ mkchain <- function(..., .dwim=TRUE, .envir=parent.frame()) {
 chain <- function(data, ..., .dwim=TRUE, .envir=parent.frame()) {
   fn <- mkchain(..., .dwim=.dwim, .envir=.envir)
   fn(data)
-}
-
-remove.returning <- function(sym) {
-##this slightly ugly hack is required by the current way that pipe works.
-  q <- substitute(sym)
-  val <- force(sym)
-  rm(list=as.character(q), envir=parent.frame())
-  val
 }
 
 chain.dwim <- function(arg.list) {

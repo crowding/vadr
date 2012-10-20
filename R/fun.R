@@ -106,7 +106,7 @@ summariser <- function(..., .envir=parent.frame()) {
   #cook up a function
   bind_list <- lapply(varnames, as.name)
   names(bind_list) <- outnames
-  bind_cmd <- substitute(quickdf(x),
+  bind_cmd <- substitute(plyr:::quickdf(x),
                          list(x=as.call(c(as.name("list"), bind_list))))
   summary_command <- mapply(function(name, x)
                             substitute(name <- x, list(name=as.name(name), x=x)),
