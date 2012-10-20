@@ -134,7 +134,7 @@ test_that("template interpolation in first argument", {
   argument.name <- "x"
   expect_equal(
     template(function(`.(argument.name)`) {
-      cat(.(argument.name), " is ", `(.argument.name)`, "\n")
+      cat(.(argument.name), " is ", `.(argument.name)`, "\n")
     })
     ,
     quote( function(x) {cat("x", " is ", x, "\n")})
