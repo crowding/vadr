@@ -148,7 +148,7 @@ mutator <- function(..., `_envir`=parent.frame()) {
   #plyr's "mutate" doesn't do what summarise did about making up new
   #column names is none are provided, so in mimicry of that, out
   #mutator simpler. But one difference is that mutate() doesn't
-  #evaluate the unnamed arguments arguments, but this does. (you might
+  #evaluate the unnamed arguments, but this does. (you might
   #want to insert a debugging print() after all, or use <- instead of
   #==)
   eIn <- eval(substitute(alist(...)));
@@ -179,3 +179,56 @@ mutator <- function(..., `_envir`=parent.frame()) {
   body(f) <- body2
   f
 }
+
+
+MapReduce <- function(map, reduce, x, init, right=FALSE, accumulate=FALSE)
+  Reduce(function(a,b) reduce(map(a), map(b)), x, init, right, accumulate)
+
+drop.empty <- function(x) x[x != ""]
+
+mutator <- macro(function(...) {
+  mutations <- list(...)
+  arg.names <- drop.empty(MapReduce(all.names, union, mutations, c()))
+  mutation.names <- make.names(names(mutations))
+  template(
+    function( .=...( templapply( n = union(arg.names, mutation.names),
+                                 get(.(n), parent.env(environment())))))
+    {
+      ...( templapply(
+             n = mutation.names,
+             m = mutations,
+             .(as.name(n)) <- .(m)
+             ))
+      plyr::quickdf( ...( mapply(as.name, mutation.names) ), ... )
+    }
+  )
+})
+
+summariser <- macro(function(...) {
+  summaries <- print(list(...))
+  arg.names <- drop.empty(MapReduce(all.names, union, summaries, c()))
+  summary.names <- make.names(names(summaries))
+  template(
+    function( .=...( templapply( n = union(arg.names, summary.names),
+                                 get( .(n), parent.env(environment()) )))) {
+      ...(
+        templapply(
+          n = summary.names,
+          m = summaries,
+          .(as.name(n)) <- .(m)
+        )
+      )
+      plyr::quickdf( ...( mapply(as.name, summary.names) ) )
+    }
+  )
+})
+
+fun <- macro(function(expr, functions=FALSE) {
+  arg.names <- all.names(expr, functions)
+  template(
+    function( .=...( templapply( n=arg.names,
+                                 get(.(n), parent.env(environment)) )))
+             .(expr)
+  )
+})
+

@@ -155,7 +155,7 @@ make_unique_names <- function(new, context, sep=".") {
 #' \code{a} is null.
 #' @return the value of \code{a} if not null, else \code{b}
 #' @author Peter Meilstrup
-#' @export
+#' @export "%||%"
 `%||%` <- function(a, b) if(is.null(a)) b else a
 
 #' Turn an expression-substituting function into a
@@ -185,8 +185,7 @@ make_unique_names <- function(new, context, sep=".") {
 #'
 #' @author Peter Meilstrup
 #' @seealso template
-#' @export
-
+#' @export 
 macro <- function(fn, cache=TRUE) {
   #here, we want a caching mechanism?
   #
@@ -269,6 +268,7 @@ macro <- function(fn, cache=TRUE) {
 #' dfname <- "baseball"
 #' template(ddply(.(as.name(dfname)), .(quote(.(id, team))), identity))
 #' #ddply(baseball, .(id.team), identity)
+#' @export
 template <- function(expr, .envir=parent.frame()) {
   require(stringr)
 
@@ -326,8 +326,19 @@ template <- function(expr, .envir=parent.frame()) {
   unquote(substitute(expr))
 }
 
+#argnames <- letters[1:4]
+#template( function(.=...(templapply(.(i), n=argnames, i=seq_along(argnames))))
+#         list( ...( templapply(.(as.name(n).), n=argnames) ) ))
 
-#' Return an empty symbol.
+templapply <- function(.template, ..., .enclos=parent.frame()) {
+  template.expr <- substitute(.template)
+  f <- eval(template(
+              function(...) template(.(substitute(.template)),
+                                     list2env(list(...), parent=.enclos))))
+  mapply(FUN=f, ..., SIMPLIFY=FALSE, USE.NAMES=TRUE)
+}
+
+#' Return an empty symbol (which is used by R to represent missing values.)
 #'
 #' The empty symbol is used to represent missing values in the R
 #' language; for instance in the value slot of a function argument
@@ -357,8 +368,6 @@ missing.value <- function(n) {
     rep(list(quote(expr=)), n)
   }
 }
-
-
 
 
 # below is speculative and should probably rather be saved into a branch.

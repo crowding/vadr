@@ -15,17 +15,17 @@ Suggests:
     testthat (>= 0.2)
 Imports:
     plyr (>= 1.7.0),
-    codetools (>= 0.2)
 Collate:
+    'macro.R'
     'chain.R'
     'indexing.R'
     'programming.R'
     'ptools-description.R'
     'fun.R'
     'bind.R'
-    'macro.R'
     'resources.R'
     'run_as_script.R'
     'with_args.R'
     'ammoc.R'
     'dm_ply.R'
+    'accumulator.R'

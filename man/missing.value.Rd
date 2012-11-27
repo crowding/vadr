@@ -1,6 +1,6 @@
 \name{missing.value}
 \alias{missing.value}
-\title{Return an empty symbol.}
+\title{Return an empty symbol (which is used by R to represent missing values.)}
 \usage{
   missing.value(n)
 }

@@ -1,7 +1,6 @@
 \name{dm_ply}
 \alias{dm_ply}
-\title{Split data frame, apply columns to arguments of a function, and discard results.
-For each subset of a data frame,}
+\title{Split data frame, apply columns to arguments of a function, and discard results.}
 \usage{
   dm_ply(.data, .variables, .fun = NULL, ...,
     .progress = "none", .drop = TRUE, .parallel = FALSE)
@@ -31,9 +30,8 @@ For each subset of a data frame,}
   NULL
 }
 \description{
-  Split data frame, apply columns to arguments of a
-  function, and discard results. For each subset of a data
-  frame,
+  For each subset of a data frame, apply its columns to a
+  multiple-argument function.
 }
 \section{Function Application}{
   The columns of \code{.data} will be matched against the

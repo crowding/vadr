@@ -4,7 +4,7 @@
 function evaluates all expressions with respect to all arguments
 given, then returns the data frame}
 \usage{
-  mutator(..., _envir = parent.frame())
+  mutator(...)
 }
 \arguments{
   \item{...}{A list of expressions to evaluate

@@ -14,5 +14,5 @@ ammoc <- function (...) {
   list(...)[[1]]
 }
 
-##' @export
+##' @export "%'%"
 `%'%` <- ammoc

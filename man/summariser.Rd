@@ -3,7 +3,7 @@
 \alias{summarizer}
 \title{Create a function of several arguments returning a data frame.}
 \usage{
-  summariser(..., .envir = parent.frame())
+  summariser(...)
 }
 \arguments{
   \item{...}{A list of expressions to evaluate

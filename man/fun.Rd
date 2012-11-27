@@ -3,7 +3,7 @@
 \title{A very compact way to define a function. Generally, you can write
 \code{fun(x+y)} where you would have written \code{function(x,y) x+y}.}
 \usage{
-  fun(..., .all.names = FALSE, .envir = parent.frame())
+  fun(...)
 }
 \arguments{
   \item{.all.names}{Defaults to \code{FALSE}, in which case
