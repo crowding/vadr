@@ -152,7 +152,7 @@ test_that("template interpolation in first argument", {
     )
 })
 
-0 && {test_that("expand_macro expands all visible macros (by one step)", {
+test_that("expand_macro expands all visible macros (by one step)", {
   local({
     addmacro <- macro(function(x, y) template(.(x) + .(y)))
     doublemacro <- macro(function(x, y) template(.(x) * addmacro(.(y), .(y))))
@@ -160,7 +160,9 @@ test_that("template interpolation in first argument", {
     expect_equal(expand_macros(quote(addmacro(a, b))), quote(a+b))
     expect_equal(expand_macros(addmacro(a, b*y)), quote(a+b*y))
     expect_equal(expand_macros(doublemacro(a, b)), quote(a, addmacro(b, b)))
-    #this means we need to be tricky with quoting.env
+    #this means we need to be tricky with quoting.env, or use
+    #something else entirely, or make it so that quoting.env does
+    #substitution from the top down...
     expect_equal(expand_macros(addmacro(a, addmacro(b*c))), quote(a+addmacro(b*c)))
   })
-})}
+})
