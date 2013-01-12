@@ -7,7 +7,7 @@
 ##' the inner.
 ##'
 ##' This somewhat esoteric function mostly intended to be used by
-##' \code{\link{expand.macro}}
+##' \code{\link{expand_macro}}
 ##'
 ##' @note This will cause errors when the expression has missing
 ##' arguments. The expression might be preprocessed (somewhow?) to take missing
@@ -358,44 +358,73 @@ missing.value <- function(n) {
   }
 }
 
-
-
-
-# below is speculative and should probably rather be saved into a branch.
-
-0 && {
 #' Expand any macros in the quoted expression.
 #'
 #' This searches for macro functions referred to in the quoted
 #' expression and substitutes their equivalent expansions.  Not
 #' guaranteed to give exact results.
 #'
-#' @param expr An expression. This is quoted and not evaluated.
-#' @param .envir An environment in which to look for macro functions,
-#' or a named list of macro functions. Defaults to the calling
-#' environment.
+#' @aliases expand_macros_q
+#' @param expr An expression. For \code{expand_macros_q}, this
+#' argument is quoted. For \code{expand_macros}, itis a language object.
+#' @param macros a named list of macros. By default searches for all macros.
 #' @return The expansion of the given expression.
 #' @author Peter Meilstrup
 #'
 #' This is intended for interactive/debugging use; in general, its
 #' results are not correct. For example, expressions appearing inside
 #' of \code{link{quote}()} will get expanded anyway.
-expand_macros_q <- function(expr, .envir=parent.frame()) {
-  eval(substitute(expand_macros_q(expr, .envir)))
-  "not written"
+#' @export
+expand_macros <- function(expr,
+                          macros=NULL,
+                          where=parent.frame(), recursive=FALSE) {
+  if (is.null(macros)) {
+    macros <- find_macros(all.names(expr), where)
+  }
+  present_macros <- macros[names(macros) %in% all.names(expr)]
+  #recast macros to return quoted results instead of eval'ing them
+  redone_macros <- lapply(present_macros, function(m) {
+    inner <- attr(m, "orig")
+    function(...) {
+      quoted.args <- eval(substitute(alist(...)))
+      do.call("inner", quoted.args, quote=TRUE)
+    }
+  })
+  envir <- as.environment(redone_macros)
+  parent.env(envir) <- quoting.env(all.names(expr))
+  expanded <- eval(expr, envir)
+  if (recursive && any(names(macros) %in% all.names(expr))) {
+    expanded <- expand_macros(expanded, macros, where, recursive)
+  }
+  expanded
 }
 
-#' Given a quoted expression and a list of macro functions, perform
-#' one level of macro expansion.
+#' @export
+expand_macros_q <- function(expr,
+                            macros=find_macros(all.names(expr), where),
+                            where=parent.frame(), recursive=FALSE) {
+  expr <- substitute(expr)
+  expand_macros(expr, macros, where, recursive)
+}
+
+#' Attempts to find all macros on the search path.
 #'
-#' @param expr A language object.
-#' @param macros A named list of macro functions. These are expected
-#' to have an "orig" attribute (as functions built using \link{macro}
-#' do.)
-#' @return The expression with macros expanded.
+#' @title List all macros.
+#' @return a list of macro functions, the list having names according
+#' to the names they are bound to. If given, this overrides both
+#' include.enclos and include.search.
+#'
 #' @author Peter Meilstrup
-expand_macros <- function(expr, macros) {
-  "not written"
-}
-
+#' @export
+#' @param what a list of names to try. If not specified, searches all
+#' attached namespaces.
+#' @param where A frame to search.
+find_macros <- function(what, where=parent.frame()) {
+  if (is.null(what)) {
+    what <- apropos(".*", where=FALSE, mode="function")
+  }
+  functions <- lapply(what, getFunction, where=where, mustFind=FALSE)
+  #search for every function with class "macro"
+  is.macro <- vapply(functions, function(x) "macro" %in% class(x), FALSE)
+  structure(functions[is.macro], names=what[is.macro])
 }
