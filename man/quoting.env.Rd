@@ -27,7 +27,7 @@ back.}
 }
 \details{
   This somewhat esoteric function mostly intended to be
-  used by \code{\link{expand.macro}}
+  used by \code{\link{expand_macro}}
 }
 \note{
   This will cause errors when the expression has missing
