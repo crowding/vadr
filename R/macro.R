@@ -186,23 +186,45 @@ make_unique_names <- function(new, context, sep=".") {
 #' @author Peter Meilstrup
 #' @seealso template
 #' @export
+macro <- function(fn, cache=TRUE, verbose=FALSE) {
+  #Cache all expansions of the macro by pointer-equality on the
+  #unevaluated args.
+  if(cache) {
+    expansionCache <- new.env(hash=TRUE, parent=emptyenv())
 
-macro <- function(fn, cache=TRUE) {
-  #here, we want a caching mechanism?
-  #
+    #the cache is pointer-based and becomes meaningless on
+    #serialization, so we really want to make it not serialize.
+    #But how?
+  }
+
   f <- function (...) {
     fr <- parent.frame()
     args <- eval(substitute(alist(...)))
-    args <- lapply(args, enquote)
-    result <- do.call(fn, args)
+
+    if (cache) {
+      digest <- expression_pointers(...)
+
+      key <- paste(names(digest), collapse=".")
+      if(verbose) message(key)
+      if (exists(key, envir=expansionCache)) {
+        if(verbose) message("cache hit!")
+        result <- expansionCache[[key]]
+      } else {
+        message("cache miss!")
+        result <- do.call(fn, args, quote=TRUE)
+        expansionCache[[key]] <- result
+      }
+    } else {
+      result <- do.call(fn, args, quote=TRUE)
+    }
     eval(result, fr)
   }
-# set the source to look reasonable?
-#  attr(f, "srcref") <-
-#    paste("macro(", paste(attr(fn, "srcref") %||% deparse(fn), collapse="\n"), ")")
 
   class(f) <- c("macro", class(f))
   attr(f, "orig") <- fn
+  # set the source to look reasonable?
+  #  attr(f, "srcref") <-
+  #    paste("macro(", paste(attr(fn, "srcref") %||% deparse(fn), collapse="\n"), ")")
   f
 }
 
@@ -216,9 +238,11 @@ macro <- function(fn, cache=TRUE) {
 #' interpolated into the argument list in which they occur. Names
 #' wrapped in `.()` will be substituted and coerced to name.
 #'
-#' The contents of a name matching `.(  )` will be parsed and
+#' The contents of a name matching `.( )` will be parsed and
+#' substituted. The expression should evaluate to a character or name.
 #'
-#' This can used recursively to build interesting code transformations.
+#' There may be calls to template() within each expanded .() section
+#' and they should work as promised.
 #'
 #' @param expr A language object.
 #' @param .envir An environment to evaluate the backquoted expressions in.
