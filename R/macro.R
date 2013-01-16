@@ -180,16 +180,14 @@ make_unique_names <- function(new, context, sep=".") {
 #' writing these as functors, or using formula objects or
 #' \code{\link[plyr]{.}()} to capture environments explicitly.
 #'
-#'
 #' @author Peter Meilstrup
 #' @seealso template
 #' @export
 macro <- function(fn, cache=TRUE, verbose=FALSE) {
-  #Cache all expansions of the macro by pointer-equality on the
-  #unevaluated args.
   if(cache) {
+    #Cache all expansions of the macro by pointer-equality on the
+    #unevaluated args.
     expansionCache <- new.env(hash=TRUE, parent=emptyenv())
-
     #the cache is pointer-based and becomes meaningless on
     #serialization, so we really want to make it not serialize.
     #But how?
@@ -211,8 +209,8 @@ macro <- function(fn, cache=TRUE, verbose=FALSE) {
         if(verbose) message("cache miss!")
         #hold on to the expression objects to keep them from getting stale
         #I probably want weak references though.
-        result <- c(list(do.call(fn, args, quote=TRUE), digest))
-        expansionCache[[key]] <- result
+        result <- do.call(fn, args, quote=TRUE)
+        expansionCache[[key]] <- list(result, digest)
       }
     } else {
       result <- do.call(fn, args, quote=TRUE)
