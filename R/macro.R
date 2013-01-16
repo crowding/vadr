@@ -180,8 +180,6 @@ make_unique_names <- function(new, context, sep=".") {
 #' writing these as functors, or using formula objects or
 #' \code{\link[plyr]{.}()} to capture environments explicitly.
 #'
-#' As a future enhancement, we will cache the values of macro
-#' substitutions.
 #'
 #' @author Peter Meilstrup
 #' @seealso template
@@ -202,16 +200,18 @@ macro <- function(fn, cache=TRUE, verbose=FALSE) {
     args <- eval(substitute(alist(...)))
 
     if (cache) {
-      digest <- expression_pointers(...)
-
+      digest <- expressions_and_pointers(...)
       key <- paste(names(digest), collapse=".")
+      #key <- digest(args)
       if(verbose) message(key)
       if (exists(key, envir=expansionCache)) {
         if(verbose) message("cache hit!")
-        result <- expansionCache[[key]]
+        result <- expansionCache[[key]][[1]]
       } else {
-        message("cache miss!")
-        result <- do.call(fn, args, quote=TRUE)
+        if(verbose) message("cache miss!")
+        #hold on to the expression objects to keep them from getting stale
+        #I probably want weak references though.
+        result <- c(list(do.call(fn, args, quote=TRUE), digest))
         expansionCache[[key]] <- result
       }
     } else {
@@ -232,17 +232,14 @@ macro <- function(fn, cache=TRUE, verbose=FALSE) {
 #'
 #' This is an extended version of the \code{\link{backquote}}
 #' utility.  'template' quotes its first argument, then scans for
-#' terms erapped in \code{.()}, \code{...()}, or names that match
+#' terms wrapped in \code{.()}, \code{...()}, or names that match
 #' \code{`.()`} The wrapped expressions or names are evaluated in the
 #' given environment.  Expressions wrapped in \code{...()} will be
 #' interpolated into the argument list in which they occur. Names
 #' wrapped in `.()` will be substituted and coerced to name.
 #'
-#' The contents of a name matching `.( )` will be parsed and
-#' substituted. The expression should evaluate to a character or name.
-#'
-#' There may be calls to template() within each expanded .() section
-#' and they should work as promised.
+#' Invocations of template() can be nested within the \code{.()}'s
+#' section and they should work as promised.
 #'
 #' @param expr A language object.
 #' @param .envir An environment to evaluate the backquoted expressions in.

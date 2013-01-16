@@ -5,5 +5,5 @@
 #' @return A vector of integers containing pointer values, one per argument.
 #' @author Peter Meilstrup
 #' @useDynLib ptools
-expression_pointers <- function(...) .Call("expression_pointers", get("..."))
-
+expressions_and_pointers <- function(...) if (!missing(...))
+  .Call("expressions_and_pointers", get("...")) else list("NULL"=NULL)

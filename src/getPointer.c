@@ -5,10 +5,10 @@ int dots_length(SEXP dots);
 const char* sexp_type_to_string(SEXPTYPE type);
 
 /*
- * Create extract pointers or literals corresponding to every element of a
- * dots-list.
+ * Extract every unevaluated element or literal of a
+ * dots-list. In the names, give their pointers.
  */
-SEXP expression_digest(SEXP dots) {
+SEXP expressions_and_pointers(SEXP dots) {
   SEXP result, pointers, s;
   int i, length;
 
@@ -25,29 +25,37 @@ SEXP expression_digest(SEXP dots) {
         /* if we have a promise, drill down. */
         item=PRCODE(item);
         break;
+
       case CHARSXP:
         /* interned string, represent its pointer */
         SET_VECTOR_ELT(result, i, item);
         sprintf(buf, "c%p", CHAR(item)); break;
         SET_STRING_ELT(pointers, i, mkChar(buf));
+
       case REALSXP:
       case INTSXP:
       case STRSXP:
-        /* we have a code literal? represent it canonically */
+        /* we have a code literal? represent it canonically, 
+           and don't hold a ref to a simple number. */
+        SET_VECTOR_ELT(result, i, R_NilValue);
         if (LENGTH(item) != 1) {
-          error("literal %s with length %d?",
+          error("unexpected literal %s with non-unitary length %d",
                 sexp_type_to_string(TYPEOF(item)), LENGTH(item));
         }
-        SET_VECTOR_ELT(result, i, item);
         switch(TYPEOF(item)) {
         case REALSXP: sprintf(buf, "r%la", REAL(item)[0]); break;
         case INTSXP: sprintf(buf, "i%x", INTEGER(item)[0]); break;
-        case STRSXP: sprintf(buf, "%s", CHAR(STRING_ELT(item,0))); break;
+        case STRSXP: 
+          /* on the other hand, do hold a ref to interned string literals. */
+          sprintf(buf, "s%p", CHAR(STRING_ELT(item,0))); 
+          SET_VECTOR_ELT(result, i, STRING_ELT(item,0));
+          break;
         default: error("this should never happen");
         }
         SET_STRING_ELT(pointers, i, mkChar(buf));
         done = 1;
         break;
+
       case SYMSXP:
       case LANGSXP:
       case EXPRSXP:
@@ -55,7 +63,7 @@ SEXP expression_digest(SEXP dots) {
       case NILSXP:
         /* We have an expression-ish, represent its pointer. */
         SET_VECTOR_ELT(result, i, item);
-        sprintf(buf, "%p", item);
+        sprintf(buf, "e%p", item);
         SET_STRING_ELT(pointers, i, mkChar(buf));
         done=1;
         break;
@@ -63,9 +71,9 @@ SEXP expression_digest(SEXP dots) {
         error("Unexpected type %s", sexp_type_to_string(TYPEOF(item)));
       }
     }
-    //set the name as a string
   }
 
+  /* set the name as a string */
   setAttrib(result, R_NamesSymbol, pointers);
   UNPROTECT(2);
 
@@ -78,16 +86,7 @@ int dots_length(SEXP dots) {
   if (TYPEOF(dots) != DOTSXP) {
     error("Expected a dots object");
   }
-
-  for (s = dots, length = 0; s != R_NilValue; s = CDR(s), length++) {
-    switch(TYPEOF(CAR(s))) {
-
-    }
-    if (TYPEOF(CAR(s)) != PROMSXP) {
-      error("Expected PROMSXP (%d) at position %d, got type %s",
-            PROMSXP, length, sexp_type_to_string(TYPEOF(CAR(s))));
-    }
-  }
+  for (s = dots, length = 0; s != R_NilValue; s = CDR(s)) length++;
   return length;
 }
 
