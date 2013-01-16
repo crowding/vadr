@@ -10,15 +10,15 @@ const char* sexp_type_to_string(SEXPTYPE type);
  */
 SEXP expression_digest(SEXP dots) {
   SEXP result, pointers, s;
-  int i, length;
+  int i;
 
-  length = dots_length(dots);
-  PROTECT(result = allocVector(VECSXP, length));
-  PROTECT(pointers = allocVector(STRSXP, length));
+  const int length = dots_length(dots);
+  const int buflength = 30 * dotslength;
+  char buf[MAX(length * 30, 2<<16)]; /*  */
+  char *bufptr = buf;
   for (s = dots, i = 0; i < length; s = CDR(s), i++) {
     int done=0;
     SEXP item=CAR(s);
-    char buf[99];
     while(!done) {
       switch (TYPEOF(item)) {
       case PROMSXP:
@@ -27,9 +27,8 @@ SEXP expression_digest(SEXP dots) {
         break;
       case CHARSXP:
         /* interned string, represent its pointer */
-        SET_VECTOR_ELT(result, i, item);
-        sprintf(buf, "c%p", CHAR(item)); break;
-        SET_STRING_ELT(pointers, i, mkChar(buf));
+        bufptr += snprintf(bufptr, buf + sizeof(buf) - bufptr,
+                           "c%p.", CHAR(item)); break;
       case REALSXP:
       case INTSXP:
       case STRSXP:
@@ -38,14 +37,15 @@ SEXP expression_digest(SEXP dots) {
           error("literal %s with length %d?",
                 sexp_type_to_string(TYPEOF(item)), LENGTH(item));
         }
-        SET_VECTOR_ELT(result, i, item);
         switch(TYPEOF(item)) {
-        case REALSXP: sprintf(buf, "r%la", REAL(item)[0]); break;
-        case INTSXP: sprintf(buf, "i%x", INTEGER(item)[0]); break;
-        case STRSXP: sprintf(buf, "%s", CHAR(STRING_ELT(item,0))); break;
+        case REALSXP: bufptr += snprintf(bufptr, buf + sizeof(buf) - bufptr,
+                                         "r%la.", REAL(item)[0]); break;
+        case INTSXP: bufptr += snprintf(bufptr, buf + sizeof(buf) - bufptr,
+                                        "i%x.", INTEGER(item)[0]); break;
+        case STRSXP: bufptr += snprintf(bufptr, buf + sizeof(buf) - bufptr,
+                                        "%s.", CHAR(STRING_ELT(item,0))); break;
         default: error("this should never happen");
         }
-        SET_STRING_ELT(pointers, i, mkChar(buf));
         done = 1;
         break;
       case SYMSXP:
@@ -54,20 +54,23 @@ SEXP expression_digest(SEXP dots) {
       case BCODESXP:
       case NILSXP:
         /* We have an expression-ish, represent its pointer. */
-        SET_VECTOR_ELT(result, i, item);
-        sprintf(buf, "%p", item);
-        SET_STRING_ELT(pointers, i, mkChar(buf));
+        bufptr += snprintf(bufptr, buf + sizeof(buf) - bufptr,
+                           "e%p.", item);
         done=1;
         break;
       default:
         error("Unexpected type %s", sexp_type_to_string(TYPEOF(item)));
       }
     }
+
+    if (bufptr >= buf + sizeof(buf)) {
+      error("too many arguments to macro");
+    }
     //set the name as a string
   }
-
-  setAttrib(result, R_NamesSymbol, pointers);
-  UNPROTECT(2);
+  PROTECT(result = allocVector(STRSXP, 1));
+  SET_STRING_ELT(result, 0, mkChar(buf));
+  UNPROTECT(1);
 
   return(result);
 }
@@ -80,9 +83,6 @@ int dots_length(SEXP dots) {
   }
 
   for (s = dots, length = 0; s != R_NilValue; s = CDR(s), length++) {
-    switch(TYPEOF(CAR(s))) {
-
-    }
     if (TYPEOF(CAR(s)) != PROMSXP) {
       error("Expected PROMSXP (%d) at position %d, got type %s",
             PROMSXP, length, sexp_type_to_string(TYPEOF(CAR(s))));
