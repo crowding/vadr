@@ -147,17 +147,6 @@ make_unique_names <- function(new, context, sep=".") {
   uniq[(length(context)+1):(length(context)+length(new))]
 }
 
-#' Evaluate the first argument; if null, evaluate and return the
-#' second argument.
-#'
-#' @param a The first argument to evaluate.
-#' @param b The second argument to evaluate. Only evaluated if
-#' \code{a} is null.
-#' @return the value of \code{a} if not null, else \code{b}
-#' @author Peter Meilstrup
-#' @export
-`%||%` <- function(a, b) if(is.null(a)) b else a
-
 #' Turn an expression-substituting function into a
 #' nonstandard-evaluating function.
 #'

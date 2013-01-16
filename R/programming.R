@@ -1,5 +1,16 @@
 ###Useful R functions for programming, (encouraging terseness.) "Ptools"
 
+#' Evaluate the first argument; if null, evaluate and return the
+#' second argument.
+#'
+#' @param a The first argument to evaluate.
+#' @param b The second argument to evaluate. Only evaluated if A evaluates to NULL.
+#' @name grapes_or_or_grapes
+#' @return the value of \code{a} if not null, else \code{b}
+#' @author Peter Meilstrup
+#' @export "%||%"
+`%||%` <- function(a, b) if(is.null(a)) b else a
+
 pad.missing.cells <- function(data, factors) {
   ##add a row containing NA for each combination of factors that is not represented.
   ##This is a workaround for a bug in current reshape / ggplot.
@@ -79,14 +90,6 @@ cluster.to.unique <- function(values, thresh=0.0001) {
        .[inverse.permutation(ord)])
 }
 
-ammoc <- function(...) {
-  ##evaluate all arguments in order, then return the first argument.
-  ##Named because it is the left-to-right inverse of C's comma operator.
-  ## the main use case for this is to remove a temp variable while keeping its value
-  ## i.e. ammoc(.tmp, rm(.tmp))
-  list(...)[[1]]
-}
-
 inverse.permutation <- function(perm) {
   ##if X is a vector expressing a permutation, for example the output
   ##of ORDER(), returns the inverse of that permutation.
@@ -150,38 +153,7 @@ load.as.list <- function(...) {
 }
 
 
-## "fn" is a slight shorthand for defining functions of one argument,
-## useful in the arguments to higher-order functions.  Rather than
-## function(.) .+1 we have fn(.+1) and otherwise the same.
-fn <- function(expr) {
-  ff <- eval.parent(substitute(function(.) e, list(e = substitute(expr))))
-  attr(ff, "source") <- NULL
-  ff
-  ##need to do something with printing and use.source?
-  ##mm <- match.call()
-  ##mm$expr <- NULL
-  ##mm[[1]] <- as.name("fn")
-  ##attr(ff, "source") <- deparse(mm)
-}
-
 ###below this fold, things get unreasonable.
-
-## ##assign. overloading dot may produce some confusion with the plyr package.
-## ##For example, 
-## `.<-` <- function(x, expr) {
-  
-## }
-
-## `.macro<-` <- function(x, expr) {
-  
-## }
-
-
-
-
-             
-## how to cache the results of macro substitution?
-## modify the enclosing function in place?
 
 ## this comes from Gary Sabot and Thomas Lumley. via this post to s-news:
 ## http://www.biostat.wustl.edu/archives/html/s-news/2002-10/msg00064.html
@@ -238,32 +210,3 @@ defmacro <-function(...,expr,local=NULL){
   attr(ff,"source")<-c(deparse(mm),deparse(expr))
   ff
 }
-
-## things this package ought to contain:
-
-## a version of "substitute" that quotes all its arguments (thus is
-## only a lexical transform, which can be replaced), and erases itself
-## out of functions for speed. It might be used like this
-##
-## .(. = somefunction(.), .=complicated[[expr(argument)]])
-##
-## . <- function(...) {
-##   args <- match.call()
-##   eval.parent.rewriting.call(substitute.na(args[[2]], as.list(args[seq(3, length(args),1])))
-## }
-
-## the function that ties all my other functions' self erasure together.... will be a trick
-## eval.parent.rewriting.call <- function(expr) {
-##   eval.parent(expr)
-## }
-
-## an extended version of "gensym" that inspects the definitions of
-## calling functions, and functions defining enclosing frames, for a
-## list of all applicable symbols.
-## gensym.lexical <- function(base=".v.",
-
-
-
-
-## question: if you use eval.parent() to eval something in the parent,
-## what do parent frames look like?
