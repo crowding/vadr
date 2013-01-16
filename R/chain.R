@@ -78,7 +78,7 @@ mkchain <- function(..., .dwim=TRUE, .envir=parent.frame()) {
   arg.list <- eval(substitute(alist(...)))
   if(.dwim) arg.list <- chain.dwim(arg.list)
   arg.list <- lapply(arg.list, substitute.nq, list(.=quote(`_data`)))
-  arg.list <- lapply(arg.list, fn(substitute(a<-b, list(a=quote(`_data`),b=.))))
+  arg.list <- lapply(arg.list, function(x) substitute(a<-b, list(a=quote(`_data`),b=x)))
   pipe.call <- do.call(call, c(list("{"), lapply(arg.list, enquote), quote(quote(`_data`))))
   pipe.fn <- substitute(function(`_data`) ., list(.=pipe.call))
   out <- eval(pipe.fn, .envir)

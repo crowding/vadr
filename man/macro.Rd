@@ -3,11 +3,19 @@
 \title{Turn an expression-substituting function into a
 nonstandard-evaluating function.}
 \usage{
-  macro(fn, cache = TRUE, verbose = FALSE)
+  macro(fn, cache = TRUE, JIT = TRUE)
 }
 \arguments{
   \item{fn}{A function which takes some arguments and
   returns a trane}
+
+  \item{cache}{Whether to store already-compiled macros for
+  faster evaluation. Defaults to TRUE. This requires that
+  the macro function be a pure function not referring to
+  any outside state.}
+
+  \item{JIT}{Whether to compile expressions (using the
+  "compiler" package) before executing. Defaults to TRUE.}
 }
 \value{
   the wrapper function. It will have an identical argument

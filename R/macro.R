@@ -155,6 +155,11 @@ make_unique_names <- function(new, context, sep=".") {
 #' mix nonstandard with standard evaluation(*).
 #'
 #' @param fn A function which takes some arguments and returns a trane
+#' @param cache Whether to store already-compiled macros for faster
+#' evaluation. Defaults to TRUE. This requires that the macro function
+#' be a pure function not referring to any outside state.
+#' @param JIT Whether to compile expressions (using the "compiler"
+#' package) before executing. Defaults to TRUE.
 #' @return the wrapper function. It will have an identical argument
 #' list to the wrapped function. It will transform all arguments into
 #' expressions, pass the expressions to the wrapped function, then
@@ -172,7 +177,7 @@ make_unique_names <- function(new, context, sep=".") {
 #' @author Peter Meilstrup
 #' @seealso template
 #' @export
-macro <- function(fn, cache=TRUE, verbose=FALSE) {
+macro <- function(fn, cache=TRUE, JIT=TRUE) {
   if(cache) {
     #Cache all expansions of the macro by pointer-equality on the
     #unevaluated args.
@@ -189,20 +194,19 @@ macro <- function(fn, cache=TRUE, verbose=FALSE) {
     if (cache) {
       digest <- expressions_and_pointers(...)
       key <- paste(names(digest), collapse=".")
-      #key <- digest(args)
-      if(verbose) message(key)
       if (exists(key, envir=expansionCache)) {
-        if(verbose) message("cache hit!")
         result <- expansionCache[[key]][[1]]
       } else {
-        if(verbose) message("cache miss!")
-        #hold on to the expression objects to keep them from getting stale
-        #I probably want weak references though.
         result <- do.call(fn, args, quote=TRUE)
+        if (JIT) result <- compile(result, fr)
+        #Hold on to the list of expression objects to keep them from
+        #getting stale; I probably want weak references though.
         expansionCache[[key]] <- list(result, digest)
       }
     } else {
       result <- do.call(fn, args, quote=TRUE)
+      #jitting is no help if you're not caching
+      #if (JIT) result <- compile(result, fr)
     }
     eval(result, fr)
   }
@@ -277,6 +281,7 @@ macro <- function(fn, cache=TRUE, verbose=FALSE) {
 #' dfname <- "baseball"
 #' template(ddply(.(as.name(dfname)), .(quote(.(id, team))), identity))
 #' #ddply(baseball, .(id.team), identity)
+#' @export
 template <- function(expr, .envir=parent.frame()) {
   require(stringr)
 

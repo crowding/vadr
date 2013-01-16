@@ -1,4 +1,4 @@
-###Useful R functions for programming, (encouraging terseness.) "Ptools"
+#mostly an un-exported collection of juink in here.
 
 #' Evaluate the first argument; if null, evaluate and return the
 #' second argument.
@@ -77,12 +77,12 @@ prefixing.assign <- function(prefix='', l=list(), env=parent.frame()) {
 
 almost.unique <- function(values, thresh = 0.0001) {
   values <- sort(values, na.last=TRUE)
-  index <- pipe(values, diff, . > thresh, cumsum, c(0,.))
+  index <- chain(values, diff, . > thresh, cumsum, c(0,.))
   tapply(values, index, mean)
 }
 
 cluster.to.unique <- function(values, thresh=0.0001) {
-  pipe(values,
+  chain(values,
        .[ord <- order(.)],
        diff, .>thresh, cumsum, c(0,.),
        tapply(values[ord], ., function(x) {x[] <- mean(x); x}),
@@ -153,8 +153,6 @@ load.as.list <- function(...) {
 }
 
 
-###below this fold, things get unreasonable.
-
 ## this comes from Gary Sabot and Thomas Lumley. via this post to s-news:
 ## http://www.biostat.wustl.edu/archives/html/s-news/2002-10/msg00064.html
 gensym <- function(base=".v.",envir=parent.frame()){
@@ -167,10 +165,6 @@ gensym <- function(base=".v.",envir=parent.frame()){
   as.name(nm)
 }
 
-##future improvement: make gensym also scan all functions in the
-##lexical environment, in preparation for a self-rewriting "pipe"
-
-## here's a "defmacro" with locals
 defmacro <-function(...,expr,local=NULL){
   expr<-substitute(expr)
   a<-substitute(list(...))[-1]

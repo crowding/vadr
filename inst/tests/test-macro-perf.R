@@ -12,6 +12,8 @@ test_that("caching makes macros faster", {
   #you would never expect unrolling a loop to make things faster in R
   #but it's an example of a macro. (more importantly, I think unrolling
   #an expression might be a better microbenchmark than microbenchmark...)
+  #(actually, with JIT enabled, the unrolled loop does become slightly
+  #faster than the straight loop.)
   .unrolled_loop_body <- function(index_var, repetitions, body) template({
     ...( lapply(seq_len(as.numeric(repetitions)),
                 function(x)
