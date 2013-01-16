@@ -2,11 +2,16 @@
 \name{ptools}
 \alias{ptools}
 \alias{ptools-package}
-\title{Tools for compact programming.}
+\title{Make R the language you wish R was like.}
 \description{
-  This package collects a few otherwise unrelated tools
-  around the theme of compact coding -- things that save
-  you keystrokes.
+  This package implements workalikes for the author's (and
+  perhaps your) favorite features from other languages,
+  making R programs shorter and more expressive. The
+  centerpiece is an efficient facility for macro-like
+  functions. Built on that are a nice destructuring-bind
+  for parallel assignment of variables, a pipline macro
+  similar to the "->" macro of Clojure, and other
+  utilities.
 }
 \details{
   Of note are:
@@ -28,9 +33,9 @@
   way to define a throwaway function;}
 
   \item{\code{\link{dm_ply}} which meshes with the
-  \code{\link{plyr}} package to provide intuitive, compact,
-  and fast ways of split-apply-combine operations on data
-  frames.}
+  \code{\link{plyr}} package to provide a faster
+  alternative to ddply that is still intuitive and
+  compact.}
 
   }
 }

@@ -3,7 +3,7 @@
 \title{Turn an expression-substituting function into a
 nonstandard-evaluating function.}
 \usage{
-  macro(fn, cache = TRUE)
+  macro(fn, cache = TRUE, verbose = FALSE)
 }
 \arguments{
   \item{fn}{A function which takes some arguments and
@@ -25,9 +25,6 @@ nonstandard-evaluating function.}
   these as functors, or using formula objects or
   \code{\link[plyr]{.}()} to capture environments
   explicitly.
-
-  As a future enhancement, we will cache the values of
-  macro substitutions.
 }
 \description{
   This just places a wrapper around the function so that

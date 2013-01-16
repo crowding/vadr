@@ -16,7 +16,7 @@
 \description{
   This is an extended version of the
   \code{\link{backquote}} utility.  'template' quotes its
-  first argument, then scans for terms erapped in
+  first argument, then scans for terms wrapped in
   \code{.()}, \code{...()}, or names that match
   \code{`.()`} The wrapped expressions or names are
   evaluated in the given environment.  Expressions wrapped
@@ -25,10 +25,8 @@
   substituted and coerced to name.
 }
 \details{
-  The contents of a name matching `.( )` will be parsed and
-
-  This can used recursively to build interesting code
-  transformations.
+  Invocations of template() can be nested within the
+  \code{.()}'s section and they should work as promised.
 }
 \examples{
 #Basic substitution

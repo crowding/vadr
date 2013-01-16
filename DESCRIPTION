@@ -5,16 +5,22 @@ Version: 0.01
 Date: 2012-09-21
 Author: Peter Meilstrup <peter.meilstrup@gmail.com>
 Maintainer: Peter Meilstrup <peter.meilstrup@gmail.com>
-Description: Functions for expressing ideas while saving
-    keystrokes. There is a function for creating pipelines, a
-    destructuring bind, a function for creating functions, a function
-    for indexing data frames, and (soon) functions for fast
-    split-apply-combine operations on data frames.
+Description: This package implements workalikes for the author's (and
+    perhaps your) favorite features from other languages, making R
+    programs shorter and more expressive. The centerpiece is an
+    efficient facility for macro-like functions. Built on that are a
+    destructuring-bind, a pipline macro similar to the "->" macro of
+    Clojure, and other utilities.
 License: MIT
 Suggests:
-    testthat (>= 0.2)
+    testthat (>= 0.2),
+    microbenchmark (>= 1.1.3),
+    digest (>= 0.5.2),
+    roxygen2 (>= 2.2.2)
+Depends:
+    plyr (>= 1.8.0)
 Imports:
-    plyr (>= 1.7.0)
+    stringr (>= 0.6.1)
 Collate:
     'chain.R'
     'indexing.R'
