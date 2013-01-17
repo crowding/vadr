@@ -100,6 +100,37 @@
   `*temp*`
 }
 
+bindery <- macro(function(...) {
+  eOut <- eval(substitute(alist(...)))
+  eIn <- eOut[[length(eOut)]]
+  eOut[length(eOut)] <- NULL
+  nOut <- if(is.null(names(eOut))) rep("", length(eOut)) else names(eOut)
+  template({
+    `*binding*` <- eIn
+    ...(if ("..." %in% nOut) {
+      if (all(nOut == "")) {
+                            bind_positional_with_dots(eOut, nOut)
+                            } else if (!any(nOut=="")) {
+                            bind_all_named_with_dots(eOut, nOut)
+                            } else {
+                            bind_difficult(eOut, nOut)
+                            }
+    } else {
+      c(list(template(if (length(`*binding*`) != .(length(eOut)))
+                      error("Wrong number of items in bind"))),
+        bind_with_rest(eOut, nOut))
+      if (all(nOut == "")) {
+        bind_all_positional(eOut)
+      } else if (!any(nOut=="")) {
+        bind_all_named(eOut, nOut)
+      } else {
+        bind_mixed_positional(eOut, nOut)
+      }
+      ammoc(eOut, rm("*binding*"))
+    })
+  })
+})
+
 bind_match <- function(nOut, vIn) {
   ##Match according to name, and compute the values to assign to the outputs.
 
