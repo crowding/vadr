@@ -35,7 +35,8 @@ SEXP expressions_and_pointers(SEXP dots) {
       case REALSXP:
       case INTSXP:
       case STRSXP:
-        /* we have a code literal? represent it canonically, 
+      case LGLSXP:
+        /* we have a code literal. represent it canonically, 
            and don't hold a ref to a simple number. */
         SET_VECTOR_ELT(result, i, R_NilValue);
         if (LENGTH(item) != 1) {
@@ -43,8 +44,12 @@ SEXP expressions_and_pointers(SEXP dots) {
                 sexp_type_to_string(TYPEOF(item)), LENGTH(item));
         }
         switch(TYPEOF(item)) {
-        case REALSXP: sprintf(buf, "r%la", REAL(item)[0]); break;
-        case INTSXP: sprintf(buf, "i%x", INTEGER(item)[0]); break;
+        case REALSXP: 
+          sprintf(buf, "r%la", REAL(item)[0]); break;
+        case INTSXP: 
+          sprintf(buf, "i%x", INTEGER(item)[0]); break;
+        case LGLSXP: 
+          sprintf(buf, "l%x", LOGICAL(item)[0]); break;
         case STRSXP: 
           /* on the other hand, do hold a ref to interned string literals. */
           sprintf(buf, "s%p", CHAR(STRING_ELT(item,0))); 
