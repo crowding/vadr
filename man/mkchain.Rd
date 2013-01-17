@@ -3,7 +3,7 @@
 \alias{mkchain}
 \title{Chain the output of one expression into the input of another.}
 \usage{
-  mkchain(..., .dwim = TRUE, .envir = parent.frame())
+  mkchain(...)
 }
 \arguments{
   \item{data}{The data to run through the chain.}
@@ -86,8 +86,8 @@
   with subassignments is desirable.
 }
 \note{
-  \code{chain} is a bit like the arrow monad of Haskell or
-  the \code{->} macro of Clojure.
+  \code{chain} is a bit like the \code{->} macro of
+  Clojure.
 }
 \examples{
 # In help(match_df, package="plyr") there is this example:
@@ -97,7 +97,7 @@ bb_longterm <- match_df(baseball, longterm, on="id")
 bb_longterm[1:5,]
 
 # Rewriting the above using chain:
-chain(df=baseball, count("id"), subset(freq>25), match_df(df, on="id"), head(5))
+chain(baseball, count("id"), subset(freq>25), match_df(baseball, ., on="id"), head(5))
 }
 \author{
   Peter Meilstrup

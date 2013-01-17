@@ -22,13 +22,13 @@ Depends:
 Imports:
     stringr (>= 0.6.1)
 Collate:
-    'chain.R'
+    'macro.R'
     'indexing.R'
     'programming.R'
     'ptools-description.R'
     'fun.R'
     'bind.R'
-    'macro.R'
+    'chain.R'
     'resources.R'
     'run_as_script.R'
     'with_args.R'
