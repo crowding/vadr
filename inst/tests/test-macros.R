@@ -73,6 +73,16 @@ test_that("macro() turns a lexical substitutor function into a macro", {
   expect_equal(attr(double, "orig"), d)
 })
 
+test_that("macro cache pays attention to tags", {
+  divmacro <- macro(function(a,b) template(.(a)/.(b)))
+
+  expect_equal(divmacro(10, 5), 2)
+  expect_equal(divmacro(5, 10), 0.5)
+  expect_equal(divmacro(a=10, b=5), 2)
+  expect_equal(divmacro(b=10, a=5), 0.5)
+  expect_equal(divmacro(b=5, a=10), 2)
+})
+
 test_that("template", {
   #"template" is intended to be a stronger version of backquote.
 
