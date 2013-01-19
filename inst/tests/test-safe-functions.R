@@ -96,3 +96,20 @@ test_that("guessing local variables works on subassignments", {
 
   expect_equal(f2(), list(a=NULL, b=NULL, c=NULL))
 })
+
+test_that("safe function knows about bind[]", {
+  #and via a mechanism that is semi-available to teach it about other
+  #nonstandard-bindings
+  butlast <- fun[x]:{
+    bind[...=rest, last] <- x
+    rest
+  }
+
+  getname <- fun[x]:{
+    bind[name=bind[first=first, last=last], ...=] <- x
+    paste(first, last)
+  }
+
+  butfirst(c(1, 2, 3)) %is% c(1,2)
+  getname(list(first="Harry", middle="S", last="Truman")) %is% "Harry Truman"
+})
