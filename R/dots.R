@@ -159,7 +159,9 @@ dots <- function(...) structure(get("..."), class="...")
 `%()%` <- function(f, arglist) UseMethod("%()%", arglist)
 
 #' @S3method "%()%" ...
-`%()%....` <- function(arglist, f, ...) {
+`%()%....` <- function(f, arglist, ...) {
+  # this method  is surprising and elegant but doesn't work on some
+  # nonstandard-eval functions (alist)
   assign("...", arglist)
   f(...)
 }
@@ -191,19 +193,32 @@ dots <- function(...) structure(get("..."), class="...")
 `%__%` <- function(x, y) UseMethod("%__%", x)
 
 #' @S3method "%>>%" "..."
-`%__%....` <- function(f, x) stop()
+`%__%....` <- function(x, y) UseMethod("cdots....", y)
 
-#' @S3method "%>>%" default
+cdots........ <- function(x, y, ...) {
+  #we can trick R's eval system into concatenating together multiple
+  #dotslists like this. Why? Basically, when the evaluator finds "..."
+  #in a call it knows to start unpacking a DOTSXP (otherwise opaque to
+  #R code) into multiple arguments. But it looks up whatever "..." is
+  #in the frame, so we can intercede with an active binding to swap out
+  #different dotlists.
+  dotslists <- list(x, y)
+  count <- 0
+  rm("...")
+  makeActiveBinding("...", function(x) {
+    count <<- count+1
+    dotslists[[count]]
+  }, environment())
+  dots(..., ...)
+}
+
+cdots.....default <- function(x, y) stop()
+
+#' @S3method "%__%" default
 `%__%.default` <- function(f, x) UseMethod("cdots.default, ...")
 
 #' @S3method cdots.default "..."
 cdots.default.... <- function (f,x) stop()
 
 #' @S3method cdots.default default
-paste.default.default <- c
-
-c.dots <- function(...) {
-  elements <- list(...)
-  count <- 0
-  makeActiveBinding()
-}
+cdots.default.default <- c
