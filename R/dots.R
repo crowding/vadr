@@ -87,3 +87,123 @@ list_missing <- function(...) {
 
 #' @export
 list_quote <- function(...) eval(substitute(alist(...)))
+
+#' Partially apply arguments to a function.
+#'
+#' The arguments given in brackets are saved and a new function is
+#' constructed.
+#'
+#' The difference between
+#' \code{'[.function'} and \code{'[.function'} is that the single
+#' bracket applies arguments to the right, while the double bracket
+#' applies arguments to the left.
+#'
+#' This curry captures the arguments you give as promises; they will
+#' only be evaluated once. if the curried function chooses to do
+#' so. [For another type of curry see addDefaults?]
+
+#' Capture the list of "dot-dot-dot" arguments as an object.
+#'
+#' \code{dots} and methods of class \code{...} provide a more
+#' convenient interface to capturing lists of unevaluated arguments
+#' and applying them to functions.
+#'
+#' @param ... Any number of arguments.
+#' @return A dots object. This is currently just the raw DOTSXP with
+#' the object bit set and the class set to "..." so that method dispatch works.
+#' @author Peter Meilstrup
+#' @seealso "%<<%" "%>>%" "%()%" "[...." "[[....", "names...."
+#' @examples
+#' reverse.list <- function(...) {
+#'  d <- dots(...)
+#'  list %()% rev(d)
+#' }
+#' reverse.list("a", b="bee", c="see")
+#'
+#' named.list <- function(...) {
+#'  d <- dots(...)
+#'  list %()% d[names(d) != ""]
+#'  }
+#' named.list(a=1, b=2*2, stop("this is not evaluated"))
+#' @export
+dots <- function(...) structure(get("..."), class="...")
+
+#' @S3method "print" "..."
+`print....` <- function(x) cat("<...[", length(x), "]>\n")
+
+#' Partially and fully apply arguments to functions.
+#'
+#' These operators help in passing arbitrary lists of arguments to
+#' functions, with a more consistent interface than
+#' \code{\link{do.call}}. The currying operator allows saving some
+#' arguments with a reference to a function so the resulting function
+#' can be passed elsewhere.
+#'
+#' These objects have methods for objects of class \code{...} produced
+#' by \code{\link{dots}}, so that you may apply arguments as yet
+#' unevaluated.
+#' @param x a vector, optionally with names, or an object of class
+#' \code{...} as produced by \code{\link{dots}}.
+#' @param f a function, to be called to to have arguments attached to.
+#' @aliases "%()%" "%<<%" "%>>%" "%__%"
+#' @return \itemize{ \item{For \code{%()%}, the result of calling the
+#' function with the arguments provided.}  \item{For \code{%<<%} and
+#' \code{%>>%}, a new function with the arguments partially
+#' applied. For \code{arglist %>>% f}, the arguments will be placed in
+#' the argument list before any further arguments; for \code{f %<<%
+#' arglist} thje arguments } \item{for \code{%__%}, the two operands
+#' pasted together. The result will be a list, or a \code{dots} object
+#' if any of the operands are \code{dots} objects.
+#' @author Peter Meilstrup
+#' @export
+`%()%` <- function(f, arglist) UseMethod("%()%", arglist)
+
+#' @S3method "%()%" ...
+`%()%....` <- function(arglist, f, ...) {
+  assign("...", arglist)
+  f(...)
+}
+
+#' @S3method "%()%" default
+`%()%.default`  <- function(f, arglist) {
+  eval(as.call(c(quote(f), as.list(arglist))))
+}
+
+#' @export
+`%<<%` <- function(f, x) UseMethod("%<<%", x)
+
+#' @S3method "%<<%" "..."
+`%<<%....` <- function(f, x) stop()
+
+#' @S3method "%<<%" default
+`%<<%.default` <- function(f, x) stop()
+
+#' @export
+`%>>%` <- function(f, x) UseMethod("%>>%", x)
+
+#' @S3method "%>>%" "..."
+`%>>%....` <- function(f, x) stop()
+
+#' @S3method "%>>%" default
+`%>>%.default` <- function(f, x) stop()
+
+#' @export
+`%__%` <- function(x, y) UseMethod("%__%", x)
+
+#' @S3method "%>>%" "..."
+`%__%....` <- function(f, x) stop()
+
+#' @S3method "%>>%" default
+`%__%.default` <- function(f, x) UseMethod("cdots.default, ...")
+
+#' @S3method cdots.default "..."
+cdots.default.... <- function (f,x) stop()
+
+#' @S3method cdots.default default
+paste.default.default <- c
+
+c.dots <- function(...) {
+  elements <- list(...)
+  count <- 0
+  makeActiveBinding()
+}

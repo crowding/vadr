@@ -37,7 +37,7 @@ SEXP dots_info(SEXP dots) {
 
     SET_STRING_ELT(names, i, isNull(TAG(s)) ? mkChar("") : asChar(TAG(s)));
 
-    //wrap, because this porevent print.data.frame from getting unfriendly.
+    //wrap, because this prevent print.data.frame from getting unfriendly :(
     PROTECT(wraplist = allocVector(VECSXP, 1));
     SET_VECTOR_ELT(wraplist, 0, PRENV(item));
     SET_VECTOR_ELT(environments, i, wraplist);
@@ -97,7 +97,7 @@ SEXP dots_info(SEXP dots) {
   setAttrib(dataFrame, R_ClassSymbol, class);
 
   UNPROTECT(9);
-  return(dataFrame);
+  return(dataFrame); 
 }
 
 SEXP dots_names(SEXP dots) {
@@ -114,20 +114,5 @@ SEXP dots_names(SEXP dots) {
   }
   UNPROTECT(1);
   return(names);
-}
-
-int dots_length(SEXP dots) {
-  SEXP s; int length;
-  if (TYPEOF(dots) != DOTSXP) {
-    error("Expected a dots object");
-  }
-
-  for (s = dots, length = 0; s != R_NilValue; s = CDR(s), length++) {
-    if (TYPEOF(CAR(s)) != PROMSXP) {
-      error("Expected PROMSXP (%d) at position %d, got type %d",
-            PROMSXP, length, TYPEOF(CAR(s)));
-    }
-  }
-  return length;
 }
 

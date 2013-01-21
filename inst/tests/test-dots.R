@@ -74,7 +74,7 @@ test_that("x <- dots() captures dots and %()% calls with dots", {
 
 ##Quickie macro to help with setup and teardown.
 ##this is also an example of problematic autoindent in the Emacs mode...
-with_setup() <- macro(function(setup=NULL, ..., teardown=NULL) {
+with_setup <- macro(JIT=FALSE, function(setup=NULL, ..., teardown=NULL) {
   template({
     ...( lapply(list(...), function(x) template({
       .(setup)
