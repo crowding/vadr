@@ -1,56 +1,6 @@
-(context "Dots")
+context("Dots")
 
-test_that("x <- dots() captures dots and %()% calls with dots", {
-  x <- 1;
-  y <- 3;
-
-  f <- `/`
-
-  d <- dots(y=x, 4)
-  expectEqual( f %()% d, 0.5 )
-})
-
-test_that("Curried dots evaluate like promises", {
-  do_tests <- function() {
-    for (t in tests()) {
-      w <- 2
-      x <- 3
-      y <- 4
-      z <- 5
-      d <- dots(w+x, y+z)
-      f <- `*`
-      eval(t)
-    }
-  }
-
-  tests() <-
-    alist(
-      {
-        expect_equal((f %<.% d), 120)
-        expect_equal(f %()% d)
-      }, {
-        
-      }, {
-
-      },
-
-      )
-  do_tests()
-})
-
-test_that("Curry operators concatenate (unevaluated) dots", {
-
-})
-
-test_that("dots [] operator subsets without evaluating []", {
-
-})
-
-test_that("dots [[]] operator goes ahead and evaluates", {
-
-})
-
-test_that("dots names() method extracts tags", {
+test_that("unpack(dots(...)) descends through promise chains if necessary", {
 
 })
 
@@ -73,9 +23,7 @@ test_that("unpack(dots(...)) unpacks a dotslist and exposes promise behavior", {
 
 })
 
-test_that("unpack(dots(...)) descends through promise chains if necessary", {
-  
-})
+## these should also be in reference to dots objects
 
 test_that("dots_missing", {
   expect_equal(c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE),
@@ -89,7 +37,7 @@ test_that("dots_missing", {
                checkMyDots(a, b, c=, 4, d=x+y, ) )
 
   #but it doesn't eval
-  expect_equal(c(FALSE, TRUE, FALSE)
+  expect_equal(c(FALSE, TRUE, FALSE),
                CheckMyDots(stop("no"), c=, stop("no")))
 })
 
@@ -98,6 +46,147 @@ test_that("dots_names", {
                dots_names(a, b, c=, 4, d=x+y, ) )
 
   #and dots_names does not eval dots
-  expect_equal(c("", "a")
+  expect_equal(c("", "a"),
                dots_names(stop("no"), a=stop("no")))
 })
+
+## DOTS OBJECT, CALLING AND CURRYING -------------------------------------
+
+test_that("%()% with sequences behaves reasonably, unlike do.call", {
+  x = 2
+  y = 5
+  list %()% c(x, y) %is% list(2,5)
+  list %()% list(x, y) %is% list(2,5)
+  list %()% alist(x, y) %is% alist(x, y)
+  alist %()% alist(x, y) %is% alist(x, y)
+  alist %()% list(x,y) %is% alist(2, 5)
+})
+
+test_that("x <- dots() captures dots and %()% calls with dots", {
+  x <- 1;
+  y <- 3;
+
+  f <- `/`
+
+  d <- dots(y=x, 4)
+  expectEqual( f %()% d, 0.5 )
+})
+
+##Quickie macro to help with setup and teardown.
+##this is also an example of problematic autoindent in the Emacs mode...
+with_setup() <- macro(function(setup=NULL, ..., teardown=NULL) {
+  template({
+    ...( lapply(list(...), function(x) template({
+      .(setup)
+      .(x)
+      .(teardown)
+    }))
+        )
+  })
+})
+
+test_that("Curried dots evaluate like promises", {
+  with_setup(
+    setup={ bind[w, x, y, z] <- c(2, 3, 4, 5)
+            d <- dots(w+x, y+z)
+            f <- `*` },
+    { f2 <- f %<<% d
+      f2() %is% 45
+      x <- 4
+      f2() %is% 45
+      (f %()% d) %is% 54 },
+    { f <- f %<<% d
+      x <- 4
+      f2() %is% 54
+      x <- 3
+      (f %()% d) %is% 54 },
+    { #left-curry applies to the left of the arglist
+      f2 <- dots(w+x) %.>% `/`
+      x <- 2
+      f2(2) %is% 2
+      x <- 3
+      f2(2) %is% 2 }
+    )
+})
+
+test_that(paste("Curry operators concatenate dots, dots stay attached to envs"), {
+  with_setup(
+    setup={ envl <- list2env(structure(as.list(letters), names=letters))
+            envu <- list2env(structure(as.list(letters), names=LETTERS))
+            envn <- list2env(structure(as.list(1:10)), names=letters[1:10])
+            l <- evalq(dots(a, b, c), envl)
+            u <- evalq(dots(a, b, c), envu)
+            n <- evalq(dots(a, b, c), envn)
+            P <- paste %<<% list(sep="") },
+    P  %()%  l  %is%  "abcdef",
+    P  %()%  u  %is%  "ABCDEF",
+    #these two cases are bothersome.
+    P  %.<%  l  %.<%  u  %()%  n  %is%  "123ABCabc", #this is not intuitive
+    l  %>>% (u  %>>%  P) %()%  n  %is%  "ABCabc123", #this also counterintuitive...
+    u  %++%  l  %>>%  P  %()%  n  %is%  "ABCabc123",
+    l  %>>%  P  %.<%  u  %()%  n  %is%  "abc123ABC",
+    u  %++%  l  %>>%  P  %()%  n  %is%  "ABCabc123"
+    )
+})
+
+
+test_that("dots [] operator subsets without evaluating []", {
+  with_setup(
+    setup= {
+      a <- dots(x, r=y, x+y)
+      x <- 3
+      y <- 4},
+    { c %()% a[1:2] %is% c(3,r=4)
+      x <- 8
+      c %()% a[3] %is% 8
+      y <- 2
+      c %()% a %is% c(3,r=4,8)},
+    { c %()% a[2:3] %is% c(4, 7)
+      x <- 2
+      c %()% a %is% c(2,r=4,7) },
+    { c %()% a["r"] %is% c(r=4)
+      x <- 4
+      c %()% "r" %is% c(r=4)
+    }
+    )
+})
+
+test_that("[<-.... replacement operator, even", {
+  #should be able to replace items of a dotslist with items from
+  #another dotslist (or ordinary sequence.)
+  with_setup(
+    setup={
+      x <- 2; y<-3;
+      d <- dots(a=x, b=y, c=x+y) },
+    {
+      d[2] <- 10
+      y <- 4
+      c %()% d %is% c(a=2, b=10, c=7) },
+    {
+      d["a"] <- dots(x*y)
+      x <- 5
+      c %()% d %is% c(a=15, b=3, c=8)
+    })
+})
+
+test_that("dots [[]] and $ operators go ahead and evaluate. (?)", {
+  stop("test not written")
+})
+
+test_that("dots names method extracts tags", {
+  names(dots(a, b, c=, 4, d=x+y, )) %is% c("", "", "c", "", "d", "")
+  names(dots(stop("no"), a=stop("no"))) %is%  c("", "a")
+})
+
+test_that("dots names<- method can set tags w/o disturbing promise eval", {
+  with_setup(
+    setup={
+      x <- 2; y<-3;
+      d <- dots(a=x, b=y, c=x+y) },
+    {
+      names(d) <- c("foo", "bar", "baz")
+      y <- 4
+      c %()% d %is% c(foo=2, bar=10, baz=7) }
+    )
+})
+
