@@ -23,10 +23,10 @@ SEXP expressions_and_pointers(SEXP dots) {
     if (TAG(s) != R_NilValue) {
       if (TYPEOF(TAG(s)) != SYMSXP)
         error("expected SYMSXP in tag, found %s",
-              sexp_type_to_string(TYPEOF(TAG(s))));
+              type2char(TYPEOF(TAG(s))));
       if (TYPEOF(PRINTNAME(TAG(s))) != CHARSXP)
         error("expected CHARSXP in symbol name, found %s",
-              sexp_type_to_string(TYPEOF(PRINTNAME(TAG(s)))));
+              type2char(TYPEOF(PRINTNAME(TAG(s)))));
       bufptr += sprintf(bufptr, "c%p=", CHAR(PRINTNAME(TAG(s))));
     }
     while(!done) {
@@ -51,7 +51,7 @@ SEXP expressions_and_pointers(SEXP dots) {
         SET_VECTOR_ELT(result, i, R_NilValue);
         if (LENGTH(item) != 1) {
           error("unexpected literal %s with non-unitary length %d",
-                sexp_type_to_string(TYPEOF(item)), LENGTH(item));
+                type2char(TYPEOF(item)), LENGTH(item));
         }
         switch(TYPEOF(item)) {
         case REALSXP:
@@ -83,7 +83,7 @@ SEXP expressions_and_pointers(SEXP dots) {
         done=1;
         break;
       default:
-        error("Unexpected type %s", sexp_type_to_string(TYPEOF(item)));
+        error("Unexpected type %s", type2char(TYPEOF(item)));
       }
     }
   }
@@ -103,37 +103,4 @@ int dots_length(SEXP dots) {
   }
   for (s = dots, length = 0; s != R_NilValue; s = CDR(s)) length++;
   return length;
-}
-
-const char* sexp_type_to_string(SEXPTYPE type) {
-  switch (type) {
-  case NILSXP: return "NILSXP";
-  case SYMSXP: return "SYMSXP";
-  case LISTSXP: return "LISTSXP";
-  case CLOSXP: return "CLOSXP";
-  case ENVSXP: return "ENVSXP";
-  case PROMSXP: return "PROMSXP";
-  case LANGSXP: return "LANGSXP";
-  case SPECIALSXP: return "SPECIALSXP";
-  case BUILTINSXP: return "BUILTINSXP";
-  case CHARSXP: return "CHARSXP";
-  case LGLSXP: return "LGLSXP";
-  case INTSXP: return "INTSXP";
-  case REALSXP: return "REALSXP";
-  case CPLXSXP: return "CPLXSXP";
-  case STRSXP: return "STRSXP";
-  case DOTSXP: return "DOTSXP";
-  case ANYSXP: return "ANYSXP";
-  case VECSXP: return "VECSXP";
-  case EXPRSXP: return "EXPRSXP";
-  case BCODESXP: return "BCODESXP";
-  case EXTPTRSXP: return "EXTPTRSXP";
-  case WEAKREFSXP: return "WEAKREFSXP";
-  case RAWSXP: return "RAWSXP";
-  case S4SXP: return "S4SXP";
-  case NEWSXP: return "NEWSXP";
-  case FREESXP: return "FREESXP";
-  case FUNSXP: return "FUNSXP";
-  default: error("unknown type %d", type);
-  }
 }

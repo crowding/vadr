@@ -71,7 +71,7 @@ dots_missing <- function(...) {
   sym = paste("..", seq_len(nargs()), sep="")
   for (i in seq_len(nargs()))
     result[[i]] <- do.call("missing", list(as.name(sym[[i]])))
-  result
+  structure(result, names=dots_names(...))
 }
 
 #' @export
@@ -146,6 +146,7 @@ dots <- function(...) structure(get("..."), class="...")
 #' \code{...} as produced by \code{\link{dots}}.
 #' @param f a function, to be called to to have arguments attached to.
 #' @aliases "%()%" "%<<%" "%>>%" "%__%"
+#' @name grapes-open-paren-close-paren-grapes
 #' @return \itemize{ \item{For \code{%()%}, the result of calling the
 #' function with the arguments provided.}  \item{For \code{%<<%} and
 #' \code{%>>%}, a new function with the arguments partially
@@ -167,8 +168,10 @@ dots <- function(...) structure(get("..."), class="...")
 }
 
 #' @S3method "%()%" default
-`%()%.default`  <- function(f, arglist) {
-  eval(as.call(c(quote(f), as.list(arglist))))
+#' @useDynLib ptools
+`%()%.default`  <- function(f, arglist, .envir=parent.frame()) {
+  seq <- do.call(dots, as.list(arglist), TRUE, .envir)
+  .Call("call_function_from_dots", f, seq, .envir, TRUE)
 }
 
 #' @export
@@ -189,19 +192,21 @@ dots <- function(...) structure(get("..."), class="...")
 #' @S3method "%>>%" default
 `%>>%.default` <- function(f, x) stop()
 
-#' @export
-`%__%` <- function(x, y) UseMethod("%__%", x)
+cdots <- function(x, y) UseMethod("cdots", x)
 
-#' @S3method "%>>%" "..."
-`%__%....` <- function(x, y) UseMethod("cdots....", y)
+#' @export
+`%__%` <- cdots
+
+#' @S3method "cdots" "..."
+`cdots....` <- function(x, y) UseMethod("cdots....", y)
 
 cdots........ <- function(x, y, ...) {
   #we can trick R's eval system into concatenating together multiple
-  #dotslists like this. Why? Basically, when the evaluator finds "..."
-  #in a call it knows to start unpacking a DOTSXP (otherwise opaque to
-  #R code) into multiple arguments. But it looks up whatever "..." is
-  #in the frame, so we can intercede with an active binding to swap out
-  #different dotlists.
+  #dotslists like this. Why? Basically, when the evaluator finds the
+  #special symbol "..."  in a call it knows to start unpacking a
+  #DOTSXP (otherwise opaque to R code) into multiple arguments. But it
+  #looks up whatever "..." is in the frame, so we can intercede with
+  #an active binding to swap out different dotlists.
   dotslists <- list(x, y)
   count <- 0
   rm("...")
@@ -214,8 +219,8 @@ cdots........ <- function(x, y, ...) {
 
 cdots.....default <- function(x, y) stop()
 
-#' @S3method "%__%" default
-`%__%.default` <- function(f, x) UseMethod("cdots.default, ...")
+#' @S3method "cdots" default
+cdots.default <- function(f, x) UseMethod("cdots.default")
 
 #' @S3method cdots.default "..."
 cdots.default.... <- function (f,x) stop()

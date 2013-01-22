@@ -1,5 +1,22 @@
 context("Dots")
 
+`%is%` <- expect_equal
+
+##Quickie macro to help with setup and teardown.
+##this is also an example of problematic autoindent in the Emacs mode...
+with_setup <- macro(JIT=FALSE, function(setup=NULL, ..., teardown=NULL) {
+  template({
+    ...( lapply(list(...), function(x) template({
+      .(setup)
+      .(x)
+      .(teardown)
+    }))
+        )
+  })
+})
+
+## DOTSXP UNPACKING --------------------------------------------------
+
 test_that("unpack(dots(...)) descends through promise chains if necessary", {
 
 })
@@ -26,7 +43,7 @@ test_that("unpack(dots(...)) unpacks a dotslist and exposes promise behavior", {
 ## these should also be in reference to dots objects
 
 test_that("dots_missing", {
-  expect_equal(c(FALSE, FALSE, TRUE, FALSE, FALSE, TRUE),
+  expect_equal(c(FALSE, FALSE, c=TRUE, FALSE, d=FALSE, TRUE),
                dots_missing(a, b, c=, 4, d=x+y, ) )
 
   checkMyDots <- function(...) {
@@ -37,8 +54,8 @@ test_that("dots_missing", {
                checkMyDots(a, b, c=, 4, d=x+y, ) )
 
   #but it doesn't eval
-  expect_equal(c(FALSE, TRUE, FALSE),
-               CheckMyDots(stop("no"), c=, stop("no")))
+  expect_equal(c(FALSE, c=TRUE, FALSE),
+               checkMyDots(stop("no"), c=, stop("no")))
 })
 
 test_that("dots_names", {
@@ -52,13 +69,16 @@ test_that("dots_names", {
 
 ## DOTS OBJECT, CALLING AND CURRYING -------------------------------------
 
-test_that("%()% with sequences behaves reasonably, unlike do.call", {
+test_that("%()% has literal-value-passing semantics, unlike do.call", {
+  ## notwithstanding any nonstandard evaluation a thing might do.
   x = 2
   y = 5
+
   list %()% c(x, y) %is% list(2,5)
   list %()% list(x, y) %is% list(2,5)
   list %()% alist(x, y) %is% alist(x, y)
-  alist %()% alist(x, y) %is% alist(x, y)
+  alist %()% alist(x, y)
+  alist %()% alist(x, y) %is% alist(x, y) #really?
   alist %()% list(x,y) %is% alist(2, 5)
 })
 
@@ -72,17 +92,34 @@ test_that("x <- dots() captures dots and %()% calls with dots", {
   expectEqual( f %()% d, 0.5 )
 })
 
-##Quickie macro to help with setup and teardown.
-##this is also an example of problematic autoindent in the Emacs mode...
-with_setup <- macro(JIT=FALSE, function(setup=NULL, ..., teardown=NULL) {
-  template({
-    ...( lapply(list(...), function(x) template({
-      .(setup)
-      .(x)
-      .(teardown)
-    }))
-        )
-  })
+test_that("as.dots() converts expressions to dotslists w.r.t. a given env", {
+  x <- 3
+
+  f1 <- function(l) {
+    x <- 1
+    as.dots(l)
+  }
+
+  f2 <- function(l) {
+    x
+    as.dots(l)
+  }
+
+  c %()% f1(alist(x)) %is% 1
+  c %()% f2(alist(x)) %is% 2
+  c %()% as.dots(alist(x)) %is% 3
+})
+
+test_that("as.dots() is idempotent on dots objects", {
+  x <- 3
+  l <- as.dots(alist(x))
+  f <- function(l) {
+    x <- 4
+    as.dots(l)
+  }
+  l <- f(l)
+  x <- 5
+  c %()% l %is% 5
 })
 
 test_that("Curried dots evaluate like promises", {

@@ -116,3 +116,48 @@ SEXP dots_names(SEXP dots) {
   return(names);
 }
 
+SEXP _getName(SEXP names, int i) {
+  /* return  names[i]  if it is a character (>= 1 char), or NULL otherwise */
+    if (names != R_NilValue &&
+        STRING_ELT(names, i) != R_NilValue &&
+        CHAR(STRING_ELT(names, i))[0] != '\0') /* length test */
+        return STRING_ELT(names, i);
+    else
+        return R_NilValue;
+}
+
+SEXP call_function_from_dots(SEXP fun, SEXP args, SEXP envir, SEXP unforce) {
+  if (!isEnvironment(envir))
+    error("'envir' must be an environment");
+  if (TYPEOF(args) != DOTSXP)
+    error("Expected a DOTSXP, got %s", type2char(TYPEOF(args)));
+  if (!isLogical(unforce) || length(unforce) != 1)
+    error("Expected a scalar logical for unforce, got %s[%d]", 
+          type2char(TYPEOF(unforce)), length(unforce));
+  int force = LOGICAL(unforce)[0];
+
+  SEXP call;
+  PROTECT( call = allocVector(LANGSXP, length(args) + 1 )); 
+  SETCAR(call, fun);
+  
+  SEXP in, out, name;
+  int i;
+  for (out = CDR(call), in = args, i = 0; 
+       out != R_NilValue; 
+       in=CDR(in), out=CDR(out), i++) {
+    while (TYPEOF(CAR(IN)) == PROMSXP) {
+        
+  default: /* fall through */
+    SETCAR( out, CAR(in));
+    if (unforce) {
+      //magic promise-unpacking here...
+    }
+    SET_TAG( in, TAG(out) );
+    }
+  }
+ 
+  SEXP result = eval( call, envir );
+
+  UNPROTECT(1);
+  return result;
+}

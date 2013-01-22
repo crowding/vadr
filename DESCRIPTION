@@ -34,3 +34,4 @@ Collate:
     'with_args.R'
     'ammoc.R'
     'getPointer.R'
+    'dots.R'
