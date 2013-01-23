@@ -69,14 +69,12 @@ test_that("dots_names", {
 
 ## DOTS OBJECT, CALLING AND CURRYING -------------------------------------
 
-test_that("%()% is like do.call(quote=TRUE) but doesn't overquote", {
+test_that("%()% is like do.call(quote=TRUE)", {
   x = 2
   y = 5
 
   ff <- function(x, y) list(substitute(x), substitute(y))
-  ff %()% ff(x, y) 
-  do.call(ff, ff(x, y))
-  
+
   list %()% list(x, y) %is% list(2,5)
   list %()% alist(x, y) %is% ff(x, y)
   list %()% ff(x, y+z) %is% ff(x, y+z)
