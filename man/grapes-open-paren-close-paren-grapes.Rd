@@ -17,18 +17,15 @@
 }
 \value{
   \itemize{ \item For \code{\%()\%}, the result of calling
-  the function with the arguments provided. THis has
-  slightly different semantics from \code{\link{do.call}(f,
-  as.list(x), quote=TRUE)}, in that arguments are passed
-  through already-evaluated promises, rather than wrapped
-  in "quote" and passed in new promises. This makes a
-  difference if \code{f} performs nonstandard evaluation.
-  \item For \code{\%<<\%} and \code{\%>>\%}, a new function
-  with the arguments partially applied. For \code{arglist
-  \%>>\% f}, the arguments will be placed in the argument
-  list before any further arguments; for \code{f \%<<\%
-  arglist} the arguments will be placed afterwards. \item
-  For \code{\%__\%}, the two operands pasted together. The
+  the function with the arguments provided. This is
+  effectively the same as \code{\link{do.call}(f,
+  as.list(x), quote=TRUE)}. \item For \code{\%<<\%} and
+  \code{\%>>\%}, a new function with the arguments
+  partially applied. For \code{arglist \%>>\% f}, the
+  arguments will be placed in the argument list before any
+  further arguments; for \code{f \%<<\% arglist} the
+  arguments will be placed afterwards. \item For
+  \code{\%__\%}, the two operands pasted together. The
   result will be a list, or a \code{dots} object if any of
   the operands are \code{dots} objects. }
 }

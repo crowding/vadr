@@ -148,12 +148,9 @@ dots <- function(...) structure(get("..."), class="...")
 #' @aliases %()% %<<% %>>% %__%
 #' @name grapes-open-paren-close-paren-grapes
 #' @return \itemize{
-#' \item For \code{\%()\%}, the result of calling the function with the
-#' arguments provided. THis has slightly different semantics from
-#' \code{\link{do.call}(f, as.list(x), quote=TRUE)}, in that arguments
-#' are passed through already-evaluated promises, rather than wrapped
-#' in "quote" and passed in new promises. This makes a difference if
-#' \code{f} performs nonstandard evaluation.
+#' \item For \code{\%()\%}, the result of calling the function with
+#' the arguments provided. This is effectively the same as
+#' \code{\link{do.call}(f, as.list(x), quote=TRUE)}.
 #' \item For \code{\%<<\%} and \code{\%>>\%}, a new function with the
 #' arguments partially applied. For \code{arglist \%>>\% f}, the
 #' arguments will be placed in the argument list before any further
@@ -163,7 +160,7 @@ dots <- function(...) structure(get("..."), class="...")
 #' will be a list, or a \code{dots} object if any of the operands are
 #' \code{dots} objects.
 #' }
-#' 
+#'
 #' @author Peter Meilstrup
 #' @export
 `%()%` <- function(f, arglist) UseMethod("%()%", arglist)
@@ -179,11 +176,8 @@ dots <- function(...) structure(get("..."), class="...")
 
 #' @S3method "%()%" default
 #' @useDynLib ptools
-`%()%.default`  <- function(f, arglist, .envir=parent.frame()) {
-#  do.call(f, as.list(arglist), quote=TRUE)
-  seq <- do.call(dots, as.list(arglist), FALSE, .envir)
-  .Call("call_function_from_dots", f, seq, .envir, TRUE)
-}
+`%()%.default`  <- function(f, arglist, .envir=parent.frame())
+  do.call(f, as.list(arglist), TRUE, .envir)
 
 #' @export
 `%<<%` <- function(f, x) UseMethod("%<<%", x)

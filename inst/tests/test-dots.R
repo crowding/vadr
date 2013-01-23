@@ -73,11 +73,15 @@ test_that("%()% is like do.call(quote=TRUE) but doesn't overquote", {
   x = 2
   y = 5
 
+  ff <- function(x, y) list(substitute(x), substitute(y))
+  ff %()% ff(x, y) 
+  do.call(ff, ff(x, y))
+  
   list %()% list(x, y) %is% list(2,5)
-  list %()% alist(x, y) %is% alist(x, y)
-  list %()% alist(x, y+z) %is% alist(x, y+z)
-  alist %()% alist(x, y) %is% alist(x, y) #this is different from do.call
-  alist %()% list(x,y) %is% alist(2, 5)
+  list %()% alist(x, y) %is% ff(x, y)
+  list %()% ff(x, y+z) %is% ff(x, y+z)
+  ff %()% alist(x, y) %is% ff(x, y)
+  ff %()% list(x,y) %is% ff(2, 5)
  })
 
 test_that("x <- dots() captures dots and %()% calls with dots", {
