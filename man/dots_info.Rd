@@ -12,15 +12,16 @@
 }
 \value{
   A data frame, with one row for each element of
-  \code{...}, and columns: \itemize{ \item{"name"}{The name
-  of each argument, or "" if present.} \item{"envir"}{The
-  enviroment the promise came from.} \item{"expr"}{The
-  expression attached to the promise.} \item{"eval"}{TRUE
-  if the promise has been evaluated.} \item{"value"}{The
-  value attached to the promise, or NULL if not evaluated.}
-  \item{"seen"}{TRUE if the promise has already been "seen"
-  during promise evaluation. This flag is set by R during
-  evaluation to detect cyclic references.} }
+  \code{...}, and columns: \describe{ \item{"name"}{The
+  name of each argument, or "" if present.}
+  \item{"envir"}{The enviroment the promise came from.}
+  \item{"expr"}{The expression attached to the promise.}
+  \item{"eval"}{TRUE if the promise has been evaluated.}
+  \item{"value"}{The value attached to the promise, or NULL
+  if not evaluated.} \item{"seen"}{TRUE if the promise has
+  already been "seen" during promise evaluation. This flag
+  is set by R during evaluation to detect cyclic
+  references.} }
 }
 \description{
   This unpacks the contents of a dot-dot-dot (or

@@ -69,18 +69,16 @@ test_that("dots_names", {
 
 ## DOTS OBJECT, CALLING AND CURRYING -------------------------------------
 
-test_that("%()% has literal-value-passing semantics, unlike do.call", {
-  ## notwithstanding any nonstandard evaluation a thing might do.
+test_that("%()% is like do.call(quote=TRUE) but doesn't overquote", {
   x = 2
   y = 5
 
-  list %()% c(x, y) %is% list(2,5)
   list %()% list(x, y) %is% list(2,5)
   list %()% alist(x, y) %is% alist(x, y)
-  alist %()% alist(x, y)
-  alist %()% alist(x, y) %is% alist(x, y) #really?
+  list %()% alist(x, y+z) %is% alist(x, y+z)
+  alist %()% alist(x, y) %is% alist(x, y) #this is different from do.call
   alist %()% list(x,y) %is% alist(2, 5)
-})
+ })
 
 test_that("x <- dots() captures dots and %()% calls with dots", {
   x <- 1;

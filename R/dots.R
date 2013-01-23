@@ -16,7 +16,7 @@
 #'
 #' @return A data frame, with one row for each element of \code{...},
 #' and columns:
-#' \itemize{
+#' \describe{
 #' \item{"name"}{The name of each argument, or "" if present.}
 #' \item{"envir"}{The enviroment the promise came from.}
 #' \item{"expr"}{The expression attached to the promise.}
@@ -134,35 +134,45 @@ dots <- function(...) structure(get("..."), class="...")
 #' Partially and fully apply arguments to functions.
 #'
 #' These operators help in passing arbitrary lists of arguments to
-#' functions, with a more consistent interface than
-#' \code{\link{do.call}}. The currying operator allows saving some
-#' arguments with a reference to a function so the resulting function
-#' can be passed elsewhere.
+#' functions, with a more convenient interface than
+#' \code{\link{do.call}}. The partial application operator allows
+#' saving some arguments with a reference to a function so the
+#' resulting function can be passed elsewhere.
 #'
 #' These objects have methods for objects of class \code{...} produced
-#' by \code{\link{dots}}, so that you may apply arguments as yet
-#' unevaluated.
+#' by \code{\link{dots}}, so that you may partially apply argument
+#' lists without arguments as yet unevaluated.
 #' @param x a vector, optionally with names, or an object of class
 #' \code{...} as produced by \code{\link{dots}}.
-#' @param f a function, to be called to to have arguments attached to.
-#' @aliases "%()%" "%<<%" "%>>%" "%__%"
+#' @param f a function, to be called, or to to have arguments attached to.
+#' @aliases %()% %<<% %>>% %__%
 #' @name grapes-open-paren-close-paren-grapes
-#' @return \itemize{ \item{For \code{%()%}, the result of calling the
-#' function with the arguments provided.}  \item{For \code{%<<%} and
-#' \code{%>>%}, a new function with the arguments partially
-#' applied. For \code{arglist %>>% f}, the arguments will be placed in
-#' the argument list before any further arguments; for \code{f %<<%
-#' arglist} thje arguments } \item{for \code{%__%}, the two operands
-#' pasted together. The result will be a list, or a \code{dots} object
-#' if any of the operands are \code{dots} objects.
+#' @return \itemize{
+#' \item For \code{\%()\%}, the result of calling the function with the
+#' arguments provided. THis has slightly different semantics from
+#' \code{\link{do.call}(f, as.list(x), quote=TRUE)}, in that arguments
+#' are passed through already-evaluated promises, rather than wrapped
+#' in "quote" and passed in new promises. This makes a difference if
+#' \code{f} performs nonstandard evaluation.
+#' \item For \code{\%<<\%} and \code{\%>>\%}, a new function with the
+#' arguments partially applied. For \code{arglist \%>>\% f}, the
+#' arguments will be placed in the argument list before any further
+#' arguments; for \code{f \%<<\% arglist} the arguments will be placed
+#' afterwards.
+#' \item For \code{\%__\%}, the two operands pasted together. The result
+#' will be a list, or a \code{dots} object if any of the operands are
+#' \code{dots} objects.
+#' }
+#' 
 #' @author Peter Meilstrup
 #' @export
 `%()%` <- function(f, arglist) UseMethod("%()%", arglist)
 
 #' @S3method "%()%" ...
 `%()%....` <- function(f, arglist, ...) {
-  # this method  is surprising and elegant but doesn't work on some
-  # nonstandard-eval functions (alist)
+  # this method elegant but doesn't work on some
+  # nonstandard-eval functions (e.g. alist $()$ dots(...) just returns
+  # quote(...))?
   assign("...", arglist)
   f(...)
 }
@@ -170,7 +180,8 @@ dots <- function(...) structure(get("..."), class="...")
 #' @S3method "%()%" default
 #' @useDynLib ptools
 `%()%.default`  <- function(f, arglist, .envir=parent.frame()) {
-  seq <- do.call(dots, as.list(arglist), TRUE, .envir)
+#  do.call(f, as.list(arglist), quote=TRUE)
+  seq <- do.call(dots, as.list(arglist), FALSE, .envir)
   .Call("call_function_from_dots", f, seq, .envir, TRUE)
 }
 

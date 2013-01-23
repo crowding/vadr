@@ -126,36 +126,49 @@ SEXP _getName(SEXP names, int i) {
         return R_NilValue;
 }
 
-SEXP call_function_from_dots(SEXP fun, SEXP args, SEXP envir, SEXP unforce) {
+SEXP call_function_from_dots(SEXP fun, SEXP args, SEXP envir, SEXP unpromise) {
   if (!isEnvironment(envir))
     error("'envir' must be an environment");
   if (TYPEOF(args) != DOTSXP)
     error("Expected a DOTSXP, got %s", type2char(TYPEOF(args)));
-  if (!isLogical(unforce) || length(unforce) != 1)
-    error("Expected a scalar logical for unforce, got %s[%d]", 
-          type2char(TYPEOF(unforce)), length(unforce));
-  int force = LOGICAL(unforce)[0];
+  if (!isLogical(unpromise) || length(unpromise) != 1)
+    error("Expected a scalar logical for unforce, got %s[%d]",
+          type2char(TYPEOF(unpromise)), length(unpromise));
+  int do_unpromise = LOGICAL(unpromise)[0];
 
   SEXP call;
-  PROTECT( call = allocVector(LANGSXP, length(args) + 1 )); 
+  PROTECT( call = allocVector(LANGSXP, length(args) + 1 ));
   SETCAR(call, fun);
-  
+
   SEXP in, out, name;
   int i;
-  for (out = CDR(call), in = args, i = 0; 
-       out != R_NilValue; 
+  for (out = CDR(call), in = args, i = 0;
+       out != R_NilValue;
        in=CDR(in), out=CDR(out), i++) {
-    while (TYPEOF(CAR(IN)) == PROMSXP) {
-        
-  default: /* fall through */
     SETCAR( out, CAR(in));
-    if (unforce) {
-      //magic promise-unpacking here...
+    if (do_unpromise && TYPEOF(CAR(out)) == PROMSXP) {
+      // unwrap multiple-promise chains, leaving one promise that
+      // "looks" evaluated.
+      SEXP bot = CAR(out);
+      while (1) {
+        if (PRENV(bot) == R_NilValue) {
+          break;
+        } else {
+          if (TYPEOF(PRCODE(bot)) == PROMSXP) {
+            bot = PRCODE(bot);
+          } else break;
+        }
+      }
+      if (PRENV(bot) != R_NilValue) {
+        if (PRVALUE(bot) == R_UnboundValue) {
+          SET_PRVALUE(bot, PRCODE(bot));
+        }
+        SET_PRENV(bot, R_NilValue);
+      }
+      SETCAR(out, bot);
     }
     SET_TAG( in, TAG(out) );
-    }
   }
- 
   SEXP result = eval( call, envir );
 
   UNPROTECT(1);
