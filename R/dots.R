@@ -163,7 +163,7 @@ dots <- function(...) structure(get("..."), class="...")
 #' will be a list, or a \code{dots} object if any of the operands are
 #' \code{dots} objects.
 #' }
-#' 
+#'
 #' @author Peter Meilstrup
 #' @export
 `%()%` <- function(f, arglist) UseMethod("%()%", arglist)
@@ -188,17 +188,53 @@ dots <- function(...) structure(get("..."), class="...")
 #' @export
 `%<<%` <- function(f, x) UseMethod("%<<%", x)
 
+#' @export
+`%>>%` <- function(x, f) UseMethod("%>>%", x)
+
 #' @S3method "%<<%" "..."
-`%<<%....` <- function(f, x) stop()
+`%<<%....` <- function(f, x) {
+  dotslist <- list(NULL, x)
+  function(...) {
+    if (missing(...)) {
+      assign("...", x)
+      f(...)
+    } else {
+      dotslist[1] <<- list(get("..."))
+      rm("...")
+      count <- 0
+      makeActiveBinding("...", function(x) {
+        count <<- count+1
+        dotslist[[count]]
+      }, environment())
+      f(..., ...)
+    }
+  }
+}
+
+#' @S3method "%>>%" "..."
+`%>>%....` <- function(x, f) {
+  dotslist <- list(x, NULL)
+  function(...) {
+    if (missing(...)) {
+      assign("...", x)
+      f(...)
+    } else {
+      dotslist[2] <<- list(get("..."))
+      rm("...")
+      count <- 0
+      makeActiveBinding("...", function(x) {
+        count <<- count+1
+        dotslist[[count]]
+      }, environment())
+      f(..., ...)
+    }
+  }
+}
 
 #' @S3method "%<<%" default
 `%<<%.default` <- function(f, x) stop()
 
-#' @export
-`%>>%` <- function(f, x) UseMethod("%>>%", x)
 
-#' @S3method "%>>%" "..."
-`%>>%....` <- function(f, x) stop()
 
 #' @S3method "%>>%" default
 `%>>%.default` <- function(f, x) stop()
@@ -238,3 +274,20 @@ cdots.default.... <- function (f,x) stop()
 
 #' @S3method cdots.default default
 cdots.default.default <- c
+
+#' Convert a list of expressions into a \code{\dots} object (a list of promises.)
+#'
+#' .. content for \details{} ..
+#' @param x a vector.
+#' @param .envir The environemnt within which each promise will be evaluated.
+#' @return A \code{\dots} object.
+#' @seealso dots "%<<%" "%>>%" "%()%" "[...." "[[....", "names...."
+#' @author Peter Meilstrup
+as.dots <- function(x, .envir=parent.frame()) UseMethod("as.dots")
+
+#' @S3method as.dots ...
+as.dots.... <- function(x, ...) x
+
+#' @S3method as.dots default
+as.dots.default <- function(x, .envir=parent.frame())
+  do.call(dots, as.list(x), FALSE, .envir)

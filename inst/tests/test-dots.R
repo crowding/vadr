@@ -73,36 +73,33 @@ test_that("%()% is like do.call(quote=TRUE) but doesn't overquote", {
   x = 2
   y = 5
 
+  ff <- function(x, y) list(substitute(x), substitute(y))
+
   list %()% list(x, y) %is% list(2,5)
-  list %()% alist(x, y) %is% alist(x, y)
-  list %()% alist(x, y+z) %is% alist(x, y+z)
-  alist %()% alist(x, y) %is% alist(x, y) #this is different from do.call
-  alist %()% list(x,y) %is% alist(2, 5)
+  list %()% alist(x, y) %is% ff(x, y)
+  list %()% ff(x, y+z) %is% ff(x, y+z)
+  ff %()% ff(x, y) %is% ff(x, y)
+  ff %()% list(x,y) %is% ff(2, 5)
  })
 
 test_that("x <- dots() captures dots and %()% calls with dots", {
   x <- 1;
   y <- 3;
-
   f <- `/`
-
   d <- dots(y=x, 4)
-  expectEqual( f %()% d, 0.5 )
+  f %()% d %is% 0.25
 })
 
 test_that("as.dots() converts expressions to dotslists w.r.t. a given env", {
   x <- 3
-
   f1 <- function(l) {
     x <- 1
     as.dots(l)
   }
-
   f2 <- function(l) {
-    x
+    x <- 2
     as.dots(l)
   }
-
   c %()% f1(alist(x)) %is% 1
   c %()% f2(alist(x)) %is% 2
   c %()% as.dots(alist(x)) %is% 3
@@ -122,37 +119,46 @@ test_that("as.dots() is idempotent on dots objects", {
 
 test_that("Curried dots evaluate like promises", {
   with_setup(
-    setup={ bind[w, x, y, z] <- c(2, 3, 4, 5)
-            d <- dots(w+x, y+z)
-            f <- `*` },
-    { f2 <- f %<<% d
+    setup={
+      bind[w, x, y, z] <- c(2, 3, 4, 5)
+      d <- dots(w+x)
+      dd <- dots(w+x, y+z)
+      f <- `*` %<<% d
+      f2 <- `*` %<<% dd
+    },
+    {
       f2() %is% 45
       x <- 4
-      f2() %is% 45
-      (f %()% d) %is% 54 },
-    { f <- f %<<% d
+      f(y+z) %is% 54
+    },
+    {
       x <- 4
       f2() %is% 54
+      f(2) %is% 12
       x <- 3
-      (f %()% d) %is% 54 },
-    { #left-curry applies to the left of the arglist
-      f2 <- dots(w+x) %.>% `/`
+      (f %()% d) %is% 36
+    },
+    {
+      #left-curry applies to the left of the arglist
+      f2 <- dots(w+x) %>>% `/`
       x <- 2
       f2(2) %is% 2
       x <- 3
-      f2(2) %is% 2 }
-    )
+      f2(2) %is% 2
+    })
 })
 
 test_that(paste("Curry operators concatenate dots, dots stay attached to envs"), {
   with_setup(
-    setup={ envl <- list2env(structure(as.list(letters), names=letters))
-            envu <- list2env(structure(as.list(letters), names=LETTERS))
-            envn <- list2env(structure(as.list(1:10)), names=letters[1:10])
-            l <- evalq(dots(a, b, c), envl)
-            u <- evalq(dots(a, b, c), envu)
-            n <- evalq(dots(a, b, c), envn)
-            P <- paste %<<% list(sep="") },
+    setup={
+      envl <- list2env(structure(as.list(letters), names=letters))
+      envu <- list2env(structure(as.list(letters), names=LETTERS))
+      envn <- list2env(structure(as.list(1:10)), names=letters[1:10])
+      l <- evalq(dots(a, b, c), envl)
+      u <- evalq(dots(a, b, c), envu)
+      n <- evalq(dots(a, b, c), envn)
+      P <- paste %<<% list(sep="")
+    },
     P  %()%  l  %is%  "abcdef",
     P  %()%  u  %is%  "ABCDEF",
     #these two cases are bothersome.
