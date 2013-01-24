@@ -34,34 +34,37 @@
 #' @export
 dots_info <- function(...) .Call("dots_info", get("..."))
 
-#' Functions to work with dot-dot-dot arguments.
+#' Functions to work with dot-dot-dot (\dots) arguments.
 #'
 #' These are useful for writing functions that accept any number of
 #' arguments but some may be missing. For example, arrays in R can
 #' have any number of dimensions, indexed by the \code{\link{"["}}
 #' function, where a missing argument means to take all indexes on that
-#' dimension. However there is not a good to replicate
-#' \code{\link{"["}}'s behavoior in pure R; using \code{list(...)} to
+#' dimension. However there is not a good way to replicate
+#' \code{\link{"["}}'s behavior in base R; using \code{list(...)} to
 #' collect all positional arguments will throw errors on missing
 #' arguments. These functions help extract names and values of
 #' positional arguments without triggering missing-value errors.
 #'
+#' Parallel functions exist as methods of the \{\dots} class of
+#' objects returned by \code{\link{dots}} that allows you to manipulate
+#' ... argument lists as explicit objects.
 #' @param ... Any arguments. Usually you will pass \code{...} from the
 #' body of a function.
-#' @return For \code{\link{dots_names}}, a character vector giving the names of
-#' all arguments.
-#'
-#' For \code{\link{dots_names}}, the names of all arguments.
-#'
-#' For \code{\link{dots_missing}}, a logical vector with TRUE for each
+#' @return \itemize{
+#' \item For \code{\link{dots_names}}, the names of all arguments. Names are
+#' also attached to results from the other functions listed here.
+#' \item For \code{\link{dots_missing}}, a logical vector with TRUE for each
 #' missing argument.
-#'
-#' For \code{\link{list_missing}}, a named list of all evaluated
+#' \item For \code{\link{list_missing}}, a named list of all evaluated
 #' arguments, where any missing arguments are set to NULL.
-#'
-#' For \code{\link{dots_names}}, a list of quoted arguments.
+#' \item For \code{\link{list_quote}}, a list of quoted arguments. This extracts
+#' the original expressions from a dotlist without forcing evaluation.
+#' }
 #' @author Peter Meilstrup
-#' @aliases dots_missing list_missing list_quote
+#' @aliases dots_missing list_missing list_quote alist
+#' @seealso is.missing dots curr
+#' @useDynLib ptools
 #' @export
 dots_names <- function(...) .Call("dots_names", get("..."))
 
@@ -76,31 +79,19 @@ dots_missing <- function(...) {
 
 #' @export
 list_missing <- function(...) {
-  result = list(nargs())
+  out <- logical(nargs())
   sym = paste("..", seq_len(nargs()), sep="")
-  for (i in seq_len(nargs()))
-    result[[i]] <- if (do.call("missing", list(as.name(sym[[i]]))))
-      NULL else evall(as.name(sym[[i]]))
-  names(result) <- dots_names(...)
-  result
+  for (i in seq_len(nargs())) {
+    x <- as.name(sym[[i]])
+    out[i] <- eval(substitute(missing(x)))
+  }
+  n <- dots_names(...)
+  if (!is.null(n)) names(out) <- n
+  out
 }
 
 #' @export
 list_quote <- function(...) eval(substitute(alist(...)))
-
-#' Partially apply arguments to a function.
-#'
-#' The arguments given in brackets are saved and a new function is
-#' constructed.
-#'
-#' The difference between
-#' \code{'[.function'} and \code{'[.function'} is that the single
-#' bracket applies arguments to the right, while the double bracket
-#' applies arguments to the left.
-#'
-#' This curry captures the arguments you give as promises; they will
-#' only be evaluated once. if the curried function chooses to do
-#' so. [For another type of curry see addDefaults?]
 
 #' Capture the list of "dot-dot-dot" arguments as an object.
 #'
@@ -145,7 +136,7 @@ dots <- function(...) structure(get("..."), class="...")
 #' @param x a vector, optionally with names, or an object of class
 #' \code{...} as produced by \code{\link{dots}}.
 #' @param f a function, to be called, or to to have arguments attached to.
-#' @aliases %()% %<<% %>>% %__%
+#' @aliases %()% %<<% %>>% %__% curr curl
 #' @name grapes-open-paren-close-paren-grapes
 #' @return \itemize{
 #' \item For \code{\%()\%}, the result of calling the function with the
@@ -159,11 +150,13 @@ dots <- function(...) structure(get("..."), class="...")
 #' arguments will be placed in the argument list before any further
 #' arguments; for \code{f \%<<\% arglist} the arguments will be placed
 #' afterwards.
+#' \item \code{curr} and \code{curl} are standalone functions that partially apply arguments to functions; \code{curr(f, a=1, b=2)} is equivalent to \code{f %<<% dots(a=1, b=2)}, and
+#' \code{curl} is the "left curry" corresponding to 
 #' \item For \code{\%__\%}, the two operands pasted together. The result
 #' will be a list, or a \code{dots} object if any of the operands are
 #' \code{dots} objects.
 #' }
-#'
+#' @note "Curry" is a slight misnomer for partial function application.
 #' @author Peter Meilstrup
 #' @export
 `%()%` <- function(f, arglist) UseMethod("%()%", arglist)
@@ -193,6 +186,7 @@ dots <- function(...) structure(get("..."), class="...")
 
 #' @S3method "%<<%" "..."
 `%<<%....` <- function(f, x) {
+  if (is.null(x)) return(f)
   dotslist <- list(NULL, x)
   function(...) {
     if (missing(...)) {
@@ -206,6 +200,10 @@ dots <- function(...) structure(get("..."), class="...")
         count <<- count+1
         dotslist[[count]]
       }, environment())
+      #a DOTSXP is only expanded into a function's arguments when the
+      #evaluator encounters the special symbol "...". We use an active
+      #binding to get R to expand two different DOTSXPS from the same
+      #symbol.
       f(..., ...)
     }
   }
@@ -213,6 +211,7 @@ dots <- function(...) structure(get("..."), class="...")
 
 #' @S3method "%>>%" "..."
 `%>>%....` <- function(x, f) {
+  if (is.null(x)) return(f)
   dotslist <- list(x, NULL)
   function(...) {
     if (missing(...)) {
@@ -231,13 +230,69 @@ dots <- function(...) structure(get("..."), class="...")
   }
 }
 
+#also a standalone right-curry and left-curry; does not use S3-dispacthed dots objects
+
+#' #' @export
+curr <- function(f, ...) {
+  if(missing(...)) {
+    f
+  } else {
+    stored_dots <- list(NULL, get("..."))
+    function(...) {
+      if (missing(...)) {
+        assign("...", stored_dots[[2]])
+        f(...)
+      } else {
+        stored_dots[1] <- list(get("..."))
+        rm("...")
+        selector <- 0
+        makeActiveBinding("...",
+                          function() stored_dots[[selector <<- selector+1]],
+                          environment())
+        # this depends in a deep way on how ... are represented and evaluated
+        # see eval.c
+        f(..., ...)
+      }
+    }
+  }
+}
+
+#' @export
+curl <- function(f, ...) {
+  if(missing(...)) {
+    f
+  } else {
+    stored_dots <- list(get("..."), NULL)
+    function(...) {
+      if (missing(...)) {
+        assign("...", stored_dots[[1]])
+        f(...)
+      } else {
+        stored_dots[2] <- list(get("..."))
+        rm("...")
+        selector <- 0
+        makeActiveBinding("...",
+                          function() stored_dots[[selector <<- selector+1]],
+                          environment())
+        # this depends in a deep way on how ... are represented and evaluated
+        # see eval.c, "R Internals"
+        f(..., ...)
+      }
+    }
+  }
+}
+
+#Curry methods for plain values.
+#Here we reuse %()% since we had a time getting it to follow the desired
+#semantics.
+
 #' @S3method "%<<%" default
-`%<<%.default` <- function(f, x) stop()
-
-
+`%<<%.default` <- function(f, x) function(...)
+  if(missing(...)) f %()% x else dots(...) %>>% f %()% x
 
 #' @S3method "%>>%" default
-`%>>%.default` <- function(f, x) stop()
+`%>>%.default` <- function(x, f) function(...)
+  if(missing(...)) f %()% x else f %<<% dots(...) %()% x
 
 cdots <- function(x, y) UseMethod("cdots", x)
 
@@ -248,12 +303,6 @@ cdots <- function(x, y) UseMethod("cdots", x)
 `cdots....` <- function(x, y) UseMethod("cdots....", y)
 
 cdots........ <- function(x, y, ...) {
-  #we can trick R's eval system into concatenating together multiple
-  #dotslists like this. Why? Basically, when the evaluator finds the
-  #special symbol "..."  in a call it knows to start unpacking a
-  #DOTSXP (otherwise opaque to R code) into multiple arguments. But it
-  #looks up whatever "..." is in the frame, so we can intercede with
-  #an active binding to swap out different dotlists.
   dotslists <- list(x, y)
   count <- 0
   rm("...")
@@ -275,12 +324,13 @@ cdots.default.... <- function (f,x) stop()
 #' @S3method cdots.default default
 cdots.default.default <- c
 
-#' Convert a list of expressions into a \code{\dots} object (a list of promises.)
+#' Convert a list of expressions into a \code{\dots} object (a list of
+#' promises.)
 #'
 #' .. content for \details{} ..
-#' @param x a vector.
+#' @param x a vector of expressions.
 #' @param .envir The environemnt within which each promise will be evaluated.
-#' @return A \code{\dots} object.
+#' @return An object of class \code{\dots}.
 #' @seealso dots "%<<%" "%>>%" "%()%" "[...." "[[....", "names...."
 #' @author Peter Meilstrup
 as.dots <- function(x, .envir=parent.frame()) UseMethod("as.dots")
@@ -291,3 +341,41 @@ as.dots.... <- function(x, ...) x
 #' @S3method as.dots default
 as.dots.default <- function(x, .envir=parent.frame())
   do.call(dots, as.list(x), FALSE, .envir)
+
+as.dots.quoted <- function(x) {
+}
+
+#' Check if list members are equal to the "missing value."
+#'
+#' For \code{\dots} objects as made by \code{\link{dots}}, performs
+#' this check without forcing evaluation.
+#' @param x An object
+#' @return A vector of boolean values.
+#' @author Peter Meilstrup
+#' @seealso dots dots_missing missing.value
+#' @export
+is.missing <- function(x) if (missing(x)) TRUE else UseMethod("is.missing")
+
+#' @S3method is.missing ...
+is.missing.... <- function(x, ...) {
+  out <- logical(length(x))
+  if (nargs() > 2) stop("more than one argument supplied to is.missing")
+  assign("...", x)
+  sym = paste("..", seq_len(length(x)), sep="")
+  for (i in seq_len(length(x))) {
+    n <- as.name(sym[[i]])
+    out[i] <- eval(substitute(missing(n)))
+  }
+  n <- dots_names(...)
+  if (!is.null(n)) names(out) <- n
+  out
+}
+
+
+#' @S3method is.missing default
+is.missing.default <- function(f) {
+  if (is.list(f))
+    vapply(f, identical, FALSE, quote(expr=))
+  else
+    rep(FALSE, length(f))
+}

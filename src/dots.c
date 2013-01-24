@@ -167,10 +167,11 @@ SEXP call_function_from_dots(SEXP fun, SEXP args, SEXP envir, SEXP unpromise) {
       }
       SETCAR(out, bot);
     }
-    SET_TAG( in, TAG(out) );
+    SET_TAG( out, TAG(in) );
   }
   SEXP result = eval( call, envir );
 
   UNPROTECT(1);
   return result;
 }
+

@@ -1,32 +1,29 @@
-context("Dots")
+context("dots")
 
 `%is%` <- expect_equal
 
 ##Quickie macro to help with setup and teardown.
-##this is also an example of problematic autoindent in the Emacs mode...
 with_setup <- macro(JIT=FALSE, function(setup=NULL, ..., teardown=NULL) {
   template({
     ...( lapply(list(...), function(x) template({
       .(setup)
       .(x)
       .(teardown)
-    }))
-        )
+    })))
   })
 })
 
 ## DOTSXP UNPACKING --------------------------------------------------
 
-test_that("unpack(dots(...)) descends through promise chains if necessary", {
-
+test_that("dots_info(dots(...)) descends through promise chains if necessary", {
+  stop("test not written")
 })
 
-test_that("dots unpack() method extracts dots information", {
-
+test_that("dots_info() method extracts dots information", {
+  stop("test not written")
 })
 
-test_that("unpack(dots(...)) unpacks a dotslist and exposes promise behavior", {
-
+test_that("dots_info(dots(...)) unpacks a dotslist and exposes promise behavior", {
   evalX <- function(x, ...) {
     force(x)
     do_describe(yy=x, ...)
@@ -37,26 +34,40 @@ test_that("unpack(dots(...)) unpacks a dotslist and exposes promise behavior", {
   }
 
   test <- do_dots(x=1+2, y=z, z=2)
-
+  stop("test_not_written")
 })
 
 ## these should also be in reference to dots objects
-
 test_that("dots_missing", {
-  expect_equal(c(FALSE, FALSE, c=TRUE, FALSE, d=FALSE, TRUE),
-               dots_missing(a, b, c=, 4, d=x+y, ) )
+  with_setup(
+    setup={
+      if (exists("a")) rm(a)
+      unmissing <- 1
+      b <- missing.value()
+    },
+    #test both the dots_missing form and the is.missing.... form
+    thunk <- dots_missing,
+    thunk <- function(...) is.missing....(dots(...)),
+    #actual testing in the teardown
+    teardown={
+      expect_equal(c(   FALSE, FALSE,     c=TRUE, FALSE, d=FALSE, TRUE),
+                   thunk(   a, unmissing, c=,     4,     d=x+y,       ))
 
-  checkMyDots <- function(...) {
-    missing <- dots_missing(...)
-  }
+      #we currently (R 2.15.2) answers with another level of
+      #function. My opionion is this is a bug in R, so don't check right now.
+      ## wrap <- function(...) {
+      ##   thunk(...)
+      ## }
+      ## #                                   WHAT
+      ## expect_equal(c(   FALSE, FALSE,     FALSE, c=TRUE, FALSE, d=FALSE, TRUE),
+      ##              wrap(    a, unmissing, b,     c=,     4,     d=x+y,       ))
 
-  expect_equal(c(FALSE, FALSE, c=TRUE, FALSE, d=FALSE, TRUE),
-               checkMyDots(a, b, c=, 4, d=x+y, ) )
-
-  #but it doesn't eval
-  expect_equal(c(FALSE, c=TRUE, FALSE),
-               checkMyDots(stop("no"), c=, stop("no")))
-})
+      #And this check for missingness does not eval
+      expect_equal(c(FALSE, c=TRUE, FALSE),
+                   thunk(stop("no"), c=, stop("no")))
+      rm(unmissing)
+      rm(b)
+    })})
 
 test_that("dots_names", {
   expect_equal(c("", "", "c", "", "d", ""),
@@ -65,6 +76,15 @@ test_that("dots_names", {
   #and dots_names does not eval dots
   expect_equal(c("", "a"),
                dots_names(stop("no"), a=stop("no")))
+})
+
+test_that("is.missing on non-dotlists", {
+  a <- alist(1, 2, adsf, , b=, )
+  is.missing(a) %is% c(FALSE, FALSE, FALSE, TRUE, b=TRUE, TRUE)
+  b <- c(1, 2, NA, NaN)
+  is.missing(b) %is% c(FALSE, FALSE, FALSE, FALSE)
+  is.missing() %is% TRUE
+  is.missing(function(x) y) %is% FALSE
 })
 
 ## DOTS OBJECT, CALLING AND CURRYING -------------------------------------
@@ -89,6 +109,43 @@ test_that("x <- dots() captures dots and %()% calls with dots", {
   d <- dots(y=x, 4)
   f %()% d %is% 0.25
 })
+
+test_that("%()% and %<<% on vectors respects tags", {
+  paste %()% c(sep="monkey", 1, 2, 3) %is% "1monkey2monkey3"
+  c %<<% c(a=1) %()% c(b=2) %is% c(b=2, a=1)
+  c(a=1) %>>% c %()% c(b=2) %is% c(a=1, b=2)
+})
+
+test_that("curr and curl", {
+  #these are versions that don't
+  f = curr(`/`, x)
+  expect_error(f(5))
+})
+
+test_that("curry DTRT with original scope of its arguments", {
+  with_setup(
+    setup={
+      g <- function(...) {
+        x <- "this is not in f"
+        thunk(c, ...)
+      }
+
+      f <- function(...) {
+        x <- "this is in f"
+        g(this_x_should_be_scoped_in_f = x, ...)
+      }
+    },
+    #for each variant of curry
+    thunk <- curl,
+    thunk <- curr,
+    thunk <- function(f, ...) f %<<% dots(...),
+    thunk <- function(f, ...) dots(...) %>>% f,
+    #the actual test is in the teardown...
+    teardown={
+      f()() %is% c(this_x_should_be_scoped_in_f = "this is in f")
+      length(f(a=1)()) %is% 2
+    }
+)})
 
 test_that("as.dots() converts expressions to dotslists w.r.t. a given env", {
   x <- 3
@@ -148,30 +205,40 @@ test_that("Curried dots evaluate like promises", {
     })
 })
 
-test_that(paste("Curry operators concatenate dots, dots stay attached to envs"), {
+test_that("Curry operators concatenate dots, dots stay attached to envs", {
   with_setup(
     setup={
       envl <- list2env(structure(as.list(letters), names=letters))
-      envu <- list2env(structure(as.list(letters), names=LETTERS))
-      envn <- list2env(structure(as.list(1:10)), names=letters[1:10])
+      envu <- list2env(structure(as.list(LETTERS), names=letters))
+      envn <- list2env(structure(as.list(1:10), names=letters[1:10]))
       l <- evalq(dots(a, b, c), envl)
       u <- evalq(dots(a, b, c), envu)
       n <- evalq(dots(a, b, c), envn)
       P <- paste %<<% list(sep="")
     },
-    P  %()%  l  %is%  "abcdef",
-    P  %()%  u  %is%  "ABCDEF",
+    P  %()%  l  %is%  "abc",
+    P  %()%  u  %is%  "ABC",
+    P  %()%  n  %is%  "123",
     #these two cases are bothersome.
-    P  %.<%  l  %.<%  u  %()%  n  %is%  "123ABCabc", #this is not intuitive
+    P  %<<%  l  %<<%  u  %()%  n  %is%  "123ABCabc", #this is not intuitive
     l  %>>% (u  %>>%  P) %()%  n  %is%  "ABCabc123", #this also counterintuitive...
-    u  %++%  l  %>>%  P  %()%  n  %is%  "ABCabc123",
-    l  %>>%  P  %.<%  u  %()%  n  %is%  "abc123ABC",
-    u  %++%  l  %>>%  P  %()%  n  %is%  "ABCabc123"
+    u  %__%  l  %>>%  P  %()%  n  %is%  "ABCabc123",
+    l  %>>%  P  %<<%  u  %()%  n  %is%  "abc123ABC",
+    u  %__%  l  %>>%  P  %()%  n  %is%  "ABCabc123"
     )
 })
 
+test_that("dots() et al with empty inputs", {
+  #note that there isn't such a thing as an empty dotslist, and this
+  #(a) complicates evaluating "..." etc, and (b) complicates making a
+  #dotslist the basis of the class (as it will have to be something
+  #else to match a zero value.
+  #So test variants of dots apply, curry, and cdots, with empty dotslists.
+  stop("test not written")
+})
 
-test_that("dots [] operator subsets without evaluating []", {
+
+test_that("dots [] operator subsets without forcing promises", {
   with_setup(
     setup= {
       a <- dots(x, r=y, x+y)
@@ -192,7 +259,7 @@ test_that("dots [] operator subsets without evaluating []", {
     )
 })
 
-test_that("[<-.... replacement operator, even", {
+test_that("[<-.... replacement operator can take values from another dotsxp", {
   #should be able to replace items of a dotslist with items from
   #another dotslist (or ordinary sequence.)
   with_setup(
@@ -214,12 +281,12 @@ test_that("dots [[]] and $ operators go ahead and evaluate. (?)", {
   stop("test not written")
 })
 
-test_that("dots names method extracts tags", {
+test_that("dots names method extracts tags without forcing", {
   names(dots(a, b, c=, 4, d=x+y, )) %is% c("", "", "c", "", "d", "")
   names(dots(stop("no"), a=stop("no"))) %is%  c("", "a")
 })
 
-test_that("dots names<- method can set tags w/o disturbing promise eval", {
+test_that("dots names<- method can set tags w/o forcing", {
   with_setup(
     setup={
       x <- 2; y<-3;
