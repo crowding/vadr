@@ -3,6 +3,8 @@
 \alias{\%<<\%}
 \alias{\%>>\%}
 \alias{\%__\%}
+\alias{curl}
+\alias{curr}
 \alias{grapes-open-paren-close-paren-grapes}
 \title{Partially and fully apply arguments to functions.}
 \usage{
@@ -28,9 +30,14 @@
   \%>>\% f}, the arguments will be placed in the argument
   list before any further arguments; for \code{f \%<<\%
   arglist} the arguments will be placed afterwards. \item
-  For \code{\%__\%}, the two operands pasted together. The
-  result will be a list, or a \code{dots} object if any of
-  the operands are \code{dots} objects. }
+  \code{curr} and \code{curl} are standalone functions that
+  partially apply arguments to functions; \code{curr(f,
+  a=1, b=2)} is equivalent to \code{f %<<% dots(a=1, b=2)},
+  and \code{curl} is the "left curry" corresponding to
+  \code{%>>%} \item For \code{\%__\%}, the two operands
+  pasted together. The result will be a list, or a
+  \code{dots} object if any of the operands are \code{dots}
+  objects. }
 }
 \description{
   These operators help in passing arbitrary lists of
@@ -45,6 +52,10 @@
   \code{...} produced by \code{\link{dots}}, so that you
   may partially apply argument lists without arguments as
   yet unevaluated.
+}
+\note{
+  "Curry" is a slight misnomer for partial function
+  application.
 }
 \author{
   Peter Meilstrup

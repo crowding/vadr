@@ -150,8 +150,10 @@ dots <- function(...) structure(get("..."), class="...")
 #' arguments will be placed in the argument list before any further
 #' arguments; for \code{f \%<<\% arglist} the arguments will be placed
 #' afterwards.
-#' \item \code{curr} and \code{curl} are standalone functions that partially apply arguments to functions; \code{curr(f, a=1, b=2)} is equivalent to \code{f %<<% dots(a=1, b=2)}, and
-#' \code{curl} is the "left curry" corresponding to 
+#' \item \code{curr} and \code{curl} are standalone functions that partially
+#' apply arguments to functions; \code{curr(f, a=1, b=2)} is equivalent to
+#' \code{f %<<% dots(a=1, b=2)}, and
+#' \code{curl} is the "left curry" corresponding to \code{%>>%}
 #' \item For \code{\%__\%}, the two operands pasted together. The result
 #' will be a list, or a \code{dots} object if any of the operands are
 #' \code{dots} objects.
@@ -161,7 +163,7 @@ dots <- function(...) structure(get("..."), class="...")
 #' @export
 `%()%` <- function(f, arglist) UseMethod("%()%", arglist)
 
-#' @S3method "%()%" ...
+#' @S3method "%()%" "..."
 `%()%....` <- function(f, arglist, ...) {
   # this method elegant but doesn't work on some
   # nonstandard-eval functions (e.g. alist $()$ dots(...) just returns
@@ -232,7 +234,7 @@ dots <- function(...) structure(get("..."), class="...")
 
 #also a standalone right-curry and left-curry; does not use S3-dispacthed dots objects
 
-#' #' @export
+#' @export
 curr <- function(f, ...) {
   if(missing(...)) {
     f
@@ -327,23 +329,19 @@ cdots.default.default <- c
 #' Convert a list of expressions into a \code{\dots} object (a list of
 #' promises.)
 #'
-#' .. content for \details{} ..
 #' @param x a vector of expressions.
-#' @param .envir The environemnt within which each promise will be evaluated.
+#' @param .envir The environment within which each promise will be evaluated.
 #' @return An object of class \code{\dots}.
 #' @seealso dots "%<<%" "%>>%" "%()%" "[...." "[[....", "names...."
 #' @author Peter Meilstrup
 as.dots <- function(x, .envir=parent.frame()) UseMethod("as.dots")
 
-#' @S3method as.dots ...
+#' @S3method as.dots "..."
 as.dots.... <- function(x, ...) x
 
 #' @S3method as.dots default
 as.dots.default <- function(x, .envir=parent.frame())
   do.call(dots, as.list(x), FALSE, .envir)
-
-as.dots.quoted <- function(x) {
-}
 
 #' Check if list members are equal to the "missing value."
 #'
@@ -356,7 +354,7 @@ as.dots.quoted <- function(x) {
 #' @export
 is.missing <- function(x) if (missing(x)) TRUE else UseMethod("is.missing")
 
-#' @S3method is.missing ...
+#' @S3method is.missing "..."
 is.missing.... <- function(x, ...) {
   out <- logical(length(x))
   if (nargs() > 2) stop("more than one argument supplied to is.missing")
