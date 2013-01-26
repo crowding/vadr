@@ -3,13 +3,13 @@
 
 int dots_length(SEXP dots);
 
-SEXP dots_info(SEXP dots) {
+SEXP dots_unpack(SEXP dots) {
   int i;
   SEXP s;
   SEXP item;
   int length = 0;
   SEXP names, environments, expressions, values;
-  SEXP evaluated, codeptr, missing, wraplist;
+  //SEXP evaluated, codeptr, missing, wraplist;
   //SEXP seen;
 
   SEXP dataFrame;
@@ -24,79 +24,48 @@ SEXP dots_info(SEXP dots) {
   PROTECT(names = allocVector(STRSXP, length));
   PROTECT(environments = allocVector(VECSXP, length));
   PROTECT(expressions = allocVector(VECSXP, length));
-  PROTECT(evaluated = allocVector(LGLSXP, length));
   PROTECT(values = allocVector(VECSXP, length));
-  //PROTECT(seen = allocVector(LGLSXP, length));
-
-  //codeptr gives the pointer to the s-expression, I investigate this
-  //temporarily.
-  PROTECT(codeptr = allocVector(INTSXP, length));
 
   for (s = dots, i = 0; s != R_NilValue; s = CDR(s), i++) {
     SEXP item = CAR(s);
-
-    SET_STRING_ELT(names, i, isNull(TAG(s)) ? mkChar("") : asChar(TAG(s)));
-
-    //wrap, because this prevent print.data.frame from getting unfriendly :(
-    PROTECT(wraplist = allocVector(VECSXP, 1));
-    SET_VECTOR_ELT(wraplist, 0, PRENV(item));
-    SET_VECTOR_ELT(environments, i, wraplist);
-    UNPROTECT(1);
-
-    PROTECT(wraplist = allocVector(VECSXP, 1));
-    SET_VECTOR_ELT(wraplist, 0, PRCODE(item));
-    SET_VECTOR_ELT(expressions, i, wraplist);
-    UNPROTECT(1);
-
-    PROTECT(wraplist = allocVector(VECSXP, length));
-    SET_VECTOR_ELT(wraplist, 0, PRENV(item));
-    SET_VECTOR_ELT(environments, i, wraplist);
-    UNPROTECT(1);
-    INTEGER(codeptr)[i] = (long int) PRCODE(item);
-
-    if (PRVALUE(item) != R_UnboundValue) {
-      LOGICAL(evaluated)[i] = 1;
-      SET_VECTOR_ELT(values, i, PRVALUE(item));
-    } else {
-      LOGICAL(evaluated)[i] = 0;
-      SET_VECTOR_ELT(values, i, R_NilValue);
+    
+    // if we have an unevluated promise whose code is another promise, descend
+    while ((PRENV(item) != R_NilValue) && (TYPEOF(PRCODE(item)) == PROMSXP)) {
+      item = PRCODE(item);
     }
 
-    //LOGICAL(seen)[i] = (PRSEEN(item) ? TRUE : FALSE);
+    SET_STRING_ELT(names, i, isNull(TAG(s)) ? mkChar("") : asChar(TAG(s)));
+    SET_VECTOR_ELT(environments, i, PRENV(item));
+    SET_VECTOR_ELT(expressions, i, PRCODE(item));
+
+    if (PRVALUE(item) != R_UnboundValue) {
+      SET_VECTOR_ELT(values, i, PRVALUE(item));
+    } else {
+      SET_VECTOR_ELT(values, i, R_NilValue);
+    }
   }
 
-  PROTECT(class = allocVector(STRSXP, 1));
-  SET_STRING_ELT(class, 0, mkChar("AsIs"));
-  setAttrib(expressions, R_ClassSymbol, class);
-  setAttrib(environments, R_ClassSymbol, class);
-  setAttrib(values, R_ClassSymbol, class);
-  UNPROTECT(1);
-
-  PROTECT(dataFrame = allocVector(VECSXP, 6));
-  PROTECT(colNames = allocVector(STRSXP, 6));
+  PROTECT(dataFrame = allocVector(VECSXP, 4));
   SET_VECTOR_ELT(dataFrame, 0, names);
   SET_VECTOR_ELT(dataFrame, 1, environments);
   SET_VECTOR_ELT(dataFrame, 2, expressions);
-  SET_VECTOR_ELT(dataFrame, 3, evaluated);
-  SET_VECTOR_ELT(dataFrame, 4, values);
-  //SET_VECTOR_ELT(dataFrame, 5, seen);
-  SET_VECTOR_ELT(dataFrame, 5, codeptr);
+  SET_VECTOR_ELT(dataFrame, 3, values);
+
+  PROTECT(colNames = allocVector(STRSXP, 4));
   SET_STRING_ELT(colNames, 0, mkChar("name"));
   SET_STRING_ELT(colNames, 1, mkChar("envir"));
   SET_STRING_ELT(colNames, 2, mkChar("expr"));
-  SET_STRING_ELT(colNames, 3, mkChar("eval"));
-  SET_STRING_ELT(colNames, 4, mkChar("value"));
-  //SET_STRING_ELT(colNames, 5, mkChar("seen"));
-  SET_STRING_ELT(colNames, 5, mkChar("pointer"));
+  SET_STRING_ELT(colNames, 3, mkChar("value"));
 
-  setAttrib(dataFrame, R_RowNamesSymbol, names);
+  setAttrib(expressions, R_ClassSymbol, ScalarString(mkChar("deparse")));
+  setAttrib(environments, R_ClassSymbol, ScalarString(mkChar("deparse")));
+  setAttrib(values, R_ClassSymbol, ScalarString(mkChar("deparse")));
+
   setAttrib(dataFrame, R_NamesSymbol, colNames);
+  setAttrib(dataFrame, R_RowNamesSymbol, names);
+  setAttrib(dataFrame, R_ClassSymbol, ScalarString(mkChar("data.frame")));
 
-  PROTECT(class = allocVector(STRSXP, 1));
-  SET_STRING_ELT(class, 0, mkChar("data.frame"));
-  setAttrib(dataFrame, R_ClassSymbol, class);
-
-  UNPROTECT(9);
+  UNPROTECT(6);
   return(dataFrame); 
 }
 

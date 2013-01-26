@@ -44,7 +44,7 @@ quoting.env <- function(names, parent=emptyenv(), call.names=names) {
   callenv <- new.env(parent=parent)
   for (n in as.character(call.names)) {
     f <- eval(substitute(
-                function(...) as.call(c(quote(x), list_with_missing(...))),
+                function(...) as.call(c(quote(x), list_missing(...))),
                 list(x=as.name(n))))
     assign(n, f, envir=callenv)
   }
@@ -84,7 +84,6 @@ quoting.env <- function(names, parent=emptyenv(), call.names=names) {
 #' evaluated.
 #' @section Notes
 #' This is probably rather slow.
-#' @export
 #' @author Peter Meilstrup
 #' @examples
 #' #unlike alist, arguments are evaluated in context.
@@ -268,11 +267,11 @@ macro <- function(fn, cache=TRUE, JIT=TRUE) {
 #' # is equivalent to
 #' function(...(alist(x=1, y=))) x+y
 #' # or
-#' function(...(list(x=1, y=missing.value()))) x+y
+#' function(...(list(x=1, y=missing_value()))) x+y
 #'
 #' # Building a function with an arbitrary list of arguments:
 #' argnames <- letters[1:4]
-#' template(function(.=...(setNames(missing.value(length(argnames)), argnames))) {
+#' template(function(.=...(setNames(missing_value(length(argnames)), argnames))) {
 #'   list(...(lapply(argnames, as.name)))
 #' })
 #' #function(a, b, c, d) list(a, b, c, d)
@@ -343,27 +342,29 @@ template <- function(expr, .envir=parent.frame()) {
 #' Return an empty symbol.
 #'
 #' The empty symbol is used to represent missing values in the R
-#' language; for instance in the value slot of a function argument
-#' when there is no default; and in the expression slot of a promise
-#' when a missing argument is given.
+#' language; for instance in the value of formal function function
+#' arguments when there is no default; in the expression slot of a
+#' promise when a missing argument is given; bound to the value of a
+#' variable when it is called with a missing value;
 #'
 #' @param n Optional; a number. If provided, will return a list of
 #' missing values with this many elements.
 #' @return A symbol with empty name, or a list of such.
+#' @seealso list_missing is.missing
 #' @examples
 #' # These statements are equivalent:
 #' quote(function(x, y=1) x+y)
-#' call("function", as.pairlist(x=missing.value(), y=1), quote(x+y))
+#' call("function", as.pairlist(x=missing_value(), y=1), quote(x+y))
 #'
 #' # These statements are also equivalent:
 #' quote(df[,1])
-#' substitute(df[row,col], list(row = missing.value(), col = 1))
+#' substitute(df[row,col], list(row = missing_value(), col = 1))
 #'
-#' # These statements are equivalent
+#' # These statements are also equivalent:
 #' quote(function(a, b, c, d, e) print("hello"))
-#' call("function", as.pairlist(setNames(missing.value(5), letters[1:5])), quote(print("hello")))
+#' call("function", as.pairlist(setNames(missing_value(5), letters[1:5])), quote(print("hello")))
 #' @export
-missing.value <- function(n) {
+missing_value <- function(n) {
   if (missing(n)) {
     quote(expr=)
   } else {

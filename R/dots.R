@@ -5,34 +5,40 @@
 #' object is a pairlist of promises, usually bound to the special name
 #' \code{"..."} and, when bound to that name, given special
 #' dispensation by the R interpreter when appearing in the argument
-#' list of a call. Dots objects are normally opaque to R code, but you
-#' can obtain a \code{<...>} inside a function by using
-#' \code{get("...")}.
+#' list of a call. Dots objects are normally opaque to R code, and
+#' usually don't explicitly appear in user code, but you can obtain a
+#' \code{\dots} inside of R by using \code{get("...")}.
 #'
 #' @param ... Any number of arguments. Usually, you will pass in the
 #' ... from the body of a function,
-#' e.g. \code{dots_info(...)}. Techinically this creates a copy of the
+#' e.g. \code{dots_unpack(...)}. Technically this creates a copy of the
 #' dots list, but it should be identical.
 #'
-#' @return A data frame, with one row for each element of \code{...},
-#' and columns:
-#' \describe{
-#' \item{"name"}{The name of each argument, or "" if present.}
-#' \item{"envir"}{The enviroment the promise came from.}
-#' \item{"expr"}{The expression attached to the promise.}
-#' \item{"eval"}{TRUE if the promise has been evaluated.}
-#' \item{"value"}{The value attached to the promise, or NULL if not evaluated.}
-#' \item{"seen"}{TRUE if the promise has already been "seen" during promise
-#' evaluation. This flag is set by R during evaluation to detect cyclic
-#' references.}
-#' }
-#' @note The "envir" column is a list of lists, because print.data.frame
-#' still can't handle a column that contains environments (even using
-#' \link{AsIs}).
-#' @seealso dots_names dots_missing
+#' @return A data frame, with one row for each element of
+#' \code{\dots}, and columns: \describe{ \item{"name"}{The name of
+#' each argument, or "" if present.}  \item{"envir"}{The enviroment
+#' the promise came from.}  \item{"expr"}{The expression attached to
+#' the promise. If the promise has been evaluated, this will be NULL.}
+#' \item{"value"}{The value attached to the promise. If the promise
+#' has not been evaluated, this will be NULL. (in reality is it
+#' usually the "missing value," but it would cause too much
+#' strangeness to return missing values from a function.}
+#' @note There are some problems with R printing data frames
+#' containing lists of language objects (and more problems when
+#' working with "missing value" objects.) Therefore this sets the
+#' class on the columns to one with a special as.character method.
+#' @seealso dots_names dots_missing dots_expressions dots
 #' @author Peter Meilstrup
 #' @export
-dots_info <- function(...) .Call("dots_info", get("..."))
+dots_unpack <- function(...) {
+  du <- .Call("dots_unpack", get("..."))
+  data.frame(du, row.names=make.names(du$name, unique=TRUE), check.names=TRUE)
+}
+
+#' @S3method format deparse
+format.deparse <- function(x, ...) {
+  format(vapply(x, deparse, "", nlines=1, width.cutoff=100), ... )
+}
 
 #' Functions to work with dot-dot-dot (\dots) arguments.
 #'
@@ -41,7 +47,7 @@ dots_info <- function(...) .Call("dots_info", get("..."))
 #' have any number of dimensions, indexed by the \code{\link{"["}}
 #' function, where a missing argument means to take all indexes on that
 #' dimension. However there is not a good way to replicate
-#' \code{\link{"["}}'s behavior in base R; using \code{list(...)} to
+#' \code{\link{"["}}'s behavior in base R; using \code{list(\dots)} to
 #' collect all positional arguments will throw errors on missing
 #' arguments. These functions help extract names and values of
 #' positional arguments without triggering missing-value errors.
@@ -296,15 +302,12 @@ curl <- function(f, ...) {
 `%>>%.default` <- function(x, f) function(...)
   if(missing(...)) f %()% x else f %<<% dots(...) %()% x
 
-cdots <- function(x, y) UseMethod("cdots", x)
+`%__%` <- function(x, y) UseMethod("%__%", x)
 
-#' @export
-`%__%` <- cdots
+#' @S3method "%__%" "..."
+`%__%....` <- function(x, y) UseMethod("%__%....", y)
 
-#' @S3method "cdots" "..."
-`cdots....` <- function(x, y) UseMethod("cdots....", y)
-
-cdots........ <- function(x, y, ...) {
+`%__%........` <- function(x, y, ...) {
   dotslists <- list(x, y)
   count <- 0
   rm("...")
@@ -315,16 +318,16 @@ cdots........ <- function(x, y, ...) {
   dots(..., ...)
 }
 
-cdots.....default <- function(x, y) stop()
+`%__%.....default` <- function(x, y) stop()
 
-#' @S3method "cdots" default
-cdots.default <- function(f, x) UseMethod("cdots.default")
+#' @S3method "%__%" default
+`%__%.default` <- function(f, x) UseMethod("%__%.default")
 
-#' @S3method cdots.default "..."
-cdots.default.... <- function (f,x) stop()
+#' @S3method "%__%.default" "..."
+`%__%.default....` <- function (f,x) stop()
 
-#' @S3method cdots.default default
-cdots.default.default <- c
+#' @S3method "%__%.default" default
+`%__%.default.default` <- c
 
 #' Convert a list of expressions into a \code{\dots} object (a list of
 #' promises.)
@@ -350,7 +353,7 @@ as.dots.default <- function(x, .envir=parent.frame())
 #' @param x An object
 #' @return A vector of boolean values.
 #' @author Peter Meilstrup
-#' @seealso dots dots_missing missing.value
+#' @seealso dots dots_missing missing_value
 #' @export
 is.missing <- function(x) if (missing(x)) TRUE else UseMethod("is.missing")
 

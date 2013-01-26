@@ -15,26 +15,72 @@ with_setup <- macro(JIT=FALSE, function(setup=NULL, ..., teardown=NULL) {
 
 ## DOTSXP UNPACKING --------------------------------------------------
 
-test_that("dots_info(dots(...)) descends through promise chains if necessary", {
-  stop("test not written")
+test_that("dots_unpack() method extracts dots information into a data frame", {
+  f <- function(...) {
+    list(dots_unpack(...), environment())
+  }
+  x <- 2
+  y <- 3
+  bind[di, env] <- f(x, y=3, z=x+y)
+  env <- environment()
+
+  expect_identical(di$expr[[1]], quote(x))
+  expect_identical(di$expr[[2]], quote(3))
+  expect_identical(di$expr[[3]], quote(x+y))
+  expect_identical(di$env[[3]], env)
+  expect_identical(di$env[[3]], env)
+  expect_identical(di$env[[3]], env)
+  expect_identical(di$value[[1]], NULL)
+  expect_identical(di$value[[2]], NULL)
+  expect_identical(di$value[[3]], NULL)
+  expect_identical(di$name[[1]], "")
+  expect_identical(di$name[[2]], "y")
+  expect_identical(di$name[[3]], "z")
 })
 
-test_that("dots_info() method extracts dots information", {
-  stop("test not written")
+test_that("dots_unpack(...) exposes promise behavior", {
+  a <- 12
+  b <- a+2
+  unpack_fns <- function(...) {
+    #get functions that to things to the same dotslist
+    list(
+      function() dots_unpack(...),
+      function() (function(x, ...) x)(...),
+      function() list(...),
+      environment()
+      )}
+  outer_env <- environment()
+  bind[reunpack, eval_x, eval_all, inner_env] <- unpack_fns(x=a, y=a+2)
+
+  du <- reunpack()
+  expect_identical(du$value[[1]], NULL)
+  expect_identical(du$env[[1]], outer_env)
+  eval_x()
+  du2 <- reunpack()
+  expect_identical(du2$value[[1]], 12)
+  expect_identical(du2$envir[[1]], NULL)
+  expect_identical(du2$envir[[2]], outer_env)
+  expect_identical(du2$value[[2]], NULL)
 })
 
-test_that("dots_info(dots(...)) unpacks a dotslist and exposes promise behavior", {
-  evalX <- function(x, ...) {
-    force(x)
-    do_describe(yy=x, ...)
-  }
+test_that("dots_unpack has a print method that works", {
+  capture.output(dots_unpack(a, b, c, d, 4, e)) #should go without error
+})
 
-  do_dots <- function(...) {
-    dots_info(...)
+test_that("dots_unpack(...) descends through promise chains if necessary", {
+  y <- 1
+  f1 <- function(...) {
+    x <- 1
+    list(getdots(y=x+1, ...), environment())
   }
+  getdots <- function(...) dots_unpack(...)
 
-  test <- do_dots(x=1+2, y=z, z=2)
-  stop("test_not_written")
+  bind[du, f1_env] <- f1(a=y+z)
+
+  expect_identical(du[["a", "envir"]], environment())
+  expect_identical(du[["y", "envir"]], f1_env)
+  expect_identical(du[["a", "expr"]], quote(y+z))
+  expect_identical(du[["y", "expr"]], quote(x+1))
 })
 
 ## these should also be in reference to dots objects
@@ -43,22 +89,22 @@ test_that("dots_missing", {
     setup={
       if (exists("a")) rm(a)
       unmissing <- 1
-      b <- missing.value()
+      b <- missing_value()
     },
     #test both the dots_missing form and the is.missing.... form
-    thunk <- dots_missing,
+     thunk <- dots_missing,
     thunk <- function(...) is.missing....(dots(...)),
     #actual testing in the teardown
     teardown={
       expect_equal(c(   FALSE, FALSE,     c=TRUE, FALSE, d=FALSE, TRUE),
                    thunk(   a, unmissing, c=,     4,     d=x+y,       ))
 
-      #we currently (R 2.15.2) answers with another level of
-      #function. My opionion is this is a bug in R, so don't check right now.
+      #this currently (R 2.15.2) answers "b" differently in some cases.
+      #My opionion is this is a bug in R, so don't check right now.
       ## wrap <- function(...) {
       ##   thunk(...)
       ## }
-      ## #                                   WHAT
+      ## #                                   *WHAT*
       ## expect_equal(c(   FALSE, FALSE,     FALSE, c=TRUE, FALSE, d=FALSE, TRUE),
       ##              wrap(    a, unmissing, b,     c=,     4,     d=x+y,       ))
 
@@ -234,7 +280,17 @@ test_that("dots() et al with empty inputs", {
   #dotslist the basis of the class (as it will have to be something
   #else to match a zero value.
   #So test variants of dots apply, curry, and cdots, with empty dotslists.
-  stop("test not written")
+  f <- function(x=4, y=2) x * y
+  a <- dots()
+  b <- as.dots(c())
+
+  f %()% a %is% 8
+  f %()% b %is% 8
+  (a %>>% f)() %is% 8
+  (f %<<% b)() %is% 8
+  f %()% (b %__% a) %is% 8
+  (f %<<% list())() %is% 8
+  (list %>>% f)() %is% 8
 })
 
 
@@ -261,7 +317,7 @@ test_that("dots [] operator subsets without forcing promises", {
 
 test_that("[<-.... replacement operator can take values from another dotsxp", {
   #should be able to replace items of a dotslist with items from
-  #another dotslist (or ordinary sequence.)
+  #another dotslist. Non-dotslists should error.
   with_setup(
     setup={
       x <- 2; y<-3;
@@ -277,8 +333,24 @@ test_that("[<-.... replacement operator can take values from another dotsxp", {
     })
 })
 
-test_that("dots [[]] and $ operators go ahead and evaluate. (?)", {
-  stop("test not written")
+test_that("dots [[]] and $ operators force ONE promise and return the value.", {
+  with_setup(
+    setup={
+      x <- 2; y <-3
+      d <- dots(a=x, b=y, c=x+y)
+    },
+    {
+      d[[2]] %is% 3
+      x <- 1
+      d[[1]] %is% 1
+    },
+    {
+      x <- 4
+      d$c %is% 6
+      x <- 3
+      d[["a"]] %is% 3
+    }
+    )
 })
 
 test_that("dots names method extracts tags without forcing", {
