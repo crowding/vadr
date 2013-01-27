@@ -28,10 +28,20 @@
 #' working with "missing value" objects.) Therefore this sets the
 #' class on the columns to one with a special as.character method.
 #' @seealso dots_names dots_missing dots_expressions dots
+#' @aliases unpack
 #' @author Peter Meilstrup
 #' @export
 dots_unpack <- function(...) {
   du <- .Call("dots_unpack", get("..."))
+  data.frame(du, row.names=make.names(du$name, unique=TRUE), check.names=TRUE)
+}
+
+#' @export
+unpack <- function(x) UseMethod("unpack")
+
+#' @S3method unpack ...
+unpack.... <- function (x) {
+  du <- .Call("dots_unpack", x)
   data.frame(du, row.names=make.names(du$name, unique=TRUE), check.names=TRUE)
 }
 
@@ -123,10 +133,11 @@ list_quote <- function(...) eval(substitute(alist(...)))
 #'  }
 #' named.list(a=1, b=2*2, stop("this is not evaluated"))
 #' @export
-dots <- function(...) structure(get("..."), class="...")
+dots <- function(...) structure(if (nargs() > 0) get("...") else NULL,
+                                class="...")
 
 #' @S3method "print" "..."
-`print....` <- function(x) cat("<...[", length(x), "]>\n")
+`print....` <- function(x) invisible(cat("<...[", length(x), "]>\n"))
 
 #' Partially and fully apply arguments to functions.
 #'
@@ -174,14 +185,19 @@ dots <- function(...) structure(get("..."), class="...")
   # this method elegant but doesn't work on some
   # nonstandard-eval functions (e.g. alist $()$ dots(...) just returns
   # quote(...))?
-  assign("...", arglist)
-  f(...)
+  if (length(arglist) == 0)
+    f()
+  else {
+    assign("...", arglist)
+    f(...)
+  }
 }
 
 #' @S3method "%()%" default
 #' @useDynLib ptools
 `%()%.default`  <- function(f, arglist, .envir=parent.frame()) {
 #  do.call(f, as.list(arglist), quote=TRUE)
+  if (length(arglist) == 0) return(f())
   seq <- do.call(dots, as.list(arglist), FALSE, .envir)
   .Call("call_function_from_dots", f, seq, .envir, TRUE)
 }
@@ -194,7 +210,7 @@ dots <- function(...) structure(get("..."), class="...")
 
 #' @S3method "%<<%" "..."
 `%<<%....` <- function(f, x) {
-  if (is.null(x)) return(f)
+  if (length(x) == 0) return(f)
   dotslist <- list(NULL, x)
   function(...) {
     if (missing(...)) {
@@ -219,7 +235,7 @@ dots <- function(...) structure(get("..."), class="...")
 
 #' @S3method "%>>%" "..."
 `%>>%....` <- function(x, f) {
-  if (is.null(x)) return(f)
+  if (length(x) == 0) return(f)
   dotslist <- list(x, NULL)
   function(...) {
     if (missing(...)) {
@@ -308,6 +324,8 @@ curl <- function(f, ...) {
 `%__%....` <- function(x, y) UseMethod("%__%....", y)
 
 `%__%........` <- function(x, y, ...) {
+  if (length(x) == 0) return(y)
+  if (length(y) == 0) return(x)
   dotslists <- list(x, y)
   count <- 0
   rm("...")
@@ -318,13 +336,13 @@ curl <- function(f, ...) {
   dots(..., ...)
 }
 
-`%__%.....default` <- function(x, y) stop()
+`%__%.....default` <- function (x, y) `%__%........`(x, `%()%.default`(dots, y))
 
 #' @S3method "%__%" default
-`%__%.default` <- function(f, x) UseMethod("%__%.default")
+`%__%.default` <- function(x, y) UseMethod("%__%.default", y)
 
 #' @S3method "%__%.default" "..."
-`%__%.default....` <- function (f,x) stop()
+`%__%.default....` <- function (x, y) `%__%........`(`%()%.default`(dots, x), y)
 
 #' @S3method "%__%.default" default
 `%__%.default.default` <- c
@@ -338,6 +356,10 @@ curl <- function(f, ...) {
 #' @seealso dots "%<<%" "%>>%" "%()%" "[...." "[[....", "names...."
 #' @author Peter Meilstrup
 as.dots <- function(x, .envir=parent.frame()) UseMethod("as.dots")
+
+list2dots <- function(x) {
+  dots %()% x
+}
 
 #' @S3method as.dots "..."
 as.dots.... <- function(x, ...) x
@@ -372,7 +394,6 @@ is.missing.... <- function(x, ...) {
   out
 }
 
-
 #' @S3method is.missing default
 is.missing.default <- function(f) {
   if (is.list(f))
@@ -380,3 +401,15 @@ is.missing.default <- function(f) {
   else
     rep(FALSE, length(f))
 }
+
+#' @S3method "[" "..."
+`[....` <- function(x, ...) {
+  temp <- .Call("dotslist_to_list", x)
+  temp <- temp[...]
+  .Call("list_to_dotslist", temp)
+}
+
+#' @S3method "[[" "..."
+`[[....` <- function(x, ...) force %()% x[...]
+
+

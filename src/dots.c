@@ -28,7 +28,7 @@ SEXP dots_unpack(SEXP dots) {
 
   for (s = dots, i = 0; s != R_NilValue; s = CDR(s), i++) {
     SEXP item = CAR(s);
-    
+
     // if we have an unevluated promise whose code is another promise, descend
     while ((PRENV(item) != R_NilValue) && (TYPEOF(PRCODE(item)) == PROMSXP)) {
       item = PRCODE(item);
@@ -144,3 +144,44 @@ SEXP call_function_from_dots(SEXP fun, SEXP args, SEXP envir, SEXP unpromise) {
   return result;
 }
 
+/* Convert a DOTSXP into a list of raw promise objects. */
+SEXP dotslist_to_list(SEXP x) {
+  if (TYPEOF(x) != DOTSXP)
+    error("Expected a ..., got %s", type2char(TYPEOF(x)));
+  int len = length(x);
+  int i;
+  SEXP output, names;
+  PROTECT(output = allocVector(VECSXP, len));
+  PROTECT(names = allocVector(STRSXP, len));
+
+  for (i = 0; x != R_NilValue; x=CDR(x), i++) {
+    SET_VECTOR_ELT(output, i, CAR(x));
+    SET_STRING_ELT(names, i, isNull(TAG(x)) ? R_BlankString : asChar(TAG(x)));
+  }
+  setAttrib(output, R_NamesSymbol, names);
+
+  UNPROTECT(2);
+  return output;
+}
+
+/* Convert a list of promise objects into a DOTSXP. */
+SEXP list_to_dotslist(SEXP list) {
+  if (TYPEOF(list) != VECSXP)
+    error("Expected a list, got %s", type2char(TYPEOF(list)));
+  int len = length(list);
+  int i;
+  SEXP output, names;
+  names = getAttrib(list, R_NamesSymbol);
+  output = PROTECT(allocList(len));
+  SEXP output_iter = output;
+  for (i = 0; i < len; i++, output_iter=CDR(output_iter)) {
+    SET_TYPEOF(output_iter, DOTSXP);
+    if ((names != R_NilValue) && (STRING_ELT(names, i) != R_BlankString)) {
+      SET_TAG(output_iter, install(CHAR(STRING_ELT(names, i)) ));
+    }
+    SETCAR(output_iter, VECTOR_ELT(list, i));
+  }
+  setAttrib(output, R_ClassSymbol, ScalarString(mkChar("...")));
+  UNPROTECT(1);
+  return output;
+}

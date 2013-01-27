@@ -92,7 +92,7 @@ test_that("dots_missing", {
       b <- missing_value()
     },
     #test both the dots_missing form and the is.missing.... form
-     thunk <- dots_missing,
+    thunk <- dots_missing,
     thunk <- function(...) is.missing....(dots(...)),
     #actual testing in the teardown
     teardown={
@@ -274,6 +274,25 @@ test_that("Curry operators concatenate dots, dots stay attached to envs", {
     )
 })
 
+test_that("%__% with mixed sequence types", {
+  with_setup(
+    setup={
+      x <- "a"; y <- "b"; z <- "c"
+      a <- dots(x, y, z)
+      b <- LETTERS[4:6]
+    },
+    paste0 %()% (a %__% b) %is% "abcDEF",
+    paste0 %()% (b %__% a) %is% "DEFabc",
+    {x <- "_"; paste0 %()% (b %__% a) %is% "DEF_bc"},
+    {x <- "_"; paste0 %()% (a %__% b) %is% "_bcDEF"}
+    )
+})
+
+test_that("dots has some kind of print method", {
+  d <- dots(a, b, c)
+   capture.output(print(d))
+})
+
 test_that("dots() et al with empty inputs", {
   #note that there isn't such a thing as an empty dotslist, and this
   #(a) complicates evaluating "..." etc, and (b) complicates making a
@@ -283,6 +302,8 @@ test_that("dots() et al with empty inputs", {
   f <- function(x=4, y=2) x * y
   a <- dots()
   b <- as.dots(c())
+  c <- list(1);
+  d <- dots(2);
 
   f %()% a %is% 8
   f %()% b %is% 8
@@ -290,7 +311,13 @@ test_that("dots() et al with empty inputs", {
   (f %<<% b)() %is% 8
   f %()% (b %__% a) %is% 8
   (f %<<% list())() %is% 8
-  (list %>>% f)() %is% 8
+  (list() %>>% f)() %is% 8
+  f %()% (c %__% list()) %is% 2
+  f %()% (list() %__% d) %is% 4
+  f %()% (a %__% c) %is% 2
+  f %()% (c %__% a) %is% 2
+  f %()% (a %__% d) %is% 4
+  f %()% (d %__% a) %is% 4
 })
 
 
@@ -299,18 +326,19 @@ test_that("dots [] operator subsets without forcing promises", {
     setup= {
       a <- dots(x, r=y, x+y)
       x <- 3
-      y <- 4},
-    { c %()% a[1:2] %is% c(3,r=4)
-      x <- 8
+      y <- 4
+    }, {
+      c %()% a[1:2] %is% c(3,r=4)
+      x <- 4
       c %()% a[3] %is% 8
       y <- 2
-      c %()% a %is% c(3,r=4,8)},
-    { c %()% a[2:3] %is% c(4, 7)
+      c %()% a %is% c(3,r=4,8)
+    }, {
+      c %()% a[2:3] %is% c(r=4, 7)
       x <- 2
-      c %()% a %is% c(2,r=4,7) },
-    { c %()% a["r"] %is% c(r=4)
-      x <- 4
-      c %()% "r" %is% c(r=4)
+      c %()% a %is% c(2,r=4,7)
+    }, {
+      c %()% a["r"] %is% c(r=4)
     }
     )
 })
