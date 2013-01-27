@@ -66,7 +66,7 @@ SEXP dots_unpack(SEXP dots) {
   setAttrib(dataFrame, R_ClassSymbol, ScalarString(mkChar("data.frame")));
 
   UNPROTECT(6);
-  return(dataFrame); 
+  return(dataFrame);
 }
 
 SEXP dots_names(SEXP dots) {
@@ -85,63 +85,36 @@ SEXP dots_names(SEXP dots) {
   return(names);
 }
 
-SEXP _getName(SEXP names, int i) {
-  /* return  names[i]  if it is a character (>= 1 char), or NULL otherwise */
-    if (names != R_NilValue &&
-        STRING_ELT(names, i) != R_NilValue &&
-        CHAR(STRING_ELT(names, i))[0] != '\0') /* length test */
-        return STRING_ELT(names, i);
-    else
-        return R_NilValue;
-}
-
-SEXP call_function_from_dots(SEXP fun, SEXP args, SEXP envir, SEXP unpromise) {
-  if (!isEnvironment(envir))
-    error("'envir' must be an environment");
-  if (TYPEOF(args) != DOTSXP)
-    error("Expected a DOTSXP, got %s", type2char(TYPEOF(args)));
-  if (!isLogical(unpromise) || length(unpromise) != 1)
-    error("Expected a scalar logical for unforce, got %s[%d]",
-          type2char(TYPEOF(unpromise)), length(unpromise));
-  int do_unpromise = LOGICAL(unpromise)[0];
-
-  SEXP call;
-  PROTECT( call = allocVector(LANGSXP, length(args) + 1 ));
-  SETCAR(call, fun);
-
-  SEXP in, out, name;
-  int i;
-  for (out = CDR(call), in = args, i = 0;
-       out != R_NilValue;
-       in=CDR(in), out=CDR(out), i++) {
-    SETCAR( out, CAR(in));
-    if (do_unpromise && TYPEOF(CAR(out)) == PROMSXP) {
-      // unwrap multiple-promise chains, leaving one promise that
-      // "looks" evaluated.
-      SEXP bot = CAR(out);
-      while (1) {
-        if (PRENV(bot) == R_NilValue) {
-          break;
-        } else {
-          if (TYPEOF(PRCODE(bot)) == PROMSXP) {
-            bot = PRCODE(bot);
-          } else break;
-        }
-      }
-      if (PRENV(bot) != R_NilValue) {
-        if (PRVALUE(bot) == R_UnboundValue) {
-          SET_PRVALUE(bot, PRCODE(bot));
-        }
-        SET_PRENV(bot, R_NilValue);
-      }
-      SETCAR(out, bot);
-    }
-    SET_TAG( out, TAG(in) );
+SEXP as_dots_literal(SEXP list, SEXP dotlist) {
+  if (length(dotlist) == 0) {
+    dotlist = PROTECT(allocVector(VECSXP, 0));
+    setAttrib(dotlist, R_ClassSymbol, ScalarString(mkChar("...")));
+    UNPROTECT(1);
+    return dotlist;
   }
-  SEXP result = eval( call, envir );
-
-  UNPROTECT(1);
-  return result;
+  if (TYPEOF(list) != VECSXP)
+    error("Expected list, got %s", type2char(TYPEOF(list)));
+  if (TYPEOF(dotlist) != DOTSXP)
+    error("Expected ..., got %s", type2char(TYPEOF(dotlist)));
+  int len = length(list);
+  SEXP names = getAttrib(list, R_NamesSymbol);
+  int i;
+  SEXP iter;
+  /* destructively jam the values into the dotlist */
+  for (i = 0, iter = dotlist;
+       iter != R_NilValue && i < len;
+       i++, iter = CDR(iter)) {
+    if (TYPEOF(CAR(iter)) != PROMSXP)
+      error("Expected promise, got %s", type2char(TYPEOF(CAR(iter))));
+    SET_PRVALUE(CAR(iter), VECTOR_ELT(list, i));
+    SET_PRCODE(CAR(iter), VECTOR_ELT(list, i));
+    SET_PRENV(CAR(iter), R_NilValue);
+    if ((names != R_NilValue) && (STRING_ELT(names, i) != R_BlankString)) {
+      SET_TAG(iter, install(CHAR(STRING_ELT(names, i)) ));
+    }
+  }
+  setAttrib(dotlist, R_ClassSymbol, ScalarString(mkChar("...")));
+  return dotlist;
 }
 
 /* Convert a DOTSXP into a list of raw promise objects. */

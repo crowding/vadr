@@ -181,16 +181,13 @@ dots <- function(...) structure(if (nargs() > 0) get("...") else NULL,
 `%()%` <- function(f, arglist) UseMethod("%()%", arglist)
 
 #' @S3method "%()%" "..."
-`%()%....` <- function(f, arglist, ...) {
+`%()%....` <- function(f, arglist) {
   # this method elegant but doesn't work on some
   # nonstandard-eval functions (e.g. alist $()$ dots(...) just returns
   # quote(...))?
-  if (length(arglist) == 0)
-    f()
-  else {
-    assign("...", arglist)
-    f(...)
-  }
+  if (length(arglist) == 0) return(f())
+  assign("...", arglist)
+  f(...)
 }
 
 #' @S3method "%()%" default
@@ -198,8 +195,8 @@ dots <- function(...) structure(if (nargs() > 0) get("...") else NULL,
 `%()%.default`  <- function(f, arglist, .envir=parent.frame()) {
 #  do.call(f, as.list(arglist), quote=TRUE)
   if (length(arglist) == 0) return(f())
-  seq <- do.call(dots, as.list(arglist), FALSE, .envir)
-  .Call("call_function_from_dots", f, seq, .envir, TRUE)
+  assign("...", as.dots.literal(as.list(arglist)))
+  f(...)
 }
 
 #' @export
@@ -254,7 +251,8 @@ dots <- function(...) structure(if (nargs() > 0) get("...") else NULL,
   }
 }
 
-#also a standalone right-curry and left-curry; does not use S3-dispacthed dots objects
+#also a standalone right-curry and left-curry; does not use
+#S3-dispatched dots objects.
 
 #' @export
 curr <- function(f, ...) {
@@ -273,8 +271,6 @@ curr <- function(f, ...) {
         makeActiveBinding("...",
                           function() stored_dots[[selector <<- selector+1]],
                           environment())
-        # this depends in a deep way on how ... are represented and evaluated
-        # see eval.c
         f(..., ...)
       }
     }
@@ -298,8 +294,6 @@ curl <- function(f, ...) {
         makeActiveBinding("...",
                           function() stored_dots[[selector <<- selector+1]],
                           environment())
-        # this depends in a deep way on how ... are represented and evaluated
-        # see eval.c, "R Internals"
         f(..., ...)
       }
     }
@@ -311,12 +305,10 @@ curl <- function(f, ...) {
 #semantics.
 
 #' @S3method "%<<%" default
-`%<<%.default` <- function(f, x) function(...)
-  if(missing(...)) f %()% x else dots(...) %>>% f %()% x
+`%<<%.default` <- function(f, x) `%<<%....`(f, as.dots.literal(x))
 
 #' @S3method "%>>%" default
-`%>>%.default` <- function(x, f) function(...)
-  if(missing(...)) f %()% x else f %<<% dots(...) %()% x
+`%>>%.default` <- function(x, f) `%>>%....`(as.dots.literal(x), f)
 
 `%__%` <- function(x, y) UseMethod("%__%", x)
 
@@ -336,13 +328,13 @@ curl <- function(f, ...) {
   dots(..., ...)
 }
 
-`%__%.....default` <- function (x, y) `%__%........`(x, `%()%.default`(dots, y))
+`%__%.....default` <- function (x, y) `%__%........`(x, as.dots.literal(y))
 
 #' @S3method "%__%" default
 `%__%.default` <- function(x, y) UseMethod("%__%.default", y)
 
 #' @S3method "%__%.default" "..."
-`%__%.default....` <- function (x, y) `%__%........`(`%()%.default`(dots, x), y)
+`%__%.default....` <- function (x, y) `%__%........`(as.dots.literal(x), y)
 
 #' @S3method "%__%.default" default
 `%__%.default.default` <- c
@@ -350,16 +342,16 @@ curl <- function(f, ...) {
 #' Convert a list of expressions into a \code{\dots} object (a list of
 #' promises.)
 #'
-#' @param x a vector of expressions.
+#' @param x a vector or list.
 #' @param .envir The environment within which each promise will be evaluated.
-#' @return An object of class \code{\dots}.
+#' @return An object of class \code{\dots}. For \code{as.dots}, the
+#' list items are treated as expressions to be evaluated. For \code{as.dots},
+#' the items are treated as listeral values.
 #' @seealso dots "%<<%" "%>>%" "%()%" "[...." "[[....", "names...."
 #' @author Peter Meilstrup
+#' @aliases as.dots.literal
+#' @export
 as.dots <- function(x, .envir=parent.frame()) UseMethod("as.dots")
-
-list2dots <- function(x) {
-  dots %()% x
-}
 
 #' @S3method as.dots "..."
 as.dots.... <- function(x, ...) x
@@ -367,6 +359,12 @@ as.dots.... <- function(x, ...) x
 #' @S3method as.dots default
 as.dots.default <- function(x, .envir=parent.frame())
   do.call(dots, as.list(x), FALSE, .envir)
+
+# the `do.call` here is to feed in a new dotlist of promises, since
+# allocating promises isn't made available in the .Call interface
+#' @export
+as.dots.literal <- function(x)
+  .Call("as_dots_literal", as.list(x), do.call(dots, as.list(x)))
 
 #' Check if list members are equal to the "missing value."
 #'
@@ -380,9 +378,8 @@ as.dots.default <- function(x, .envir=parent.frame())
 is.missing <- function(x) if (missing(x)) TRUE else UseMethod("is.missing")
 
 #' @S3method is.missing "..."
-is.missing.... <- function(x, ...) {
+is.missing.... <- function(x) {
   out <- logical(length(x))
-  if (nargs() > 2) stop("more than one argument supplied to is.missing")
   assign("...", x)
   sym = paste("..", seq_len(length(x)), sep="")
   for (i in seq_len(length(x))) {
@@ -410,6 +407,45 @@ is.missing.default <- function(f) {
 }
 
 #' @S3method "[[" "..."
-`[[....` <- function(x, ...) force %()% x[...]
+`[[....` <- function(x, ...) {
+  temp <- .Call("dotslist_to_list", x)
+  do.call(force.first.arg, list(temp[[...]]))
+}
+
+#' @S3method "[<-" "..."
+`[<-....` <- function(x, ix, value, ...) UseMethod("[<-....", value)
+
+#' @S3method "[<-...." "..."
+`[<-........` <- function(x, ix, value, ...) {
+  into <- .Call("dotslist_to_list", x)
+  from <- .Call("dotslist_to_list", value)
+  into[ix, ...] <- from
+  .Call("list_to_dotslist", into)
+}
+
+#' @S3method "[<-...." "default"
+`[<-.....default` <- function(x, ix, value, ...) {
+  into <- .Call("dotslist_to_list", x)
+  from <- .Call("dotslist_to_list", as.dots.literal(value))
+  into[ix, ...] <- from
+  .Call("list_to_dotslist", into)
+}
 
 
+#' @S3method "$" "..."
+`$....` <- function(x, name) {
+  temp <- .Call("dotslist_to_list", x)
+  do.call(force.first.arg, list(do.call(`$`, list(temp, name))))
+}
+
+#' @S3Method "names" "..."
+names.... <- function(x) .Call("dots_names", x)
+
+`names<-....` <- function(x, value) {
+  temp <- .Call("dotslist_to_list", x)
+  names(temp) <- value
+  .Call("list_to_dotslist", temp)
+}
+
+#force() forces "the argument named x", while force.first.arg is agnostic to the name.
+force.first.arg <- function(...) ..1

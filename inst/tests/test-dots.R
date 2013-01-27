@@ -298,7 +298,7 @@ test_that("dots() et al with empty inputs", {
   #(a) complicates evaluating "..." etc, and (b) complicates making a
   #dotslist the basis of the class (as it will have to be something
   #else to match a zero value.
-  #So test variants of dots apply, curry, and cdots, with empty dotslists.
+  #So test variants of dots apply, curry, and cdots, with  empty dotslists.
   f <- function(x=4, y=2) x * y
   a <- dots()
   b <- as.dots(c())
@@ -349,15 +349,15 @@ test_that("[<-.... replacement operator can take values from another dotsxp", {
   with_setup(
     setup={
       x <- 2; y<-3;
-      d <- dots(a=x, b=y, c=x+y) },
-    {
+      d <- dots(a=x, b=y, c=x+y)
+    }, {
       d[2] <- 10
       y <- 4
-      c %()% d %is% c(a=2, b=10, c=7) },
-    {
+      c %()% d %is% c(a=2, b=10, c=6)
+    }, {
       d["a"] <- dots(x*y)
       x <- 5
-      c %()% d %is% c(a=15, b=3, c=8)
+       c %()% d %is% c(a=15, b=3, c=8)
     })
 })
 
@@ -374,7 +374,7 @@ test_that("dots [[]] and $ operators force ONE promise and return the value.", {
     },
     {
       x <- 4
-      d$c %is% 6
+      d$c %is% 7
       x <- 3
       d[["a"]] %is% 3
     }
@@ -390,11 +390,10 @@ test_that("dots names<- method can set tags w/o forcing", {
   with_setup(
     setup={
       x <- 2; y<-3;
-      d <- dots(a=x, b=y, c=x+y) },
-    {
+      d <- dots(a=x, b=y, c=x+y)
+    }, {
       names(d) <- c("foo", "bar", "baz")
       y <- 4
-      c %()% d %is% c(foo=2, bar=10, baz=7) }
+      c %()% d %is% c(foo=2, bar=4, baz=6) }
     )
 })
-
