@@ -73,7 +73,7 @@ format.deparse <- function(x, ...) {
 #' \item For \code{\link{dots_missing}}, a logical vector with TRUE for each
 #' missing argument.
 #' \item For \code{\link{list_missing}}, a named list of all evaluated
-#' arguments, where any missing arguments are set to NULL.
+#' arguments, where any missing arguments are set to missing.value.
 #' \item For \code{\link{list_quote}}, a list of quoted arguments. This extracts
 #' the original expressions from a dotlist without forcing evaluation.
 #' }
@@ -95,11 +95,15 @@ dots_missing <- function(...) {
 
 #' @export
 list_missing <- function(...) {
-  out <- logical(nargs())
+  out <- vector("list", nargs())
   sym = paste("..", seq_len(nargs()), sep="")
   for (i in seq_len(nargs())) {
     x <- as.name(sym[[i]])
-    out[i] <- eval(substitute(missing(x)))
+    if (eval(call("missing", x))) {
+      out[[i]] <- missing_value()
+    } else {
+      out[[i]] <- eval(x)
+    }
   }
   n <- dots_names(...)
   if (!is.null(n)) names(out) <- n
@@ -135,6 +139,39 @@ list_quote <- function(...) eval(substitute(alist(...)))
 #' @export
 dots <- function(...) structure(if (nargs() > 0) get("...") else NULL,
                                 class="...")
+
+#' Return an empty symbol.
+#'
+#' The empty symbol is used to represent missing values in the R
+#' language; for instance in the value of formal function function
+#' arguments when there is no default; in the expression slot of a
+#' promise when a missing argument is given; bound to the value of a
+#' variable when it is called with a missing value;
+#'
+#' @param n Optional; a number. If provided, will return a list of
+#' missing values with this many elements.
+#' @return A symbol with empty name, or a list of such.
+#' @seealso list_missing is.missing
+#' @examples
+#' # These statements are equivalent:
+#' quote(function(x, y=1) x+y)
+#' call("function", as.pairlist(x=missing_value(), y=1), quote(x+y))
+#'
+#' # These statements are also equivalent:
+#' quote(df[,1])
+#' substitute(df[row,col], list(row = missing_value(), col = 1))
+#'
+#' # These statements are also equivalent:
+#' quote(function(a, b, c, d, e) print("hello"))
+#' call("function", as.pairlist(setNames(missing_value(5), letters[1:5])), quote(print("hello")))
+#' @export
+missing_value <- function(n) {
+  if (missing(n)) {
+    quote(expr=)
+  } else {
+    rep(list(quote(expr=)), n)
+  }
+}
 
 #' @S3method "print" "..."
 `print....` <- function(x) invisible(cat("<...[", length(x), "]>\n"))
@@ -364,7 +401,7 @@ as.dots.default <- function(x, .envir=parent.frame())
 # allocating promises isn't made available in the .Call interface
 #' @export
 as.dots.literal <- function(x)
-  .Call("as_dots_literal", as.list(x), do.call(dots, as.list(x)))
+  .Call("as_dots_literal", as.list(x), do.call(dots, vector("list", length(x))))
 
 #' Check if list members are equal to the "missing value."
 #'

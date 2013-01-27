@@ -48,88 +48,15 @@ quoting.env <- function(names, parent=emptyenv(), call.names=names) {
                 list(x=as.name(n))))
     assign(n, f, envir=callenv)
   }
-  if ("..." %in% names) {
-    capture.dots <- function(...) environment()
-    nameenv <- eval(call("capture.dots", quote(quote(...))))
-    parent.env(nameenv) <- callenv
-  } else {
-    nameenv <- new.env(parent=callenv)
-  }
+  nameenv <- new.env(parent=callenv)
   for (n in names) {
-    if (n != "...") {
+    if (n == "...") {
+      assign("...", as.dots.literal(quote(...)), envir=nameenv)
+    } else {
       assign(n, as.name(n), envir=nameenv)
     }
   }
   nameenv
-}
-
-#' Construct a list, but allow missing arguments.
-#'
-#' This is particularly useful for supporting array-indexing
-#' functions, that work like built-in \code{\link{`[`}}; it allows
-#' you to tell when arguments are missing, but also evaluate
-#' any numnber of non-missing arguments in their correct environments.
-#' choking on missing arguments. That is, it lets you implement a
-#' \code{`[`} accessor that currectly supports usage like
-#' \code{function(a,b)(array[a*b, ])(4,2*e)}. It is also used in
-#' \code{\link{expand_macros()}} and for other computing-on-the-language purposes.
-#'
-#' @param ... Objects, possibly named, possibly missing.
-#' @param `*default*` What to fill. Should be an _expression_ that will be
-#' _evaluated_ to fill in missing values. Default is an expression that
-#' evaluates to the empty symbol.
-#' @param `*envir*` The environment in which *default* will be evaluated.
-#' @return A list, with any non-missing arguments evaluated, any
-#' other arguments substituted with the default expression and
-#' evaluated.
-#' @section Notes
-#' This is probably rather slow.
-#' @author Peter Meilstrup
-#' @examples
-#' #unlike alist, arguments are evaluated in context.
-#' y <- 4
-#' alist(2*y, , x=12+24, d=)
-#' list.with.missing(2*y, , x=12+24, d=)
-#'
-#' #unlike with `list`, missing arguments are detected and handled.
-#' \dontrun{
-#' list(2*y, , x=12+24, d=) #produces an error.
-#' }
-list_with_missing <- function(...,
-                              `*default*`=quote(quote(expr= )),
-                              `*envir*`=parent.frame()) {
-  #We need to check each element of "..." for missingness.
-  #
-  #'...' is functionally a list of promises, but it's an opaque object
-  #of class '...' that is a given special treatment bu the
-  #interpreter. We would like to inspect each elment of '...' to see
-  #if it is missing.
-  #
-  #But the only thing you can do with a '...' is pass it to a call. So
-  #we build a function that takes arguments whose names match those of
-  #'...' (inspected wtih substitute()) and pass in; then we can check
-  #each argument for missingness, eval the ones that aren't missing
-  #and build a list.
-
-  uneval.args <- eval(substitute(alist(...)))
-  lexically.missing <- sapply(uneval.args,
-                              function(x) is.name(x) && as.character(x) == "")
-  orig.argnames <- names(uneval.args)
-  if (is.null(orig.argnames)) orig.argnames <- rep("", length(uneval.args))
-  empty.names <- orig.argnames == ""
-  argnames <- orig.argnames
-  argnames[empty.names] <- make_unique_names(rep("...anon", sum(empty.names)),
-                                             argnames[!empty.names])
-  arglist <- as.pairlist(
-               structure(rep(list(quote(expr= )),
-                             length(uneval.args)),
-                         names=argnames))
-  body <- mapply(FUN=`if`, !lexically.missing, lapply(argnames, as.name),
-                 moreArgs=list(`*default*`))
-  names(body) <- orig.argnames
-  body <- as.call(c(base:::list, body))
-  f <- eval(call('function', arglist, body), `*envir*`)
-  f(...)
 }
 
 ##' Modify some character strings unique with respect with an
@@ -336,40 +263,6 @@ template <- function(expr, .envir=parent.frame()) {
   }
 
   unquote(substitute(expr))
-}
-
-
-#' Return an empty symbol.
-#'
-#' The empty symbol is used to represent missing values in the R
-#' language; for instance in the value of formal function function
-#' arguments when there is no default; in the expression slot of a
-#' promise when a missing argument is given; bound to the value of a
-#' variable when it is called with a missing value;
-#'
-#' @param n Optional; a number. If provided, will return a list of
-#' missing values with this many elements.
-#' @return A symbol with empty name, or a list of such.
-#' @seealso list_missing is.missing
-#' @examples
-#' # These statements are equivalent:
-#' quote(function(x, y=1) x+y)
-#' call("function", as.pairlist(x=missing_value(), y=1), quote(x+y))
-#'
-#' # These statements are also equivalent:
-#' quote(df[,1])
-#' substitute(df[row,col], list(row = missing_value(), col = 1))
-#'
-#' # These statements are also equivalent:
-#' quote(function(a, b, c, d, e) print("hello"))
-#' call("function", as.pairlist(setNames(missing_value(5), letters[1:5])), quote(print("hello")))
-#' @export
-missing_value <- function(n) {
-  if (missing(n)) {
-    quote(expr=)
-  } else {
-    rep(list(quote(expr=)), n)
-  }
 }
 
 #' Expand any macros in the quoted expression.

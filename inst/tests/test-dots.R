@@ -133,6 +133,25 @@ test_that("is.missing on non-dotlists", {
   is.missing(function(x) y) %is% FALSE
 })
 
+test_that("list_missing evaluates arguments in the original scopes", {
+  fOne <- function(...) {
+    fThree <- function(...) {
+      x <- "three"
+      list_missing(..., three=x)
+    }
+    fTwo <- function(...) {
+      x <- "two"
+      fThree(..., two=x)
+    }
+    x <- "one"
+    fTwo(..., one=x)
+  }
+
+  x <- "four"
+  expect_equal(fOne(four=x),
+               list(four="four", one="one", two="two", three="three"))
+})
+
 ## DOTS OBJECT, CALLING AND CURRYING -------------------------------------
 
 test_that("%()% is like do.call(quote=TRUE) but doesn't overquote", {
@@ -218,6 +237,11 @@ test_that("as.dots() is idempotent on dots objects", {
   l <- f(l)
   x <- 5
   c %()% l %is% 5
+})
+
+test_that("as.dots.literal puts literal things into dots", {
+  list %()% as.dots.literal(alist(a, b, c, d)) %is% alist(a,b,c,d)
+  list %()% as.dots.literal(list(quote(...))) %is% list(quote(...))
 })
 
 test_that("Curried dots evaluate like promises", {

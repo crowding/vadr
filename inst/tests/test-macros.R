@@ -29,25 +29,6 @@ test_that("list_with_missing", {
                alist(a="one", b=, "three"))
 })
 
-test_that("list_with_missing evaluates arguments in the original scopes", {
-  fOne <- function(...) {
-    fThree <- function(...) {
-      x <- "three"
-      list_with_missing(..., three=x)
-    }
-    fTwo <- function(...) {
-      x <- "two"
-      fThree(..., two=x)
-    }
-    x <- "one"
-    fTwo(..., one=x)
-  }
-
-  x <- "four"
-  expect_equal(fOne(four=x),
-               list(four="four", one="one", two="two", three="three"))
-})
-
 test_that("quoting.env and missings", {
   en <- quoting.env(c('[', '<-', 'a', 'b', 'c'))
   expect_equal(evalq(a[1, ] <- b[, 2], en),
@@ -153,7 +134,7 @@ test_that("template interpolation in first argument", {
   argnames <- letters[1:4]
   expect_equal(
     template(function(
-                .=...(setNames(missing.value(length(argnames)), argnames)))
+                .=...(setNames(missing_value(length(argnames)), argnames)))
              {
                list(.=...(lapply(argnames, as.name)))
              } )
