@@ -18,6 +18,6 @@
   Peter Meilstrup
 }
 \seealso{
-  dots dots_missing missing.value
+  dots dots_missing missing_value
 }
 

@@ -19,10 +19,10 @@
   \code{\link{dots_missing}}, a logical vector with TRUE
   for each missing argument. \item For
   \code{\link{list_missing}}, a named list of all evaluated
-  arguments, where any missing arguments are set to NULL.
-  \item For \code{\link{list_quote}}, a list of quoted
-  arguments. This extracts the original expressions from a
-  dotlist without forcing evaluation. }
+  arguments, where any missing arguments are set to
+  missing.value. \item For \code{\link{list_quote}}, a list
+  of quoted arguments. This extracts the original
+  expressions from a dotlist without forcing evaluation. }
 }
 \description{
   These are useful for writing functions that accept any
@@ -31,8 +31,8 @@
   the \code{\link{"["}} function, where a missing argument
   means to take all indexes on that dimension. However
   there is not a good way to replicate \code{\link{"["}}'s
-  behavior in base R; using \code{list(...)} to collect all
-  positional arguments will throw errors on missing
+  behavior in base R; using \code{list(\dots)} to collect
+  all positional arguments will throw errors on missing
   arguments. These functions help extract names and values
   of positional arguments without triggering missing-value
   errors.

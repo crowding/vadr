@@ -1,16 +1,19 @@
 Package: ptools
 Type: Package
-Title: Tools for compact programming
+Title: Favorite features from your favorite language, in R
 Version: 0.01
 Date: 2012-09-21
 Author: Peter Meilstrup <peter.meilstrup@gmail.com>
 Maintainer: Peter Meilstrup <peter.meilstrup@gmail.com>
 Description: This package implements workalikes for the author's (and
     perhaps your) favorite features from other languages, making R
-    programs shorter and more expressive. The centerpiece is an
-    efficient facility for macro-like functions. Built on that are a
-    destructuring-bind, a pipline macro similar to the "->" macro of
-    Clojure, and other utilities.
+    programs shorter and more expressive.  destructurimg bind lets you
+    perform parallel assignments and unpack nested lists. A chain
+    macro lets you quickly string several operationstogether, similar
+    to Unix pipelines. A collection of functions makes it easy to work
+    with `...` arguments and missing values. Behind the scenes is an
+    efficient macro utility, with a much improved alternative to the
+    bquote() function.
 License: MIT
 Suggests:
     testthat (>= 0.2),

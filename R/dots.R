@@ -475,7 +475,7 @@ is.missing.default <- function(f) {
   do.call(force.first.arg, list(do.call(`$`, list(temp, name))))
 }
 
-#' @S3Method "names" "..."
+#' @S3method "names" "..."
 names.... <- function(x) .Call("dots_names", x)
 
 `names<-....` <- function(x, value) {

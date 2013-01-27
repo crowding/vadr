@@ -58,11 +58,11 @@ function(x=1, y) x+y
 # is equivalent to
 function(...(alist(x=1, y=))) x+y
 # or
-function(...(list(x=1, y=missing.value()))) x+y
+function(...(list(x=1, y=missing_value()))) x+y
 
 # Building a function with an arbitrary list of arguments:
 argnames <- letters[1:4]
-template(function(.=...(setNames(missing.value(length(argnames)), argnames))) {
+template(function(.=...(setNames(missing_value(length(argnames)), argnames))) {
   list(...(lapply(argnames, as.name)))
 })
 #function(a, b, c, d) list(a, b, c, d)
