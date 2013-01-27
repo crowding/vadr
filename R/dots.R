@@ -174,7 +174,10 @@ missing_value <- function(n) {
 }
 
 #' @S3method "print" "..."
-`print....` <- function(x) invisible(cat("<...[", length(x), "]>\n"))
+`print....` <- function(x, ...) invisible(cat("<...[", length(x), "]>\n"))
+
+#' @S3method "show" "..."
+`show....` <- function(x, ...) invisible(cat("<...[", length(x), "]>\n"))
 
 #' Partially and fully apply arguments to functions.
 #'
