@@ -1,4 +1,3 @@
-\docType{data}
 \name{dots_names}
 \alias{alist}
 \alias{dots_missing}
@@ -6,13 +5,8 @@
 \alias{list_missing}
 \alias{list_quote}
 \title{Functions to work with dot-dot-dot (\dots) arguments.}
-\format{List of 3
- $ name   : chr "dots_names"
- $ address:Class 'NativeSymbol' <externalptr> 
- $ package: NULL
- - attr(*, "class")= chr "NativeSymbolInfo"}
 \usage{
-  dots_names
+  dots_names(...)
 }
 \arguments{
   \item{...}{Any arguments. Usually you will pass
@@ -55,5 +49,4 @@
 \seealso{
   is.missing dots curr
 }
-\keyword{datasets}
 

@@ -1,18 +1,17 @@
 #include <R.h>
 #include <Rinternals.h>
 
-int dots_length(SEXP dots);
-const char* sexp_type_to_string(SEXPTYPE type);
+int _dots_length(SEXP dots);
 
 /*
  * Extract every unevaluated element or literal of a
  * dots-list. In the names, give their pointers.
  */
-SEXP expressions_and_pointers(SEXP dots) {
+SEXP _expressions_and_pointers(SEXP dots) {
   SEXP result, pointers, s;
   int i, length;
 
-  length = dots_length(dots);
+  length = _dots_length(dots);
   PROTECT(result = allocVector(VECSXP, length));
   PROTECT(pointers = allocVector(STRSXP, length));
   for (s = dots, i = 0; i < length; s = CDR(s), i++) {
@@ -96,7 +95,7 @@ SEXP expressions_and_pointers(SEXP dots) {
 }
 
 /* measure the length of a dots object. */
-int dots_length(SEXP dots) {
+int _dots_length(SEXP dots) {
   SEXP s; int length;
   if (TYPEOF(dots) != DOTSXP) {
     error("Expected a dots object");

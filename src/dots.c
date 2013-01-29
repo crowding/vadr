@@ -1,9 +1,9 @@
 #include <R.h>
 #include <Rinternals.h>
 
-int dots_length(SEXP dots);
+int _dots_length(SEXP dots);
 
-SEXP dots_unpack(SEXP dots) {
+SEXP _dots_unpack(SEXP dots) {
   int i;
   SEXP s;
   SEXP item;
@@ -17,7 +17,7 @@ SEXP dots_unpack(SEXP dots) {
   SEXP class;
 
   //check inputs and measure length
-  length = dots_length(dots);
+  length = _dots_length(dots);
 
   // unpack information for each item:
   // names, environemnts, expressions, values, evaluated, seen
@@ -69,11 +69,11 @@ SEXP dots_unpack(SEXP dots) {
   return(dataFrame);
 }
 
-SEXP dots_names(SEXP dots) {
+SEXP _dots_names(SEXP dots) {
   SEXP names, s;
   int i, length;
 
-  length = dots_length(dots);
+  length = _dots_length(dots);
 
   PROTECT(names = allocVector(STRSXP, length));
 
@@ -85,7 +85,7 @@ SEXP dots_names(SEXP dots) {
   return(names);
 }
 
-SEXP as_dots_literal(SEXP list, SEXP dotlist) {
+SEXP _as_dots_literal(SEXP list, SEXP dotlist) {
   if (length(dotlist) == 0) {
     dotlist = PROTECT(allocVector(VECSXP, 0));
     setAttrib(dotlist, R_ClassSymbol, ScalarString(mkChar("...")));
@@ -118,7 +118,7 @@ SEXP as_dots_literal(SEXP list, SEXP dotlist) {
 }
 
 /* Convert a DOTSXP into a list of raw promise objects. */
-SEXP dotslist_to_list(SEXP x) {
+SEXP _dotslist_to_list(SEXP x) {
   if (TYPEOF(x) != DOTSXP)
     error("Expected a ..., got %s", type2char(TYPEOF(x)));
   int len = length(x);
@@ -138,7 +138,7 @@ SEXP dotslist_to_list(SEXP x) {
 }
 
 /* Convert a list of promise objects into a DOTSXP. */
-SEXP list_to_dotslist(SEXP list) {
+SEXP _list_to_dotslist(SEXP list) {
   if (TYPEOF(list) != VECSXP)
     error("Expected a list, got %s", type2char(TYPEOF(list)));
   int len = length(list);
