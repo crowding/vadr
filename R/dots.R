@@ -30,9 +30,10 @@
 #' @seealso dots_names dots_missing dots_expressions dots
 #' @aliases unpack
 #' @author Peter Meilstrup
+#' @useDynLib ptools dots_unpack
 #' @export
 dots_unpack <- function(...) {
-  du <- .Call("dots_unpack", get("..."))
+  du <- .Call(dots_unpack, get("..."))
   data.frame(du, row.names=make.names(du$name, unique=TRUE), check.names=TRUE)
 }
 
@@ -40,8 +41,9 @@ dots_unpack <- function(...) {
 unpack <- function(x) UseMethod("unpack")
 
 #' @S3method unpack ...
+#' @useDynLib ptools dots_unpack
 unpack.... <- function (x) {
-  du <- .Call("dots_unpack", x)
+  du <- .Call(dots_unpack, x)
   data.frame(du, row.names=make.names(du$name, unique=TRUE), check.names=TRUE)
 }
 
@@ -80,9 +82,9 @@ format.deparse <- function(x, ...) {
 #' @author Peter Meilstrup
 #' @aliases dots_missing list_missing list_quote alist
 #' @seealso is.missing dots curr
-#' @useDynLib ptools
+#' @useDynLib ptools dots_names
 #' @export
-dots_names <- function(...) .Call("dots_names", get("..."))
+dots_names <- function(...) .Call(dots_names, get("..."))
 
 #' @export
 dots_missing <- function(...) {
@@ -228,9 +230,7 @@ missing_value <- function(n) {
 }
 
 #' @S3method "%()%" default
-#' @useDynLib ptools
 `%()%.default`  <- function(f, arglist, .envir=parent.frame()) {
-#  do.call(f, as.list(arglist), quote=TRUE)
   if (length(arglist) == 0) return(f())
   assign("...", as.dots.literal(as.list(arglist)))
   f(...)
@@ -399,9 +399,10 @@ as.dots.default <- function(x, .envir=parent.frame())
 
 # the `do.call` here is to feed in a new dotlist of promises, since
 # allocating promises isn't made available in the .Call interface
+#' @useDynLib ptools as_dots_literal
 #' @export
 as.dots.literal <- function(x)
-  .Call("as_dots_literal", as.list(x), do.call(dots, vector("list", length(x))))
+  .Call(as_dots_literal, as.list(x), do.call(dots, vector("list", length(x))))
 
 #' Check if list members are equal to the "missing value."
 #'
@@ -437,15 +438,17 @@ is.missing.default <- function(f) {
 }
 
 #' @S3method "[" "..."
+#' @useDynLib ptools list_to_dotslist
 `[....` <- function(x, ...) {
-  temp <- .Call("dotslist_to_list", x)
+  temp <- .Call(dotslist_to_list, x)
   temp <- temp[...]
-  .Call("list_to_dotslist", temp)
+  .Call(list_to_dotslist, temp)
 }
 
 #' @S3method "[[" "..."
+#' @useDynLib ptools dotslist_to_list list_to_dotslist
 `[[....` <- function(x, ...) {
-  temp <- .Call("dotslist_to_list", x)
+  temp <- .Call(dotslist_to_list, x)
   do.call(force.first.arg, list(temp[[...]]))
 }
 
@@ -453,35 +456,40 @@ is.missing.default <- function(f) {
 `[<-....` <- function(x, ix, value, ...) UseMethod("[<-....", value)
 
 #' @S3method "[<-...." "..."
+#' @useDynLib ptools dotslist_to_list list_to_dotslist
 `[<-........` <- function(x, ix, value, ...) {
-  into <- .Call("dotslist_to_list", x)
-  from <- .Call("dotslist_to_list", value)
+  into <- .Call(dotslist_to_list, x)
+  from <- .Call(dotslist_to_list, value)
   into[ix, ...] <- from
-  .Call("list_to_dotslist", into)
+  .Call(list_to_dotslist, into)
 }
 
 #' @S3method "[<-...." "default"
+#' @useDynLib ptools dotslist_to_list
 `[<-.....default` <- function(x, ix, value, ...) {
-  into <- .Call("dotslist_to_list", x)
-  from <- .Call("dotslist_to_list", as.dots.literal(value))
+  into <- .Call(dotslist_to_list, x)
+  from <- .Call(dotslist_to_list, as.dots.literal(value))
   into[ix, ...] <- from
-  .Call("list_to_dotslist", into)
+  .Call(list_to_dotslist, into)
 }
 
 
 #' @S3method "$" "..."
+#' @useDynLib ptools dotslist_to_list
 `$....` <- function(x, name) {
-  temp <- .Call("dotslist_to_list", x)
+  temp <- .Call(dotslist_to_list, x)
   do.call(force.first.arg, list(do.call(`$`, list(temp, name))))
 }
 
 #' @S3method "names" "..."
-names.... <- function(x) .Call("dots_names", x)
+#' @useDynLib ptools dots_names
+names.... <- function(x) .Call(dots_names, x)
 
+#' @useDynLib ptools dotslist_to_list list_to_dotslist
 `names<-....` <- function(x, value) {
-  temp <- .Call("dotslist_to_list", x)
+  temp <- .Call(dotslist_to_list, x)
   names(temp) <- value
-  .Call("list_to_dotslist", temp)
+  .Call(list_to_dotslist, temp)
 }
 
 #force() forces "the argument named x", while force.first.arg is agnostic to the name.

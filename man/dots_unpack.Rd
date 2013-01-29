@@ -1,9 +1,15 @@
+\docType{data}
 \name{dots_unpack}
 \alias{dots_unpack}
 \alias{unpack}
 \title{Show information about a dot-dot-dot object.}
+\format{List of 3
+ $ name   : chr "dots_unpack"
+ $ address:Class 'NativeSymbol' <externalptr> 
+ $ package: NULL
+ - attr(*, "class")= chr "NativeSymbolInfo"}
 \usage{
-  dots_unpack(...)
+  dots_unpack
 }
 \arguments{
   \item{...}{Any number of arguments. Usually, you will
@@ -49,4 +55,5 @@
 \seealso{
   dots_names dots_missing dots_expressions dots
 }
+\keyword{datasets}
 
