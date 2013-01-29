@@ -15,8 +15,8 @@
   Useful in macros where you want to clean up a temporary
   variable but return it; as in \code{ammoc(x, rm(x))}.
   It's the reverse of the C comma operator. There is an
-  infix alias, %'%, (i.e., inverted comma; use whichever
-  you feel a worse pun.)
+  infix alias, \code{\%\'\%}, (i.e., inverted comma; use
+  whichever you feel a worse pun.)
 }
 \author{
   Peter Meilstrup

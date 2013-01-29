@@ -22,7 +22,7 @@
 #' \item{"value"}{The value attached to the promise. If the promise
 #' has not been evaluated, this will be NULL. (in reality is it
 #' usually the "missing value," but it would cause too much
-#' strangeness to return missing values from a function.}
+#' strangeness to return missing values from a function.}}
 #' @note There are some problems with R printing data frames
 #' containing lists of language objects (and more problems when
 #' working with "missing value" objects.) Therefore this sets the
@@ -62,10 +62,10 @@ format.deparse <- function(x, ...) {
 #' arguments. These functions help extract names and values of
 #' positional arguments without triggering missing-value errors.
 #'
-#' Parallel functions exist as methods of the \{\dots} class of
+#' Parallel functions exist as methods of the \code{\dots} class of
 #' objects returned by \code{\link{dots}} that allows you to manipulate
-#' ... argument lists as explicit objects.
-#' @param ... Any arguments. Usually you will pass \code{...} from the
+#' \dots argument lists as explicit objects.
+#' @param ... Any arguments. Usually you will pass \code{\dots} from the
 #' body of a function.
 #' @return \itemize{
 #' \item For \code{\link{dots_names}}, the names of all arguments. Names are
@@ -127,13 +127,13 @@ list_quote <- function(...) eval(substitute(alist(...)))
 #' @examples
 #' reverse.list <- function(...) {
 #'  d <- dots(...)
-#'  list %()% rev(d)
+#'  list \%()\% rev(d)
 #' }
 #' reverse.list("a", b="bee", c="see")
 #'
 #' named.list <- function(...) {
 #'  d <- dots(...)
-#'  list %()% d[names(d) != ""]
+#'  list \%()\% d[names(d) != ""]
 #'  }
 #' named.list(a=1, b=2*2, stop("this is not evaluated"))
 #' @export
@@ -176,9 +176,6 @@ missing_value <- function(n) {
 #' @S3method "print" "..."
 `print....` <- function(x, ...) invisible(cat("<...[", length(x), "]>\n"))
 
-#' @S3method "show" "..."
-`show....` <- function(x, ...) invisible(cat("<...[", length(x), "]>\n"))
-
 #' Partially and fully apply arguments to functions.
 #'
 #' These operators help in passing arbitrary lists of arguments to
@@ -209,15 +206,15 @@ missing_value <- function(n) {
 #' afterwards.
 #' \item \code{curr} and \code{curl} are standalone functions that partially
 #' apply arguments to functions; \code{curr(f, a=1, b=2)} is equivalent to
-#' \code{f %<<% dots(a=1, b=2)}, and
-#' \code{curl} is the "left curry" corresponding to \code{%>>%}
+#' \code{f \%<<\% dots(a=1, b=2)}, and
+#' \code{curl} is the "left curry" corresponding to \code{\%>>\%}
 #' \item For \code{\%__\%}, the two operands pasted together. The result
 #' will be a list, or a \code{dots} object if any of the operands are
 #' \code{dots} objects.
 #' }
 #' @note "Curry" is a slight misnomer for partial function application.
 #' @author Peter Meilstrup
-#' @export
+#' @export "%()%"
 `%()%` <- function(f, arglist) UseMethod("%()%", arglist)
 
 #' @S3method "%()%" "..."

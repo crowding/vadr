@@ -22,7 +22,7 @@
   promise has not been evaluated, this will be NULL. (in
   reality is it usually the "missing value," but it would
   cause too much strangeness to return missing values from
-  a function.}
+  a function.}}
 }
 \description{
   This unpacks the contents of a dot-dot-dot (or

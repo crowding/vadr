@@ -10,7 +10,7 @@
 }
 \arguments{
   \item{...}{Any arguments. Usually you will pass
-  \code{...} from the body of a function.}
+  \code{\dots} from the body of a function.}
 }
 \value{
   \itemize{ \item For \code{\link{dots_names}}, the names
@@ -38,9 +38,10 @@
   errors.
 }
 \details{
-  Parallel functions exist as methods of the \{\dots} class
-  of objects returned by \code{\link{dots}} that allows you
-  to manipulate ... argument lists as explicit objects.
+  Parallel functions exist as methods of the \code{\dots}
+  class of objects returned by \code{\link{dots}} that
+  allows you to manipulate \dots argument lists as explicit
+  objects.
 }
 \author{
   Peter Meilstrup
