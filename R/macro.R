@@ -124,7 +124,8 @@ macro <- function(fn, cache=TRUE, JIT=TRUE) {
         result <- expansionCache[[key]][[1]]
       } else {
         result <- do.call(fn, args, quote=TRUE)
-        if (JIT) result <- compile(result, fr)
+        if (JIT) result <- compile(result, fr,
+                                   options=c(suppressUndefined=TRUE))
         #Hold on to the list of expression objects to keep them from
         #getting stale; I probably want weak references though.
         expansionCache[[key]] <- list(result, digest)
