@@ -19,11 +19,14 @@
 }
 \value{
   \itemize{ \item For \code{\%()\%}, the result of calling
-  the function with the arguments provided. THis has
-  slightly different semantics from \code{\link{do.call}(f,
-  as.list(x), quote=TRUE)}, in that arguments are passed
-  through already-evaluated promises, rather than wrapped
-  in "quote" and passed in new promises. This makes a
+  the function with the arguments provided. When \code{x}
+  is a \code{\dots} object, its contents are passed
+  inithout evaluating. When \code{x} is another type of
+  sequence its elements are put in the value slots of
+  already-evaluated promises. This is slightly different
+  behavior from \code{\link{do.call}(f, as.list(x),
+  quote=TRUE)}, which passes unevaluated promises with
+  expressions wrapped in \code{link{quote}}. This makes a
   difference if \code{f} performs nonstandard evaluation.
   \item For \code{\%<<\%} and \code{\%>>\%}, a new function
   with the arguments partially applied. For \code{arglist
@@ -34,10 +37,10 @@
   partially apply arguments to functions; \code{curr(f,
   a=1, b=2)} is equivalent to \code{f \%<<\% dots(a=1,
   b=2)}, and \code{curl} is the "left curry" corresponding
-  to \code{\%>>\%} \item For \code{\%__\%}, the two
-  operands pasted together. The result will be a list, or a
-  \code{dots} object if any of the operands are \code{dots}
-  objects. }
+  to \code{\%>>\%}. \item For \code{\%__\%}, the two
+  operands concatenated together. The result will be a
+  list, or a \code{dots} object if any of the operands are
+  \code{dots} objects.  }
 }
 \description{
   These operators help in passing arbitrary lists of

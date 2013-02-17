@@ -15,8 +15,8 @@ promises.)}
 \value{
   An object of class \code{\dots}. For \code{as.dots}, the
   list items are treated as expressions to be evaluated.
-  For \code{as.dots}, the items are treated as listeral
-  values.
+  For \code{as.dots.literal}, the items are treated as
+  literal values.
 }
 \description{
   Convert a list of expressions into a \code{\dots} object
