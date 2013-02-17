@@ -75,14 +75,22 @@ SEXP _dots_names(SEXP dots) {
 
   length = _dots_length(dots);
 
+  int made = 0;
+  names=R_NilValue;
   PROTECT(names = allocVector(STRSXP, length));
 
   for (s = dots, i = 0; s != R_NilValue; s = CDR(s), i++) {
     SEXP item = CAR(s);
-    SET_STRING_ELT(names, i, isNull(TAG(s)) ? mkChar("") : asChar(TAG(s)));
+    if (isNull(TAG(s))) {
+      SET_STRING_ELT(names, i, mkChar(""));
+    } else {
+      made = 1;
+      SET_STRING_ELT(names, i, asChar(TAG(s)));
+    }
   }
   UNPROTECT(1);
-  return(names);
+  
+  return(made ? names : R_NilValue);
 }
 
 SEXP _as_dots_literal(SEXP list, SEXP dotlist) {

@@ -18,17 +18,6 @@ test_that("quoting.env and '...'", {
                quote(c(a, list(sdf = b, ...))))
 })
 
-test_that("list_with_missing", {
-  expect_equal(list_with_missing(1, 2, 3),
-               list(1,2,3))
-
-  expect_equal(list_with_missing(1, 2, , "three"),
-               alist(1, 2, , "three"))
-
-  expect_equal(list_with_missing(a="one", b=, "three"),
-               alist(a="one", b=, "three"))
-})
-
 test_that("quoting.env and missings", {
   en <- quoting.env(c('[', '<-', 'a', 'b', 'c'))
   expect_equal(evalq(a[1, ] <- b[, 2], en),
