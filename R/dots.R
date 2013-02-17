@@ -113,7 +113,7 @@ list_missing <- function(...) {
 }
 
 #' @export
-list_quote <- function(...) eval(substitute(alist(...)))
+list_quote <- function(...) substitute(alist(...))[-1]
 
 #' Capture the list of "dot-dot-dot" arguments as an object.
 #'
@@ -194,26 +194,26 @@ missing_value <- function(n) {
 #' @param f a function, to be called, or to to have arguments attached to.
 #' @aliases %()% %<<% %>>% %__% curr curl
 #' @name grapes-open-paren-close-paren-grapes
-#' @return \itemize{
-#' \item For \code{\%()\%}, the result of calling the function with the
-#' arguments provided. THis has slightly different semantics from
-#' \code{\link{do.call}(f, as.list(x), quote=TRUE)}, in that arguments
-#' are passed through already-evaluated promises, rather than wrapped
-#' in "quote" and passed in new promises. This makes a difference if
-#' \code{f} performs nonstandard evaluation.
-#' \item For \code{\%<<\%} and \code{\%>>\%}, a new function with the
-#' arguments partially applied. For \code{arglist \%>>\% f}, the
-#' arguments will be placed in the argument list before any further
-#' arguments; for \code{f \%<<\% arglist} the arguments will be placed
-#' afterwards.
-#' \item \code{curr} and \code{curl} are standalone functions that partially
-#' apply arguments to functions; \code{curr(f, a=1, b=2)} is equivalent to
-#' \code{f \%<<\% dots(a=1, b=2)}, and
-#' \code{curl} is the "left curry" corresponding to \code{\%>>\%}
-#' \item For \code{\%__\%}, the two operands pasted together. The result
-#' will be a list, or a \code{dots} object if any of the operands are
-#' \code{dots} objects.
-#' }
+#' @return \itemize{ \item For \code{\%()\%}, the result of calling
+#' the function with the arguments provided. When \code{x} is a
+#' \code{\dots} object, its contents are passed inithout
+#' evaluating. When \code{x} is another type of sequence its elements
+#' are put in the value slots of already-evaluated promises. This is
+#' slightly different behavior from \code{\link{do.call}(f,
+#' as.list(x), quote=TRUE)}, which passes unevaluated promises with
+#' expressions wrapped in \code{link{quote}}. This makes a difference
+#' if \code{f} performs nonstandard evaluation.  \item For
+#' \code{\%<<\%} and \code{\%>>\%}, a new function with the arguments
+#' partially applied. For \code{arglist \%>>\% f}, the arguments will
+#' be placed in the argument list before any further arguments; for
+#' \code{f \%<<\% arglist} the arguments will be placed afterwards.
+#' \item \code{curr} and \code{curl} are standalone functions that
+#' partially apply arguments to functions; \code{curr(f, a=1, b=2)} is
+#' equivalent to \code{f \%<<\% dots(a=1, b=2)}, and \code{curl} is
+#' the "left curry" corresponding to \code{\%>>\%}. \item For
+#' \code{\%__\%}, the two operands concatenated together. The result will be
+#' a list, or a \code{dots} object if any of the operands are
+#' \code{dots} objects.  }
 #' @note "Curry" is a slight misnomer for partial function application.
 #' @author Peter Meilstrup
 #' @export "%()%"
@@ -293,7 +293,7 @@ missing_value <- function(n) {
 
 #' @export
 curr <- function(f, ...) {
-  if(missing(...)) {
+  if (missing(...)) {
     f
   } else {
     stored_dots <- list(NULL, get("..."))
@@ -316,7 +316,7 @@ curr <- function(f, ...) {
 
 #' @export
 curl <- function(f, ...) {
-  if(missing(...)) {
+  if (missing(...)) {
     f
   } else {
     stored_dots <- list(get("..."), NULL)
@@ -347,11 +347,13 @@ curl <- function(f, ...) {
 #' @S3method "%>>%" default
 `%>>%.default` <- function(x, f) `%>>%....`(as.dots.literal(x), f)
 
+#' @export
 `%__%` <- function(x, y) UseMethod("%__%", x)
 
 #' @S3method "%__%" "..."
 `%__%....` <- function(x, y) UseMethod("%__%....", y)
 
+#' @S3method "%__%...." "..."
 `%__%........` <- function(x, y, ...) {
   if (length(x) == 0) return(y)
   if (length(y) == 0) return(x)
@@ -365,6 +367,7 @@ curl <- function(f, ...) {
   dots(..., ...)
 }
 
+#' @S3method "%__%...." default
 `%__%.....default` <- function (x, y) `%__%........`(x, as.dots.literal(y))
 
 #' @S3method "%__%" default
@@ -382,8 +385,8 @@ curl <- function(f, ...) {
 #' @param x a vector or list.
 #' @param .envir The environment within which each promise will be evaluated.
 #' @return An object of class \code{\dots}. For \code{as.dots}, the
-#' list items are treated as expressions to be evaluated. For \code{as.dots},
-#' the items are treated as listeral values.
+#' list items are treated as expressions to be evaluated. For
+#' \code{as.dots.literal}, the items are treated as literal values.
 #' @seealso dots "%<<%" "%>>%" "%()%" "[...." "[[....", "names...."
 #' @author Peter Meilstrup
 #' @aliases as.dots.literal
@@ -397,8 +400,6 @@ as.dots.... <- function(x, ...) x
 as.dots.default <- function(x, .envir=parent.frame())
   do.call(dots, as.list(x), FALSE, .envir)
 
-# the `do.call` here is to feed in a new dotlist of promises, since
-# allocating promises isn't made available in the .Call interface
 #' @useDynLib ptools _as_dots_literal
 #' @export
 as.dots.literal <- function(x)
@@ -446,7 +447,7 @@ is.missing.default <- function(f) {
 }
 
 #' @S3method "[[" "..."
-#' @useDynLib ptools _dotslist_to_list _list_to_dotslist
+#' @useDynLib ptools _dotslist_to_list
 `[[....` <- function(x, ...) {
   temp <- .Call(`_dotslist_to_list`, x)
   do.call(force.first.arg, list(temp[[...]]))

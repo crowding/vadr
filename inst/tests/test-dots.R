@@ -133,6 +133,17 @@ test_that("is.missing on non-dotlists", {
   is.missing(function(x) y) %is% FALSE
 })
 
+test_that("list_missing", {
+  expect_equal(list_missing(1, 2, 3),
+               list(1,2,3))
+
+  expect_equal(list_missing(1, 2, , "three"),
+               alist(1, 2, , "three"))
+
+  expect_equal(list_missing(a="one", b=, "three"),
+               alist(a="one", b=, "three"))
+})
+
 test_that("list_missing evaluates arguments in the original scopes", {
   fOne <- function(...) {
     fThree <- function(...) {
@@ -182,9 +193,19 @@ test_that("%()% and %<<% on vectors respects tags", {
 })
 
 test_that("curr and curl", {
-  #these are versions that don't
-  f = curr(`/`, x)
+  #these are versions that don't dispatch
+  f <- curr(`/`)
+  g <- curr(`/`)
   expect_error(f(5))
+  expect_error(f())
+  expect_error(g(5))
+  expect_error(g())
+  f <- curr(`/`, 2)
+  g <- curl(`/`, 2)
+  expect_error(f())
+  expect_error(g())
+  f(5) %is% 2.5
+  g(5) %is% 0.4
 })
 
 test_that("curry DTRT with original scope of its arguments", {
