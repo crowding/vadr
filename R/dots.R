@@ -351,6 +351,7 @@ curl <- function(f, ...) {
 `%__%` <- function(x, y) UseMethod("%__%", x)
 
 #' @S3method "%__%" "..."
+#' @export
 `%__%....` <- function(x, y) UseMethod("%__%....", y)
 
 #' @S3method "%__%...." "..."
@@ -371,6 +372,7 @@ curl <- function(f, ...) {
 `%__%.....default` <- function (x, y) `%__%........`(x, as.dots.literal(y))
 
 #' @S3method "%__%" default
+#' @export
 `%__%.default` <- function(x, y) UseMethod("%__%.default", y)
 
 #' @S3method "%__%.default" "..."
