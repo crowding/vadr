@@ -319,7 +319,7 @@ test_that("Curry operators concatenate dots, dots stay attached to envs", {
     P  %<<<% u  %<<<% l  %()%  n  %is%  "ABCabc123",
     P  %<<<% l  %<<%  u  %()%  n  %is%  "abc123ABC",
     P  %<<<% (u %__% l)  %()%  n  %is%  "ABCabc123",
-    P  %<<% (u %__% l)  %()%  n  %is%  "ABCabc123"
+    P  %<<% (u %__% l)   %()%  n  %is%  "123ABCabc"
     )
 })
 

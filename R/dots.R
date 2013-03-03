@@ -125,7 +125,7 @@ list_quote <- function(...) substitute(alist(...))[-1]
 #' @return A dots object. This is currently just the raw DOTSXP with
 #' the object bit set and the class set to "..." so that method dispatch works.
 #' @author Peter Meilstrup
-#' @seealso "%<<%" "%>>%" "%()%" "[...." "[[....", "names...."
+#' @seealso "%<<%" "%<<<%" "%()%" "[...." "[[....", "names...."
 #' @examples
 #' reverse.list <- function(...) {
 #'  d <- dots(...)
@@ -192,7 +192,7 @@ missing_value <- function(n) {
 #' @param x a vector, optionally with names, or an object of class
 #' \code{...} as produced by \code{\link{dots}}.
 #' @param f a function, to be called, or to to have arguments attached to.
-#' @aliases %()% %<<% %>>% %__% curr curl
+#' @aliases %()% %<<% %<<<% %__% curr curl
 #' @name grapes-open-paren-close-paren-grapes
 #' @return \itemize{ \item For \code{\%()\%}, the result of calling
 #' the function with the arguments provided. When \code{x} is a
@@ -203,8 +203,8 @@ missing_value <- function(n) {
 #' as.list(x), quote=TRUE)}, which passes unevaluated promises with
 #' expressions wrapped in \code{link{quote}}. This makes a difference
 #' if \code{f} performs nonstandard evaluation.  \item For
-#' \code{\%<<\%} and \code{\%>>\%}, a new function with the arguments
-#' partially applied. For \code{arglist \%>>\% f}, the arguments will
+#' \code{\%<<\%} and \code{\%<<<\%}, a new function with the arguments
+#' partially applied. For \code{f \%<<<\% arglist}, the arguments will
 #' be placed in the argument list before any further arguments; for
 #' \code{f \%<<\% arglist} the arguments will be placed afterwards.
 #' \item \code{curr} and \code{curl} are standalone functions that
@@ -240,7 +240,7 @@ missing_value <- function(n) {
 `%<<%` <- function(f, x) UseMethod("%<<%", x)
 
 #' @export
-`%>>%` <- function(x, f) UseMethod("%>>%", x)
+`%<<<%` <- function(f, x) UseMethod("%<<<%", x)
 
 #' @S3method "%<<%" "..."
 `%<<%....` <- function(f, x) {
@@ -267,8 +267,8 @@ missing_value <- function(n) {
   }
 }
 
-#' @S3method "%>>%" "..."
-`%>>%....` <- function(x, f) {
+#' @S3method "%>>>%" "..."
+`%<<<%....` <- function(f, x) {
   if (length(x) == 0) return(f)
   dotslist <- list(x, NULL)
   function(...) {
@@ -344,8 +344,8 @@ curl <- function(f, ...) {
 #' @S3method "%<<%" default
 `%<<%.default` <- function(f, x) `%<<%....`(f, as.dots.literal(x))
 
-#' @S3method "%>>%" default
-`%>>%.default` <- function(x, f) `%>>%....`(as.dots.literal(x), f)
+#' @S3method "%<<<%" default
+`%<<<%.default` <- function(f, x) `%<<<%....`(f, as.dots.literal(x))
 
 #' @export
 `%__%` <- function(x, y) UseMethod("%__%", x)
@@ -389,7 +389,7 @@ curl <- function(f, ...) {
 #' @return An object of class \code{\dots}. For \code{as.dots}, the
 #' list items are treated as expressions to be evaluated. For
 #' \code{as.dots.literal}, the items are treated as literal values.
-#' @seealso dots "%<<%" "%>>%" "%()%" "[...." "[[....", "names...."
+#' @seealso dots "%<<%" "%<<<%" "%()%" "[...." "[[....", "names...."
 #' @author Peter Meilstrup
 #' @aliases as.dots.literal
 #' @export
