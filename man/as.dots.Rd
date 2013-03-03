@@ -26,6 +26,6 @@ promises.)}
   Peter Meilstrup
 }
 \seealso{
-  dots "%<<%" "%>>%" "%()%" "[...." "[[....", "names...."
+  dots "%<<%" "%<<<%" "%()%" "[...." "[[....", "names...."
 }
 

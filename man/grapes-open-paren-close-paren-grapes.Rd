@@ -1,7 +1,7 @@
 \name{grapes-open-paren-close-paren-grapes}
 \alias{\%()\%}
+\alias{\%<<<\%}
 \alias{\%<<\%}
-\alias{\%>>\%}
 \alias{\%__\%}
 \alias{curl}
 \alias{curr}
@@ -28,19 +28,19 @@
   quote=TRUE)}, which passes unevaluated promises with
   expressions wrapped in \code{link{quote}}. This makes a
   difference if \code{f} performs nonstandard evaluation.
-  \item For \code{\%<<\%} and \code{\%>>\%}, a new function
-  with the arguments partially applied. For \code{arglist
-  \%>>\% f}, the arguments will be placed in the argument
-  list before any further arguments; for \code{f \%<<\%
-  arglist} the arguments will be placed afterwards. \item
-  \code{curr} and \code{curl} are standalone functions that
-  partially apply arguments to functions; \code{curr(f,
-  a=1, b=2)} is equivalent to \code{f \%<<\% dots(a=1,
-  b=2)}, and \code{curl} is the "left curry" corresponding
-  to \code{\%>>\%}. \item For \code{\%__\%}, the two
-  operands concatenated together. The result will be a
-  list, or a \code{dots} object if any of the operands are
-  \code{dots} objects.  }
+  \item For \code{\%<<\%} and \code{\%<<<\%}, a new
+  function with the arguments partially applied. For
+  \code{f \%<<<\% arglist}, the arguments will be placed in
+  the argument list before any further arguments; for
+  \code{f \%<<\% arglist} the arguments will be placed
+  afterwards. \item \code{curr} and \code{curl} are
+  standalone functions that partially apply arguments to
+  functions; \code{curr(f, a=1, b=2)} is equivalent to
+  \code{f \%<<\% dots(a=1, b=2)}, and \code{curl} is the
+  "left curry" corresponding to \code{\%>>\%}. \item For
+  \code{\%__\%}, the two operands concatenated together.
+  The result will be a list, or a \code{dots} object if any
+  of the operands are \code{dots} objects.  }
 }
 \description{
   These operators help in passing arbitrary lists of

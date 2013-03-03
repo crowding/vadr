@@ -267,7 +267,7 @@ missing_value <- function(n) {
   }
 }
 
-#' @S3method "%>>>%" "..."
+#' @S3method "%<<<%" "..."
 `%<<<%....` <- function(f, x) {
   if (length(x) == 0) return(f)
   dotslist <- list(x, NULL)

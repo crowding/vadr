@@ -34,6 +34,6 @@ named.list(a=1, b=2*2, stop("this is not evaluated"))
   Peter Meilstrup
 }
 \seealso{
-  "%<<%" "%>>%" "%()%" "[...." "[[....", "names...."
+  "%<<%" "%<<<%" "%()%" "[...." "[[....", "names...."
 }
 
