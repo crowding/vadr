@@ -7,6 +7,7 @@ test_that("func captures expressions", {
 
 test_that("func captures lexical scope", {
    xinc <- NULL
+   if (exists("y")) rm("y", inherits=TRUE)
    f <- local({
      x <- 4
      xinc <<- function() {x <<- x + 1}
