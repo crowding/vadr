@@ -132,6 +132,10 @@ test_that("template interpolation in first argument", {
     )
 })
 
+test_that("templates with ...(NULL)", {
+  template(list(1, 2, ...(NULL), 4)) %is% quote(list(1, 2, 4))
+})
+
 test_that("expand_macro expands all visible macros (by one step)", {
   local({
     addmacro <- macro(function(x, y) template(.(x) + .(y)))

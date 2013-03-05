@@ -207,10 +207,9 @@ macro <- function(fn, cache=TRUE, JIT=TRUE) {
 #' dfname <- "baseball"
 #' template(ddply(.(as.name(dfname)), .(quote(.(id, team))), identity))
 #' #ddply(baseball, .(id.team), identity)
+#' @import stringr
 #' @export
 template <- function(expr, .envir=parent.frame()) {
-  require(stringr)
-
   unquote <- function(e) {
     if (is.pairlist(e)) {
       as.pairlist(unquote.list(e))
@@ -228,9 +227,7 @@ template <- function(expr, .envir=parent.frame()) {
     } else if (e[[1L]] == as.name(".")) {
       eval(e[[2L]], .envir)
     } else if (e[[1L]] == as.name("...")) {
-      x <- eval(e[[2L]], .envir)
-      attr(x, "...") <- TRUE #flag to be picked up by unquote.list
-      x
+      structure(eval(e[[2L]], .envir), ...=TRUE)
     } else {
       as.call(unquote.list(e))
     }
