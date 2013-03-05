@@ -144,12 +144,20 @@ test_that("expand_macro expands all visible macros (by one step)", {
     expect_equal(expand_macros(quote(addmacro(a, b))), quote(a+b))
     expect_equal(expand_macros_q(addmacro(a, b*y)), quote(a+b*y))
     expect_equal(expand_macros_q(doublemacro(a, b)), quote(a * addmacro(b, b)))
-    #this means we need to be tricky with quoting.env, or use
-    #something else entirely, or make it so that quoting.env does
-    #substitution from the top down...
+    #macros are expanded from the top down.
     expect_equal(expand_macros_q(addmacro(a, addmacro(b,c))),
                  quote(a+addmacro(b,c)))
     expect_equal(expand_macros_q(addmacro(a, addmacro(b,c)), recursive=TRUE),
                  quote(a+(b+c)))
   })
+})
+
+test_that("quote_args", {
+  # Function that quotes arguments "like an argument list", returning
+  # a pairlist.
+
+  quote_args(a=1, b=y, c=x+y) %is% as.pairlist(alist(a=1, b=y, c=x+y))
+  quote_args(a=1, b, c) %is% as.pairlist(alist(a=1, b=, c=))
+  expect_error(quote_args(a, b, x+y))
+  expect_error(quote_args(a, b, 1))
 })

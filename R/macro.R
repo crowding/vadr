@@ -332,3 +332,29 @@ find_macros <- function(what, where=parent.frame()) {
   is.macro <- vapply(functions, function(x) "macro" %in% class(x), FALSE)
   structure(functions[is.macro], names=what[is.macro])
 }
+
+#' Quote all arguments, like \code{\link{alist}}. But when bare words
+#' are given as arguments, interpret them as the argument name, rather
+#' than the argument value. Return a pairlist.
+#' This emulates the syntax used to specify function arguments and defaults.
+#' @param ... the arguments to quote.
+#' @return a pairlist, with quoted arguments, and barewords inprepreted as names
+#' @examples
+#' substitute(`function`(args, body), list(args=quote_args(x, y=1), body=quote(x+y)))
+quote_args <- function(...) {
+  x <- substitute(list(...))[-1]
+  as.pairlist(
+    mapply(x, USE.NAMES=FALSE,
+           if (is.null(names(x))) rep("", length(x)) else names(x),
+           FUN = function(x, n) {
+             if (n == "") {
+               if (is.name(x)) {
+                 structure(list(quote(expr=)), names=as.character(x))
+               } else {
+                 stop(deparse(x, nlines=1), " doesn't look like a name")
+               }
+             } else {
+               structure(list(x), names=n)
+             }
+           }))
+}
