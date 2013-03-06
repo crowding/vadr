@@ -341,6 +341,7 @@ find_macros <- function(what, where=parent.frame()) {
 #' @return a pairlist, with quoted arguments, and barewords inprepreted as names
 #' @examples
 #' substitute(`function`(args, body), list(args=quote_args(x, y=1), body=quote(x+y)))
+#' @export
 quote_args <- function(...) {
   x <- substitute(list(...))[-1]
   as.pairlist(
