@@ -161,3 +161,15 @@ test_that("quote_args", {
   expect_error(quote_args(a, b, x+y))
   expect_error(quote_args(a, b, 1))
 })
+
+test_that("with_arg", {
+  (with_arg(a=2, b=3, list(4), list(5))
+   %is% list(list(4, a=2, b=3), list(5, a=2, b=3)))
+
+  x <- 1; y <- 2
+  (with_arg(a=x+y, list(1), alist(1))
+   %is% list(list(1, a=3), alist(1, a=x+y)))
+
+  (with_arg(.collect=c, a=1, b=2, c(1, 2), c(1))
+   %is% c(1, 2, a=1, b=2,1, a=1, b=2))
+})

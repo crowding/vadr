@@ -11,24 +11,16 @@
 ##' argument. This can save some typing in some situations, like
 ##' heavily layered ggplot constructions.
 ##'
-##' We try to interpret each subcall according to R argument matching
-##' rules, by looking up the function's formal arguments using
-##' \code{\link{match.fun}}.  This might run into problems with
-##' generic functions. On second thought, we should be more like a
-##' macro and not do this.
-##'
 ##' @param ... Named arguments are interpreted as arguments to
 ##' inject. Unnamed arguments are interpreted as calls to evaluate.
 ##' @param .collect Which function to use to collect the results of
 ##' all the subcalls. Default is `list'.
 ##' @param .envir The environment to evaluate in. Defaults to the
 ##' environment that called with_arg.
-##' @param .override Whether to override arguments that appear to
-##' conflict. Default is FALSE.
 ##' @return The results of the evaluated calls, collected using \code{.collect}.
 ##' @author Peter Meilstrup
 ##' @export
-with_arg <- function(..., .collect=list, .envir=parent.frame(), .override=FALSE)  {
+with_arg <- function(..., .collect=list, .envir=parent.frame())  {
   dots <- as.list(substitute(quote(...)))[-1]
   calls <- dots[names(dots) == '']
   args <- dots[names(dots) != '']
@@ -40,12 +32,9 @@ with_arg <- function(..., .collect=list, .envir=parent.frame(), .override=FALSE)
       theCall <- match.call(theFun, theCall)
     }
     theCall <- as.list(theCall)
-    if (.override) {
-      theCall[names(args)] = args
-    } else {
-      safe.args <- setdiff(names(args), names(call))
-      theCall[safe.args] = args[safe.args]
-    }
+    safe.args <- setdiff(names(args), names(call))
+    theCall[safe.args] = args[safe.args]
+
     rebuiltCalls <- c(rebuiltCalls, as.call(theCall))
   }
   theCollection <- as.call(c(list(.collect), rebuiltCalls))
