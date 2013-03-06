@@ -20,23 +20,11 @@
 ##' @return The results of the evaluated calls, collected using \code{.collect}.
 ##' @author Peter Meilstrup
 ##' @export
-with_arg <- function(..., .collect=list, .envir=parent.frame())  {
-  dots <- as.list(substitute(quote(...)))[-1]
-  calls <- dots[names(dots) == '']
-  args <- dots[names(dots) != '']
-
-  rebuiltCalls <- list()
-  for (theCall in calls) {
-    theFun <- match.fun(as.list(theCall)[[1]])
-    if (!is.primitive(theFun)) {
-      theCall <- match.call(theFun, theCall)
-    }
-    theCall <- as.list(theCall)
-    safe.args <- setdiff(names(args), names(call))
-    theCall[safe.args] = args[safe.args]
-
-    rebuiltCalls <- c(rebuiltCalls, as.call(theCall))
-  }
-  theCollection <- as.call(c(list(.collect), rebuiltCalls))
-  eval(theCollection, envir=.envir)
-}
+with_arg <- macro(function(..., .collect=quote(list)) {
+  args <- list(...)
+  if (is.null(names(args))) names(args <- rep("", length(args)))
+  calls <- args[names(args) == ""]
+  args <- args[names(args) != ""]
+  chain(calls, lapply(as.list), lapply(c, args),
+        lapply(as.call), c(.collect, .), as.call)
+})
