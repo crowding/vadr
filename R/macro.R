@@ -102,6 +102,7 @@ make_unique_names <- function(new, context, sep=".") {
 #'
 #' @author Peter Meilstrup
 #' @seealso template
+#' @import compiler
 #' @export
 macro <- function(fn, cache=TRUE, JIT=TRUE) {
   if(cache) {
