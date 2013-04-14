@@ -189,3 +189,9 @@ test_that("template descends into heads of calls,", local({
     quote( (function() {1; 2; 3})() ))
 
 }))
+
+test_that("template non-call, non-primitive lists", {
+  expect_equal(
+    do.call(template, list(alist(a, b, .(paste("foo", "bar")), d))),
+    alist(a, b, "foo bar", d))
+})

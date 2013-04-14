@@ -234,7 +234,7 @@ template <- function(expr, .envir=parent.frame()) {
         e
       }
     } else {
-      as.call(unquote.list(e))
+      unquote.list(e)
     }
   }
 
