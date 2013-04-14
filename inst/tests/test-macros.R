@@ -1,5 +1,7 @@
 context("macros")
 
+`%is%` <- expect_equal
+
 #test_that("registering a macro applies a code transformation on the fly,")
 
 test_that("quoting.env", {
@@ -173,3 +175,17 @@ test_that("with_arg", {
   (with_arg(.collect=c, a=1, b=2, c(1, 2), c(1))
    %is% c(1, 2, a=1, b=2,1, a=1, b=2))
 })
+
+test_that("template descends into heads of calls,", local({
+  template( (.(as.name("list")))(1, 2, 3) ) %is% quote( (list)(1, 2, 3) )
+
+  tempfun <- function() {
+    template((function() {...(list(1, 2, 3))})())
+  }
+
+  #the real problem here was call objects of length 1
+  expect_equal(
+    tempfun(),
+    quote( (function() {1; 2; 3})() ))
+
+}))

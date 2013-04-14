@@ -214,9 +214,17 @@ template <- function(expr, .envir=parent.frame()) {
   unquote <- function(e) {
     if (is.pairlist(e)) {
       as.pairlist(unquote.list(e))
+    } else if (is.call(e)) {
+      if (e[[1L]] == as.name(".")) {
+        eval(e[[2L]], .envir)
+      } else if (e[[1L]] == as.name("...")) {
+        structure(eval(e[[2L]], .envir), ...=TRUE)
+      } else {
+        as.call(unquote.list(e))
+      }
     } else if (length(e) <= 1L) {
       if (is.name(e)) {
-        ch = unquote.char(as.character(e))
+        ch <- unquote.char(as.character(e))
         if (ch == "") {
           quote(expr=)
         } else {
@@ -225,10 +233,6 @@ template <- function(expr, .envir=parent.frame()) {
       } else {
         e
       }
-    } else if (e[[1L]] == as.name(".")) {
-      eval(e[[2L]], .envir)
-    } else if (e[[1L]] == as.name("...")) {
-      structure(eval(e[[2L]], .envir), ...=TRUE)
     } else {
       as.call(unquote.list(e))
     }
