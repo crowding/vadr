@@ -30,6 +30,11 @@ test_that("bind complicated lvalues", {
   expect_equal(a, c(20, 30))
 })
 
+test_that("bind a data frame with ...", {
+  x <- data.frame(a=c(1,2), b=c("one", "two"), c=c("uno", "dos"))
+  bind[c=spanish, b=english, ...=rest] <- x
+})
+
 test_that("bind happens left to right in bind arguments", {
   a <- c(1,2,3)
   bind[y=a[1:2], z=a[2:3], x=a[c(1,3)]] <-

@@ -140,8 +140,7 @@ bind_match <- function(nOut, vIn) {
     }
     i_in_out[i_out_unmatched[i]] <- i_in_unmatched[i]
   }
-
-  vOut <- as.list(vIn[i_in_out])
+  vOut <- as.list(as.list(vIn)[i_in_out])
 
   #then put the rest into dots.
   if (!is.null(i) && nOut[i_out_unmatched[i]] == "...") {
