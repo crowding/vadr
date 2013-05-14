@@ -14,8 +14,7 @@ path <- matrix(c(0, 0, 0,
 check <- cumsum(sqrt(rowSums(apply(path, 2, diff)^2)))
 
 test_that('chain without DWIM', {
-   ch <- mkchain(apply(.,2,diff), .^2, rowSums(.), sqrt(.), cumsum(.),
-                 .dwim=FALSE)
+   ch <- mkchain(apply(.,2,diff), .^2, rowSums(.), sqrt(.), cumsum(.))
    dist <- ch(path)
    expect_equal(dist, check)
 })
@@ -35,6 +34,37 @@ test_that('chain lexical scope', {
   pow <- 2
   dist <- chain(path, apply(2,diff), .^pow, rowSums, sqrt, cumsum)
   expect_equal(dist, check)
+})
+
+test_that('chain remembers intermediate result', {
+  test <- (function(.) {
+    path <- .
+    . <- apply(., 2, diff)
+    . <- .^2
+    . <- rowSums(.)
+    . <- sqrt(.)
+    . <- sum(.)
+    . <- norm <- path/.
+    . <- mean(.)
+    . <- norm-.
+  })(path)
+  #should be equiv to:
+  normpath <- chain(path=path, apply(2,diff), .^2,
+                rowSums, sqrt, sum, norm=path/., mean, norm-.)
+  expect_equal(normpath, test)
+})
+
+test_that('chain scope is local', {
+  x <- 1
+  y <- 100
+  expect_equal(chain[x](x, x+1, y=exp), exp(2))
+  expect_equal(x, 1)
+  expect_equal(y, 100)
+})
+
+test_that('can use . as a function according to R pseudo-lisp-2 rules', {
+  . <- function(x) 2*x
+  expect_equal(chain(2, .+3, ., .(.+1)), 22)
 })
 
 test_that('mkchain placeholder', {
@@ -57,19 +87,3 @@ test_that('chain/mkchain arguments', {
   expect_equal(chain[x, threshold=20](data, x>threshold, sum))
   #no way to change "threshold" in the chain form but that's ok
 })
-
-test_that('chain remembers intermediate result', {
-  test <- (function(.) {
-    . <- foo <- .
-    . <- apply(., 2, diff)
-    . <- foo^2
-    . <- rowSums(.)
-    . <- sqrt(.)
-    . <- cumsum(.)
-    . <- foo/.
-  })(path)
-  #should be equiv.
-  dist <- chain(foo=path, apply(2,diff), foo^2, rowSums, sqrt, cumsum, foo/.)
-  expectEqual(foo, test)
-})
-

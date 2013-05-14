@@ -1,26 +1,28 @@
-chain.body <- function(..., .dwim=TRUE) {
+#generate the function y both forms of chain
+chain.function <- function(...) {
   args <- list(...)
-  #ideally we want macro hygeine for names like "_data"
-  template({
-    `_data` <- .(args[[1]])
+  names <- dots_names(...) %||% ""
+  template(function(.) {
     ...(
-      lapply(args[-1], function(x) template(`_data` <- .(chain.dwim(x, quote(`_data`)))))
+      Map(args, names, f=function(a,n)
+          if (n == "") template(. <- .(chain.dwim(a, quote(.))))
+          else template(.(as.name(n)) <- . <- .(chain.dwim(a, quote(.)))))
       )
-    ammoc(`_data`, rm("_data"))
   })
 }
 
 ## helper function that "guesses" the correct form of the arguments to
 ## chain if they do not contain dots.
-chain.dwim <- function(expr, dot=quote(.))
+chain.dwim <- function(expr, dot=quote(.)) {
   if("." %in% all.names(expr)) {
-    substitute.nq(expr, list(.=dot))
+    expr
   } else {
     switch(mode(expr),
            name=call(as.character(expr),dot),
            call=as.call(c(expr[[1]], dot, as.list(expr[-1]))),
            stop("don't know how to chain into a '", mode(expr), "'"))
   }
+}
 
 #' Chain the output of one expression into the input of another.
 #'
@@ -31,7 +33,7 @@ chain.dwim <- function(expr, dot=quote(.))
 #' and you want to find the total length of the line segments
 #' connecting each point in sequence. You could write:
 #'
-#' \code{length <- sum(sqrt(rowSums(apply(P, 2, diff).^2)))}
+#' \code{length <- sum(sqrt(rowSums(apply(P, 2, diff)^2)))}
 #'
 #' However this must be read "inside-out" to follow the
 #' computation. It will be easier to read if written this way:
@@ -51,10 +53,7 @@ chain.dwim <- function(expr, dot=quote(.))
 #' \code{apply(.,2,diff)}, with the \code{.} coming from the output
 #' of the previous step. This tends to work well because of the
 #' typical convention in R of the dataset being the first argument to
-#' any function.
-#'
-#' If the argument \code{.dwim} is set to FALSE, arguments are only
-#' interpreted as expressions with placeholders. Thus we could write:
+#' any function. The above is equivalent to:
 #'
 #' \code{length <- chain(P, apply(.,2,diff), .^2, rowSums(.), sqrt(.), sum(.))}
 #'
@@ -63,23 +62,20 @@ chain.dwim <- function(expr, dot=quote(.))
 #' chain before being interpreted by the inner chain. A facility for
 #' specifying the placeholder may be added in the future.
 #'
-#' It is also permissible to use an assignment like \code{x <-
-#' func(.)} to store an intermediate result along the chain. The
-#' assignment will happen in the function's private scope.
+#' If you want to keep an intermediate value along the chain for use,
+#' you can name the arguments, as in
+#' \code{alphabetize <- mkchain(values=., names, order, values[.])}.
 #'
-#' Note that subassignments usually return the rvalue, which is not
-#' usually what you want in a chain. Currently you can cope with
-#' subassignments by saying things like \code{`[<-`(., index,
-#' value)}. Some better way to cope with subassignments is desirable.
+#' Note that using subassignments, for example
+#' \code{chain(x, names(.) <- toupper(.))} usually return the rvalue,
+#' which is not usually what
+#' you want (here it will return the upcased characters, not the object with
+#' upcased names.) Currently you can cope with subassignments by saying
+#' things like \code{mkchain(data, `names<-`(., toupper(names(.))))}.
+#' Some better way to cope with subassignments would be nice.
 #'
-#' @param data The data to run through the chain.
+#' @param . The data to run through the chain.
 #' @param ... A sequence of expressions.
-#' @param .dwim If set to FALSE, will only evaluate expressions
-#' literally. If set to \code{TRUE} (the default), will attempt to
-#' guess what you mean. when you leave the dot out of the
-#' expressions, as described above.
-#' @param .envir The environement that should be parent of the
-#' returned function. Defaults to the parent frame of \code{mkchain}
 #' @return For \code{mkchain} return the constructed function. For
 #' \code{chain}, apply the chain to the dataset given in the first
 #' argument and return the result.
@@ -95,11 +91,16 @@ chain.dwim <- function(expr, dot=quote(.))
 #' bb_longterm[1:5,]
 #'
 #' # Rewriting the above using chain:
-#' chain(baseball, count("id"), subset(freq>25), match_df(baseball, ., on="id"), head(5))
-mkchain <- macro(function(...)
-                 template(function(`_data`)
-                          .(chain.body(quote(`_data`), ...))))
+#' chain(baseball, count("id"), subset(freq>25),
+#'       match_df(baseball, ., on="id"), head(5))
+mkchain <- macro(chain.function)
 
 ##' @export
-chain <- macro(chain.body)
-
+chain <- macro(function(...) {
+  data <- ..1
+  transforms <- list(...)
+  names <- names(transforms) %||% ""
+  if (names[1] != "") transforms[[1]] <- quote(.)
+  else transforms <- transforms[-1]
+  template(.(chain.function %()% transforms)(.(data)))
+})
