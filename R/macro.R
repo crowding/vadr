@@ -354,10 +354,10 @@ quote_args <- function(...) {
            if (is.null(names(x))) rep("", length(x)) else names(x),
            FUN = function(x, n) {
              if (n == "") {
-               if (is.name(x)) {
+               if (is.name(x) & !identical(x, quote(expr=))) {
                  structure(list(quote(expr=)), names=as.character(x))
                } else {
-                 stop(deparse(x, nlines=1), " doesn't look like a name")
+                 stop("'", deparse(x, nlines=1), "' doesn't look like a name")
                }
              } else {
                structure(list(x), names=n)

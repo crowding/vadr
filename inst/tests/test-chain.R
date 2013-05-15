@@ -37,7 +37,7 @@ test_that('chain lexical scope', {
 })
 
 test_that('chain remembers intermediate result', {
-  test <- (function(.) {
+   test <- (function(.) {
     path <- .
     . <- apply(., 2, diff)
     . <- .^2
@@ -46,7 +46,7 @@ test_that('chain remembers intermediate result', {
     . <- sum(.)
     . <- norm <- path/.
     . <- mean(.)
-    . <- norm-.
+    . <- norm - .
   })(path)
   #should be equiv to:
   normpath <- chain(path=path, apply(2,diff), .^2,
@@ -64,7 +64,12 @@ test_that('chain scope is local', {
 
 test_that('can use . as a function according to R pseudo-lisp-2 rules', {
   . <- function(x) 2*x
-  expect_equal(chain(2, .+3, ., .(.+1)), 22)
+  check <- (function(.) {
+    . <- . + 3
+    . <- .(.)
+    . <- .(. + 1)
+  })(2)
+  expect_equal(chain(2, .+3, .(.), .(.+1)), 22)
 })
 
 test_that('mkchain placeholder', {
@@ -84,6 +89,6 @@ test_that('chain/mkchain arguments', {
   expect_equal(f(data, 60), sum(data > 60))
 
   #and for mkchain
-  expect_equal(chain[x, threshold=20](data, x>threshold, sum))
+  expect_equal(chain[x, threshold=20](data, x>threshold, sum), sum(data > 20))
   #no way to change "threshold" in the chain form but that's ok
 })

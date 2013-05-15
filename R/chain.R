@@ -1,20 +1,21 @@
 #generate the function y both forms of chain
-chain.function <- function(...) {
-  args <- list(...)
-  names <- dots_names(...) %||% ""
-  template(function(.) {
+chain_function <- function(args) {function(transforms) {
+  var <- as.name(names(args)[[1]])
+  names <- names(transforms) %||% ""
+  template(function(.=...(args)) {
     ...(
-      Map(args, names, f=function(a,n)
-          if (n == "") template(. <- .(chain.dwim(a, quote(.))))
-          else template(.(as.name(n)) <- . <- .(chain.dwim(a, quote(.)))))
+      Map(transforms, names, f=function(a,n)
+          if (n == "") template(.(var) <- .(chain.dwim(a, var)))
+          else template(.(as.name(n)) <- .(var) <- .(chain.dwim(a, var))))
       )
+    .(var)
   })
-}
+}}
 
 ## helper function that "guesses" the correct form of the arguments to
 ## chain if they do not contain dots.
 chain.dwim <- function(expr, dot=quote(.)) {
-  if("." %in% all.names(expr)) {
+  if(as.character(dot) %in% all.names(expr)) {
     expr
   } else {
     switch(mode(expr),
@@ -24,19 +25,47 @@ chain.dwim <- function(expr, dot=quote(.)) {
   }
 }
 
+#' @S3method "[" mkchain
+`[.mkchain` <-
+  macro(function(...) {
+    args <- do.call(quote_args, list(...)[-1])
+    macro(function(...) chain_function(args)(list(...)))
+  })
+
+#' @S3method "[" chain
+`[.chain` <- macro(function(...) {
+  args <- do.call(quote_args, list(...)[-1])
+  macro(function(...) {
+    transforms <- list(...)
+    arg <- transforms[[1]]
+    if ((names(transforms[1]) %||% "") != "") {
+      transforms[[1]] <- template(.(as.name(names(transforms)[[1]])) <-
+                                  .(as.name(names(args)[[1]])))
+    } else {
+      transforms <- transforms[-1]
+    }
+    template(.(chain_function(args)(transforms))(.(arg)))
+  })
+})
+
 #' Chain the output of one expression into the input of another.
 #'
 #' Many times in R programming you will want to take a dataset and do
 #' a sqeuence of simple things to it. \code{chain} aims to make this
-#' kind of code simpler and more compact. For instance, suppose that
-#' you have a path \code{P} defined by a M-by-2 array of coordinates
-#' and you want to find the total length of the line segments
-#' connecting each point in sequence. You could write:
+#' kind of code simpler and more compact.
+#'
+#'
+#' For instance, suppose that you have a path \code{P} defined by a
+#' M-by-2 array of coordinates and you want to find the total length of
+#' the line segments connecting each point in sequence. My stream of
+#' though for this goes something like "okay , take the difference
+#' between rows, square, sum along columns, square root, and sum." You
+#' could write:
 #'
 #' \code{length <- sum(sqrt(rowSums(apply(P, 2, diff)^2)))}
 #'
 #' However this must be read "inside-out" to follow the
-#' computation. It will be easier to read if written this way:
+#' computation. I find it easier to follow if written this way:
 #'
 #' \code{length <- chain(P, apply(2,diff), .^2, rowSums, sqrt, sum)}
 #'
@@ -57,14 +86,17 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #'
 #' \code{length <- chain(P, apply(.,2,diff), .^2, rowSums(.), sqrt(.), sum(.))}
 #'
-#' Note that nested invocations of \code{chain} will almost never do
-#' what you want, as the placeholder will be interpreted by the outer
-#' chain before being interpreted by the inner chain. A facility for
-#' specifying the placeholder may be added in the future.
-#'
 #' If you want to keep an intermediate value along the chain for use,
 #' you can name the arguments, as in
 #' \code{alphabetize <- mkchain(values=., names, order, values[.])}.
+#'
+#' You can also use a different placeholder than \code{"."} by
+#' supplying it in brackets, as in \code{chain[x](x^2, mean, sqrt)}.
+#' This can make things less confusing for nested invocations
+#' of \code{\link{chain}} or if another package has a use for
+#' \code{"."}. When used with \code{link{mkchain}}, you can specify
+#' other arguments and defaults, as in
+#' \code{mkchain[., pow=2](x^pow, mean, sqrt)}
 #'
 #' Note that using subassignments, for example
 #' \code{chain(x, names(.) <- toupper(.))} usually return the rvalue,
@@ -74,18 +106,21 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' things like \code{mkchain(data, `names<-`(., toupper(names(.))))}.
 #' Some better way to cope with subassignments would be nice.
 #'
-#' @param . The data to run through the chain.
-#' @param ... A sequence of expressions.
+#' @param . For \code{chain} the first parameter is the data to run
+#' through the chain.
+#' @param ... The remainder of parameters in \code{chain} are a
+#' sequence of transforming expressions.
 #' @return For \code{mkchain} return the constructed function. For
 #' \code{chain}, apply the chain to the dataset given in the first
 #' argument and return the result.
 #' @note \code{chain} is a bit like the \code{->} macro of Clojure.
-#' @aliases chain
+#' @aliases mkchain [.chain [.mkchain
 #' @author Peter Meilstrup
 #' @export
 #' @examples
-#' # In help(match_df, package="plyr") there is this example:
+#' # In help("match_df", package="plyr") there is this example:
 #' data(baseball)
+#'
 #' longterm <- subset(count(baseball, "id"), freq > 25)
 #' bb_longterm <- match_df(baseball, longterm, on="id")
 #' bb_longterm[1:5,]
@@ -93,14 +128,23 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' # Rewriting the above using chain:
 #' chain(baseball, count("id"), subset(freq>25),
 #'       match_df(baseball, ., on="id"), head(5))
-mkchain <- macro(chain.function)
+mkchain <- function(...) NULL
 
-##' @export
-chain <- macro(function(...) {
-  data <- ..1
-  transforms <- list(...)
-  names <- names(transforms) %||% ""
-  if (names[1] != "") transforms[[1]] <- quote(.)
-  else transforms <- transforms[-1]
-  template(.(chain.function %()% transforms)(.(data)))
-})
+#' @export
+chain <- function(...) NULL
+
+#mkchain(...) is the same as mkchain[.](...)
+#which is done by making mkchain itself the value of mkchain[.]
+#(setting its class to mkchain)
+#Can define but can't actually execute the macro at package build time,
+#so have to do it at load time:
+.onLoad <- function(libname, pkgname) {
+  mkchain <- `[.mkchain`(force, .)
+  class(mkchain) <- c("mkchain", class(mkchain))
+  mkchain <<- mkchain
+
+  #' @export
+  chain <- `[.chain`(force, .)
+  class(chain) <- c("chain", class(chain))
+  chain <<- chain
+}

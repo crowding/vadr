@@ -162,6 +162,7 @@ test_that("quote_args", {
   quote_args(a=1, b, c) %is% as.pairlist(alist(a=1, b=, c=))
   expect_error(quote_args(a, b, x+y))
   expect_error(quote_args(a, b, 1))
+  expect_error(quote_args(a, , c))
 })
 
 test_that("with_arg", {

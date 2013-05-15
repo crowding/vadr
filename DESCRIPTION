@@ -7,9 +7,9 @@ Author: Peter Meilstrup <peter.meilstrup@gmail.com>
 Maintainer: Peter Meilstrup <peter.meilstrup@gmail.com>
 Description: This package implements workalikes for the author's (and
     perhaps your) favorite features from other languages, making R
-    programs shorter and more expressive.  destructurimg bind lets you
+    programs shorter and more expressive. Destructurimg bind lets you
     perform parallel assignments and unpack nested lists. A chain
-    macro lets you quickly string several operationstogether, similar
+    macro lets you quickly string several operations together, similar
     to Unix pipelines. A collection of functions makes it easy to work
     with `...` arguments and missing values. Behind the scenes is an
     efficient macro utility, with a much improved alternative to the
@@ -27,6 +27,8 @@ Imports:
     compiler (>= 2.15.2)
 Collate:
     'macro.R'
+    'dots.R'
+    'getPointer.R'
     'indexing.R'
     'programming.R'
     'ptools-description.R'
@@ -37,5 +39,3 @@ Collate:
     'run_as_script.R'
     'with_args.R'
     'ammoc.R'
-    'getPointer.R'
-    'dots.R'
