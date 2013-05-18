@@ -92,3 +92,13 @@ test_that('chain/mkchain arguments', {
   expect_equal(chain[x, threshold=20](data, x>threshold, sum), sum(data > 20))
   #no way to change "threshold" in the chain form but that's ok
 })
+
+test_that('chain placeholder only noticed in call heads', {
+  data <- c(13, 32, 54, 68, 12, 31, 14, 31,  5,  9)
+  . <- function(x, t) x>20
+  remember <- function(x) function(i) x[i]
+
+  expect_equal(chain(data, .(20), sum), sum(data > 20))
+  expect_error(chain(data, remember, .(4)))
+  expect_equal(chain(data, remember, (.)(4)), 68)
+})

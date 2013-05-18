@@ -15,7 +15,7 @@ chain_function <- function(args) {function(transforms) {
 ## helper function that "guesses" the correct form of the arguments to
 ## chain if they do not contain dots.
 chain.dwim <- function(expr, dot=quote(.)) {
-  if(as.character(dot) %in% all.names(expr)) {
+  if(as.character(dot) %in% all.vars(expr)) {
     expr
   } else {
     switch(mode(expr),
@@ -51,15 +51,15 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' Chain the output of one expression into the input of another.
 #'
 #' Many times in R programming you will want to take a dataset and do
-#' a sqeuence of simple things to it. \code{chain} aims to make this
+#' a sequence of simple things to it. \code{chain} aims to make this
 #' kind of code simpler and more compact.
 #'
 #'
 #' For instance, suppose that you have a path \code{P} defined by a
 #' M-by-2 array of coordinates and you want to find the total length of
 #' the line segments connecting each point in sequence. My stream of
-#' though for this goes something like "okay , take the difference
-#' between rows, square, sum along columns, square root, and sum." You
+#' though for this goes something like "okay, take the difference
+#' along columns, square, sum along rows, square root, and sum." You
 #' could write:
 #'
 #' \code{length <- sum(sqrt(rowSums(apply(P, 2, diff)^2)))}
