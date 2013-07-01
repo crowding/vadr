@@ -16,7 +16,7 @@ more expressive. Here are some samples of what you can do:
 
 `bind[]` assigns to several variables at once, by unpacking a list. Say
 you have some data coming in with an awkward, messy format, and you
-want to pull a bunch of values from it.
+want to extract and reorganize some of the data.
 
 ```r
 record <- list("Marilyn", "Monroe", dob=list("June", 1, 1926),
@@ -59,29 +59,34 @@ every intermediate result to a var, probably reusing the same variable
 name, which I hate because I don't want to give a name to data until
 it actually _is_ what it's name suggests; or do it all at once in a
 deeply nested function call, which gets you
-[Dagwood Sandwich Code][http://c2.com/cgi/wiki?ThickBreadSmell].
+[Dagwood Sandwich Code](http://c2.com/cgi/wiki?ThickBreadSmell).
 
 *Example:* Let's compute the perimeter of the 137-gon inscribed in the
-unit circle, by computing the coordinates of each point and from that
-distance along each segment.
+unit circle.
 
-You could do it serial assignment style, until you run out of patience
+If you are comfortable with an APL influenced language (such as R), 
+you might see this task and think: "Ok, so get the (x,y) coordinates 
+of the vertices, then difference them to get edge lengths, then add 
+lengths up for the perimiter."
+
+You could write it serial assignment style, until you run out of patience
 for naming things:
 
 ```r
 n <- 137
-radians <- seq(0, 2*pi, length=137)
+radians <- seq(0, 2*pi, length=n+1)
 coords <- cbind(sin(radians), cos(radians))
 differences <- apply(coords, 2, diff)
 segment.lengths <- sqrt(rowSums(differences^2))
 perimeter <- sum(segment.lengths)
 ```
 
-Or you would do inscrutable Dagwood sandwich style, where, for
-example, the `2` winds up an enormous distance from the function
-(`apply`) it is an argument to:
+Or you could write inscrutable Dagwood sandwich style, where, for
+example, the `2` and the `^2` wind up an enormous distance from the functions
+(`apply` and `rowSums`) they are argument or subsequent to:
 
 ```r
+n <- 137
 sum(sqrt(rowSums(apply(sapply(c("sin", "cos"), do.call,
                               list(seq(0, 2*pi, length=137))),
                        2, diff)^2)))
@@ -89,26 +94,33 @@ sum(sqrt(rowSums(apply(sapply(c("sin", "cos"), do.call,
 
 This package provides an alternative for this kind of code,
 `chain`. Here's `chain` style. It's a bit like a Unix pipeline, and a
-bit more like the `->` macro in Clojure, and it's compact and easy to
-read all at once. Things happen at the beginning and you read along to
-the end, no jumping around, the 2 is right next to 'apply' where it
+bit more like the `->` macro in Clojure. It is compact and reads 
+well; things start at the beginning and you read along to
+the end, no jumping around, the 2 is right next to `apply` where it
 belongs and it's not junked up with a bunch of temporary names.
 
 ```r
-perimeter <- chain(137, seq(0, 2*pi, length=.), cbind(sin(.), cos(.)),
+n <- 137
+perimeter <- chain(n, seq(length=.+1, 0, 2*pi), cbind(sin(.), cos(.)),
                    apply(2, diff), .^2, rowSums, sqrt, sum)
 ```
+
+You can narrate this left to right. "Start with your number of 
+sides. Sample that many times (plus one, oh fenceposts) over [0, 2*pi].
+Sine and cosine of that gives you coordinates. Take differences and apply 
+Pythagoras, squaring, summing and rooting to get the length of each side. 
+Add it all up and you have your perimiter."
 
 ## Partial application (currying)
 
 If you ever want to provide default arguments to a function before
 handing it off somewhere else, or other such tricks, this package
 provide both "leftward" and "rightward" partial application functions,
-as well as `%()%`. a full-apply which can be less tricksy than
+as well as `%()%`, a full-apply which can be less tricksy than
 `do.call()`.
 
 ```
-printReport <- "Message: " %>>% cat %<<% c(sep="\n", "-----\n")
+printReport <- cat %<<<% "Message: " %<<% c(sep="\n", "-----\n")
 printReport %()% c("message one", "message two", "message three")
 ```
 
