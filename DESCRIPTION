@@ -21,8 +21,8 @@ Suggests:
     digest (>= 0.5.2),
     roxygen2 (>= 2.2.2)
 Depends:
-    plyr (>= 1.8.0)
 Imports:
+    plyr (>= 1.8.0),
     stringr (>= 0.6.1),
     compiler (>= 2.15.2)
 Collate:
