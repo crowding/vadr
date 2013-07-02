@@ -6,7 +6,6 @@ int _dots_length(SEXP dots);
 SEXP _dots_unpack(SEXP dots) {
   int i;
   SEXP s;
-  SEXP item;
   int length = 0;
   SEXP names, environments, expressions, values;
   //SEXP evaluated, codeptr, missing, wraplist;
@@ -14,7 +13,6 @@ SEXP _dots_unpack(SEXP dots) {
 
   SEXP dataFrame;
   SEXP colNames;
-  SEXP class;
 
   //check inputs and measure length
   length = _dots_length(dots);
@@ -80,7 +78,6 @@ SEXP _dots_names(SEXP dots) {
   PROTECT(names = allocVector(STRSXP, length));
 
   for (s = dots, i = 0; s != R_NilValue; s = CDR(s), i++) {
-    SEXP item = CAR(s);
     if (isNull(TAG(s))) {
       SET_STRING_ELT(names, i, mkChar(""));
     } else {

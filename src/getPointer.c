@@ -77,7 +77,7 @@ SEXP _expressions_and_pointers(SEXP dots) {
       case NILSXP:
         /* We have an expression-ish, represent its pointer. */
         SET_VECTOR_ELT(result, i, item);
-        bufptr += sprintf(bufptr, "e%p", item);
+        bufptr += sprintf(bufptr, "e%p", (void *)item);
         SET_STRING_ELT(pointers, i, mkChar(buf));
         done=1;
         break;
