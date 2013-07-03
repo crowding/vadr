@@ -89,8 +89,8 @@
   for (i in seq(len=length(nOut))) {
     to <- eOut[[i]]
     if (!missing(to)) {
-      eval(substitute(target <- value,
-                      list(target=to, value=vOut[[i]])),
+        eval(substitute(target <- quote(value),
+                        list(target=to, value=vOut[[i]])),
            `*envir*`)
     }
   }
@@ -140,7 +140,10 @@ bind_match <- function(nOut, vIn) {
     }
     i_in_out[i_out_unmatched[i]] <- i_in_unmatched[i]
   }
-  vOut <- as.list(as.list(vIn)[i_in_out])
+
+  #data.frame objects choke on selecing columns with NAs, so...
+  vOut <- rep(list(NULL), length(nOut))
+  vOut[!is.na(i_in_out)] <- vIn[na.omit(i_in_out)]
 
   #then put the rest into dots.
   if (!is.null(i) && nOut[i_out_unmatched[i]] == "...") {

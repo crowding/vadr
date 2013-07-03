@@ -168,6 +168,48 @@ test_that("bind works recursively with ellipses", {
   expect_equal(yy, 22)
 })
 
+test_that("bind works with data frames", {
+    bind[lat=lat, long=long, ...=df] <- quakes
+    expect_equal(quakes$lat, lat)
+    expect_equal(quakes$long, long)
+})
+
+test_that('bind works with lists of language objects', {
+    l <- alist(`_data`, 5, 6, 7)
+    bind[arg, ...=args] <- l
+    expect_equal(arg, quote(`_data`))
+    expect_equal(args, list(5, 6, 7))
+})
+
+test_that('bind works with pairlists and missing values', {
+    l <- quote(function(a=foo, b, c) {foo})
+    bind[ , bind[a=a_default, ...=], ...=] <- l
+    expect_equal(a_default, quote(foo))
+    #should this error? I claim not because
+    #x <- alist(foo=, bar, baz)
+    #tf <- x$foo
+    #does not error.
+    #
+    #On the other hand, it would be nice to be able to treat defaults
+    #like they ought to be treated. This would require treatment of missings...
+    bind[ , bind[b=b_default, ...=], ...=] <- l
+    expect_identical(list_missing(b_default), list(quote(e=)))
+})
+
+FALSE && test_that("bind works with dots objects", {
+    #no guarantees on what order they are extracted in though.
+    x <- 1
+    y <- 2
+    ex <- dots(a = x[2] <- x+y, b = y[2] <- y+x[2], aa=1, bb=2)
+    bind[a=a, b=b, ...=q] <- ex
+    b <- ex$b
+    expect_equal(a, c(3))
+    expect_equal(b, c(5))
+    expect_equal(x, c(1,3))
+    expect_equal(y, c(2,5))
+    expect_equal(c %()% q, c(aa=1, bb=2))
+})
+
 # some interesting test cases to think about / play with.
 # bind[names=colnames, colnames=row.names, ...] <- attributes(data.frame(a=1))
 # bind[a, names(a)] <- list(names(a), names(a))
