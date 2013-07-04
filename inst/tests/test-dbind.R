@@ -181,7 +181,7 @@ test_that('bind works with lists of language objects', {
     expect_equal(args, list(5, 6, 7))
 })
 
-test_that('bind works with pairlists and missing values', {
+test_that('bind works with missing values', {
     l <- quote(function(a=foo, b, c) {foo})
     bind[ , bind[a=a_default, ...=], ...=] <- l
     expect_equal(a_default, quote(foo))
@@ -196,7 +196,15 @@ test_that('bind works with pairlists and missing values', {
     expect_identical(list_missing(b_default), list(quote(e=)))
 })
 
-FALSE && test_that("bind works with dots objects", {
+test_that('bind works with pairlists', {
+ l <- as.pairlist(list(a=1, b=2, x=list(4), y=list(5)))
+ bind[b=b, y=y, ...=l] <- l
+ expect_equal(b, 2)
+ expect_equal(y, list(5))
+ expect_equal(l, list(a=1, x=list(4)))
+})
+
+test_that("bind works with dots objects", {
     #no guarantees on what order they are extracted in though.
     x <- 1
     y <- 2
@@ -208,6 +216,29 @@ FALSE && test_that("bind works with dots objects", {
     expect_equal(x, c(1,3))
     expect_equal(y, c(2,5))
     expect_equal(c %()% q, c(aa=1, bb=2))
+})
+
+test_that("bind with dots objects does delayed assign when possible", {
+   a <- 1
+   y <- 3
+   args <- dots(1, a+1, x+y)
+   bind[x, y, ...=c] <- args
+   expect_equal(x, 1)
+   a <- 3
+   expect_equal(y, 4)
+   expect_equal(as.list(c), list(5))
+})
+
+test_that("dots delayed assign respects origin environment of environments...", {
+  a <- 1
+  b <- 2
+  f <- function() {
+    dots(a+1, b+2)
+  }
+  a <- 3
+  bind[q, r] <- f()
+  expectEqual(q, 4)
+  expectEqual(r, 5)
 })
 
 # some interesting test cases to think about / play with.
