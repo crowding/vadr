@@ -382,7 +382,7 @@ test_that("dots [] operator subsets without forcing promises", {
       y <- 4
     }, {
       c %()% a[1:2] %is% c(3,r=4)
-      x <- 4
+       x <- 4
       c %()% a[3] %is% 8
       y <- 2
       c %()% a %is% c(3,r=4,8)

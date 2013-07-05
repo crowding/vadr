@@ -58,7 +58,7 @@ expressions <- function(...) UseMethod("expressions")
 #' @S3method expressions ...
 expressions.... <- function(x) {
   y <- .Call(`_dots_unpack`, get("x"))
-  unclass(structure(y$expr, names=y$names))
+  unclass(structure(y$expr, names=y$name))
 }
 
 #' @S3method format deparse

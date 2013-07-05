@@ -72,8 +72,8 @@
   #`<-`(bind(x=a,y=b), c(1,2) into
   #`bind<-`(`*tmp*`, c(x=1, y=2), y=b)
   #which erases the fact that you wanted to match to the key "x".
-  #using `{<-` would allow more flexible syntax but won't work on account of more
-  #involved mangling.
+  #using `{<-` would allow more flexible syntax but won't work on account
+  #of more involved mangling.
 
   ##for instance the next three lines could be written
   ## bind[...=eIn, eOut] <- eval(substitute(alist(...)))
@@ -89,9 +89,10 @@
   for (i in seq(len=length(nOut))) {
     to <- eOut[[i]]
     if (!missing(to)) {
-        eval(substitute(target <- quote(value),
-                        list(target=to, value=vOut[[i]])),
-           `*envir*`)
+        expr <- quote(a <- quote(b))
+        expr[[2]] <- to
+        expr[[3]][[2]] <- vOut[[i]]
+        eval(expr, `*envir*`)
     }
   }
 
@@ -143,7 +144,10 @@ bind_match <- function(nOut, vIn) {
 
   #data.frame objects choke on selecing columns with NAs, so...
   vOut <- vIn[rep(1, length(nOut))]
-  vOut[!is.na(i_in_out)] <- as.list(vIn[na.omit(i_in_out)])
+  positional <- !is.na(i_in_out)
+  if (any(positional)) {
+    vOut[positional] <- as.list(vIn[i_in_out[positional]])
+  }
 
   #then put the rest into dots.
   if (!is.null(i) && nOut[i_out_unmatched[i]] == "...") {

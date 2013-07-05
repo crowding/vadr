@@ -218,31 +218,25 @@ test_that("bind works with dots objects", {
     expect_equal(c %()% q, c(aa=1, bb=2))
 })
 
-test_that("bind with dots objects does delayed assign when possible", {
+test_that("bind with dots objects does not do delayed assign, except for the ...", {
    a <- 1
    y <- 3
    args <- dots(1, a+1, x+y)
    bind[x, y, ...=c] <- args
    expect_equal(x, 1)
    a <- 3
-   expect_equal(y, 4)
-   expect_equal(as.list(c), list(5))
+   expect_equal(y, 2)
+   expect_equal(as.list(c), list(3))
 })
 
 test_that("dots delayed assign respects origin environment of environments...", {
   a <- 1
   b <- 2
   f <- function() {
+    a <- 3
     dots(a+1, b+2)
   }
-  a <- 3
-  bind[q, r] <- f()
-  expectEqual(q, 4)
-  expectEqual(r, 5)
+  bind[...=x] <- f()
+  expect_equal(x[[1]], 4)
+  expect_equal(x[[2]], 4)
 })
-
-# some interesting test cases to think about / play with.
-# bind[names=colnames, colnames=row.names, ...] <- attributes(data.frame(a=1))
-# bind[a, names(a)] <- list(names(a), names(a))
-# bind[a=x, aa, ...=foo, b=y, zz] <- c(a="foo", b="bar", c="baz", d="qux", "quux", "quux", "quuux", "grauply")
-
