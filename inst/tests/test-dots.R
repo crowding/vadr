@@ -2,13 +2,17 @@ context("dots")
 
 `%is%` <- expect_equal
 
+unwind_protect <- function(body, unwind) {
+  on.exit(unwind)
+  body
+}
+
 ##Quickie macro to help with setup and teardown.
 with_setup <- macro(JIT=FALSE, function(setup=NULL, ..., teardown=NULL) {
   template({
     ...( lapply(list(...), function(x) template({
       .(setup)
-      .(x)
-      .(teardown)
+      .(unwind_protect)(.(x), .(teardown))
     })))
   })
 })
@@ -428,6 +432,32 @@ test_that("dots [[]] and $ operators force ONE promise and return the value.", {
       d[["a"]] %is% 3
     }
     )
+})
+
+test_that("'expressions' unpacks expressions from a dotslist", {
+  d <- dots(1, x=x+1, stop("should not evaluate"))
+  expect_equal(expressions(d), alist(1, x=x+1, stop("should not evaluate")))
+})
+
+test_that("dots [[<- and $<- inject evaluated promises into a dotslist", {
+  # it's impossible to inject unevaluated promises here, apparently; primitive
+  #`[[<-` forces its arguments. This way is consistent with [[ anyway.
+  with_setup(
+      setup={
+        x <- "x"; y <- 3
+        d <- dots(a=x, b=y, c=x+y)
+      }, {
+        d[[2]] <- x
+        x <- 4
+        d[[2]] %is% "x"
+        #expressions(d)[2] %is% quote(x) #Nope, no.
+      }, {
+        d$b <- x
+        x <- 4
+        d$b %is% "x"
+        #expressions(d)["b"] %is% quote("x")
+      }
+  )
 })
 
 test_that("dots names method extracts tags without forcing", {

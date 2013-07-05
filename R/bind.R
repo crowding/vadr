@@ -142,15 +142,15 @@ bind_match <- function(nOut, vIn) {
   }
 
   #data.frame objects choke on selecing columns with NAs, so...
-  vOut <- rep(list(NULL), length(nOut))
-  vOut[!is.na(i_in_out)] <- vIn[na.omit(i_in_out)]
+  vOut <- vIn[rep(1, length(nOut))]
+  vOut[!is.na(i_in_out)] <- as.list(vIn[na.omit(i_in_out)])
 
   #then put the rest into dots.
   if (!is.null(i) && nOut[i_out_unmatched[i]] == "...") {
     i_out_unmatched <- which(is.na(i_in_out) & nOut %in% c("", "..."))
     i_in_unmatched <- na.omit(`[<-`(seq(length(vIn)), i_in_out, NA))
     if (length(i_out_unmatched) > i) {
-      stop("")
+      stop("This should not happen")
     }
     vOut[[i_out_unmatched]] <- vIn[i_in_unmatched]
   } else {

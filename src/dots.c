@@ -25,12 +25,22 @@ SEXP _dots_unpack(SEXP dots) {
   PROTECT(values = allocVector(VECSXP, length));
 
   for (s = dots, i = 0; s != R_NilValue; s = CDR(s), i++) {
+    if (TYPEOF(s) != DOTSXP)
+      error("Expected DOTSXP, got %s", type2char(TYPEOF(s)));
+
     SEXP item = CAR(s);
+
+    if (TYPEOF(item) != PROMSXP)
+      error("Expected PROMSXP as CAR of DOTSXP, got %s", type2char(TYPEOF(item)));
 
     // if we have an unevluated promise whose code is another promise, descend
     while ((PRENV(item) != R_NilValue) && (TYPEOF(PRCODE(item)) == PROMSXP)) {
       item = PRCODE(item);
     }
+
+    if ((TYPEOF(PRENV(item)) != ENVSXP) && (PRENV(item) != R_NilValue))
+      error("Expected ENVSXP or NULL in environment slot of DOTSXP, got %s",
+            type2char(TYPEOF(item)));
 
     SET_STRING_ELT(names, i, isNull(TAG(s)) ? mkChar("") : asChar(TAG(s)));
     SET_VECTOR_ELT(environments, i, PRENV(item));

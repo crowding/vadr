@@ -47,6 +47,20 @@ unpack.... <- function (x) {
   data.frame(du, row.names=make.names(du$name, unique=TRUE), check.names=TRUE)
 }
 
+#' @export
+expressions <- function(...) UseMethod("expressions")
+
+#' Extract the expressions from a dots object.
+#'
+#' @param x A dots object (see \code{\link{dots}}
+#' @return A named list of expressions.
+#' @seealso dots unpack
+#' @S3method expressions ...
+expressions.... <- function(x) {
+  y <- .Call(`_dots_unpack`, get("x"))
+  unclass(structure(y$expr, names=y$names))
+}
+
 #' @S3method format deparse
 format.deparse <- function(x, ...) {
   format(vapply(x, deparse, "", nlines=1, width.cutoff=100), ... )
@@ -398,6 +412,9 @@ as.dots <- function(x, .envir=parent.frame()) UseMethod("as.dots")
 #' @S3method as.dots "..."
 as.dots.... <- function(x, ...) x
 
+#' @S3method as.list "..."
+as.list.... <- function(x) list %()% x
+
 #' @S3method as.dots default
 as.dots.default <- function(x, .envir=parent.frame())
   do.call(dots, as.list(x), FALSE, .envir)
@@ -468,11 +485,25 @@ is.missing.default <- function(f) {
 }
 
 #' @S3method "[<-...." "default"
+#' @useDynLib ptools _list_to_dotslist
 #' @useDynLib ptools _dotslist_to_list
 `[<-.....default` <- function(x, ix, value, ...) {
   into <- .Call(`_dotslist_to_list`, x)
   from <- .Call(`_dotslist_to_list`, as.dots.literal(value))
   into[ix, ...] <- from
+  .Call(`_list_to_dotslist`, into)
+}
+
+#' @S3method "[[<-" "..."
+#' @useDynLib ptools _list_to_dotslist
+#' @useDynLib ptools _dotslist_to_list
+`[[<-....` <- function(x, ...) {
+  into <- .Call(`_dotslist_to_list`, x)
+  from <- .Call(`_dotslist_to_list`, dots(...))
+  #value comes last in an array assignment
+  aargs <- c(.Call(`_dotslist_to_list`, dots(into)), from)
+  aargs[length(aargs)] <- .Call(`_dotslist_to_list`, dots(from[[length(from)]]))
+  into <- `[[<-` %()% .Call(`_list_to_dotslist`, aargs)
   .Call(`_list_to_dotslist`, into)
 }
 
@@ -482,6 +513,16 @@ is.missing.default <- function(f) {
 `$....` <- function(x, name) {
   temp <- .Call(`_dotslist_to_list`, x)
   do.call(force.first.arg, list(do.call(`$`, list(temp, name))))
+}
+
+#' @S3method "$<-" "..."
+#' @useDynLib ptools _dotslist_to_list
+#' @useDynLib ptools _list_to_dotslist
+`$<-....` <- function(x, name, ...) {
+  into <- .Call(`_dotslist_to_list`, x)
+  from <- .Call(`_dotslist_to_list`, dots(...))
+  eval(call("$<-", quote(into), name, quote(from[[length(from)]])))
+   .Call(`_list_to_dotslist`, into)
 }
 
 #' @S3method "names" "..."
@@ -495,5 +536,6 @@ names.... <- function(x) .Call(`_dots_names`, x)
   .Call(`_list_to_dotslist`, temp)
 }
 
-#force() forces "the argument named x", while force.first.arg is agnostic to the name.
+#force() forces "the argument named x", while force.first.arg is
+#agnostic to the name.
 force.first.arg <- function(...) ..1
