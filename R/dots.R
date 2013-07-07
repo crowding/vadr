@@ -127,7 +127,7 @@ list_missing <- function(...) {
 }
 
 #' @export
-list_quote <- function(...) substitute(alist(...))[-1]
+list_quote <- function(...) as.list(substitute(alist(...))[-1])
 
 #' Capture the list of "dot-dot-dot" arguments as an object.
 #'

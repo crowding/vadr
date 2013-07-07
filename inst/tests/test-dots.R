@@ -171,6 +171,14 @@ test_that("list_missing evaluates arguments in the original scopes", {
                list(four="four", one="one", two="two", three="three"))
 })
 
+test_that("list_quote", {
+  a <- list_quote(a, b, d=c, d, e)
+  f <- function(a, b, ...) list_quote(a+b, ...)
+  b <- f(x, y, z, foo, wat=bar)
+  expect_equal(a, alist(a, b, d=c, d, e))
+  expect_equal(b, alist(a+b, z, foo, wat=bar))
+})
+
 ## DOTS OBJECT, CALLING AND CURRYING -------------------------------------
 
 test_that("%()% is like do.call(quote=TRUE) but doesn't overquote", {
