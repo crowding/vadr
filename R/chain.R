@@ -58,7 +58,7 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' For instance, suppose that you have a path \code{P} defined by a
 #' M-by-2 array of coordinates and you want to find the total length of
 #' the line segments connecting each point in sequence. My stream of
-#' though for this goes something like "okay , take the difference
+#' thought for this goes something like "okay, take the difference
 #' between rows, square, sum along columns, square root, and sum." You
 #' could write:
 #'
@@ -94,7 +94,7 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' supplying it in brackets, as in \code{chain[x](x^2, mean, sqrt)}.
 #' This can make things less confusing for nested invocations
 #' of \code{\link{chain}} or if another package has a use for
-#' \code{"."}. When used with \code{link{mkchain}}, you can specify
+#' \code{"."}. When used with \code{\link{mkchain}}, you can specify
 #' other arguments and defaults, as in
 #' \code{mkchain[., pow=2](x^pow, mean, sqrt)}
 #'
@@ -114,7 +114,7 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' \code{chain}, apply the chain to the dataset given in the first
 #' argument and return the result.
 #' @note \code{chain} is a bit like the \code{->} macro of Clojure.
-#' @aliases mkchain [.chain [.mkchain
+#' @aliases chain [.chain [.mkchain
 #' @author Peter Meilstrup
 #' @export
 #' @examples

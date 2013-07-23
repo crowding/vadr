@@ -1,6 +1,7 @@
 \name{mkchain}
 \alias{[.chain}
 \alias{[.mkchain}
+\alias{chain}
 \alias{mkchain}
 \title{Chain the output of one expression into the input of another.}
 \usage{
@@ -28,10 +29,10 @@
   For instance, suppose that you have a path \code{P}
   defined by a M-by-2 array of coordinates and you want to
   find the total length of the line segments connecting
-  each point in sequence. My stream of though for this goes
-  something like "okay , take the difference between rows,
-  square, sum along columns, square root, and sum." You
-  could write:
+  each point in sequence. My stream of thought for this
+  goes something like "okay, take the difference between
+  rows, square, sum along columns, square root, and sum."
+  You could write:
 
   \code{length <- sum(sqrt(rowSums(apply(P, 2, diff)^2)))}
 
@@ -72,8 +73,8 @@
   mean, sqrt)}. This can make things less confusing for
   nested invocations of \code{\link{chain}} or if another
   package has a use for \code{"."}. When used with
-  \code{link{mkchain}}, you can specify other arguments and
-  defaults, as in \code{mkchain[., pow=2](x^pow, mean,
+  \code{\link{mkchain}}, you can specify other arguments
+  and defaults, as in \code{mkchain[., pow=2](x^pow, mean,
   sqrt)}
 
   Note that using subassignments, for example
