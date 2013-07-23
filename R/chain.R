@@ -114,7 +114,7 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' \code{chain}, apply the chain to the dataset given in the first
 #' argument and return the result.
 #' @note \code{chain} is a bit like the \code{->} macro of Clojure.
-#' @aliases mkchain [.chain [.mkchain
+#' @aliases chain [.chain [.mkchain
 #' @author Peter Meilstrup
 #' @export
 #' @examples
