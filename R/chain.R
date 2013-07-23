@@ -94,7 +94,7 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' supplying it in brackets, as in \code{chain[x](x^2, mean, sqrt)}.
 #' This can make things less confusing for nested invocations
 #' of \code{\link{chain}} or if another package has a use for
-#' \code{"."}. When used with \code{link{mkchain}}, you can specify
+#' \code{"."}. When used with \code{\link{mkchain}}, you can specify
 #' other arguments and defaults, as in
 #' \code{mkchain[., pow=2](x^pow, mean, sqrt)}
 #'

@@ -73,8 +73,8 @@
   mean, sqrt)}. This can make things less confusing for
   nested invocations of \code{\link{chain}} or if another
   package has a use for \code{"."}. When used with
-  \code{link{mkchain}}, you can specify other arguments and
-  defaults, as in \code{mkchain[., pow=2](x^pow, mean,
+  \code{\link{mkchain}}, you can specify other arguments
+  and defaults, as in \code{mkchain[., pow=2](x^pow, mean,
   sqrt)}
 
   Note that using subassignments, for example
