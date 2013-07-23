@@ -29,10 +29,10 @@
   For instance, suppose that you have a path \code{P}
   defined by a M-by-2 array of coordinates and you want to
   find the total length of the line segments connecting
-  each point in sequence. My stream of though for this goes
-  something like "okay , take the difference between rows,
-  square, sum along columns, square root, and sum." You
-  could write:
+  each point in sequence. My stream of thought for this
+  goes something like "okay, take the difference between
+  rows, square, sum along columns, square root, and sum."
+  You could write:
 
   \code{length <- sum(sqrt(rowSums(apply(P, 2, diff)^2)))}
 
