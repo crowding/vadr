@@ -55,67 +55,67 @@ test_that("macro cache pays attention to tags", {
   expect_equal(divmacro(b=5, a=10), 2)
 })
 
-test_that("template", {
-  #"template" is intended to be a stronger version of backquote.
+test_that("quasiquote", {
+  #"qq" is intended to be a stronger version of backquote.
 
   a <- quote(a+b)
   b <- quote(b+c)
   c <- quote(c+d)
   default = quote(a+z)
 
-  expect_equal(template( .(a) + .(b)    + .(c)),
+  expect_equal(qq( .(a) + .(b)    + .(c)),
                quote(   a + b + (b + c) + (c + d)))
 
-  expect_equal(template( .(a) + b + .(template( .(a) + b ) ) ),
+  expect_equal(qq( .(a) + b + .(qq( .(a) + b ) ) ),
                quote(   a + b + b + (a + b + b) ) )
 
-  expect_equal( template( function(a, b = .(default)) force(b) ),
+  expect_equal( qq( function(a, b = .(default)) force(b) ),
                 quote(    function(a, b = a + z     ) force(b) ))
 })
 
-test_that("template interpolation in names", {
+test_that("qq interpolation in names", {
   achar <- "a"
   aname <- quote(a)
   bchar <- "b"
 
-  expect_equal(template( list(".(achar)"=foobar) ),
+  expect_equal(qq( list(".(achar)"=foobar) ),
                   quote( list(         a=foobar) ))
-  expect_equal(template( list(`.(aname)`=baz   ) ),
+  expect_equal(qq( list(`.(aname)`=baz   ) ),
                   quote( list(         a=baz   ) ))
-  expect_equal(template( list(`.(paste(achar, bchar, sep=""))` = foobar ) ),
+  expect_equal(qq( list(`.(paste(achar, bchar, sep=""))` = foobar ) ),
                   quote( list(                              ab = foobar ) ))
   #also in formal argument lists.
-  expect_equal(template( function( `.(achar)`, `.(bchar)` = default) body ),
+  expect_equal(qq( function( `.(achar)`, `.(bchar)` = default) body ),
                   quote( function(          a,          b = default) body ))
 
   #thius also covers some situations where nothing other than a name
   #is allowed by the parser
-  expect_equal(template(a$`.(bchar)`),
+  expect_equal(qq(a$`.(bchar)`),
                   quote( a$b ))
-  expect_equal(template( for(`.(aname)` in seq_len(10)) NULL),
+  expect_equal(qq( for(`.(aname)` in seq_len(10)) NULL),
                quote(    for(         a in seq_len(10)) NULL));
 })
 
-test_that("multiple element template interpolation", {
+test_that("multiple element qq interpolation", {
   arglist <- alist(aa, bb, cc)
   namedlist <- alist(aa=a, bb=b, ccc=)
 
-  expect_equal(template( list(z, b, ...(arglist)) ),
+  expect_equal(qq( list(z, b, ...(arglist)) ),
                   quote( list(z, b, aa, bb, cc) ) )
-  expect_equal(template( list(z, ...(namedlist), q) ),
+  expect_equal(qq( list(z, ...(namedlist), q) ),
                   quote( list(z, aa=a, bb=b, ccc=, q) ))
   #and in argument lists. Note how ccc is on the name on the right side.
   #note that the name of the argument ... appears in is ignored.
-  expect_equal(template( function(q, .=...(namedlist), x) body ),
+  expect_equal(qq( function(q, .=...(namedlist), x) body ),
                   quote( function(q, aa=a, bb=b, ccc, x) body ))
 })
 
-test_that("template interpolation in first argument", {
-  #template() wasn't hitting the first element of function arg lists?
+test_that("qq interpolation in first argument", {
+  #qq() wasn't hitting the first element of function arg lists?
   #turns out bquote() itself had this bug too.
   argument.name <- "x"
   expect_equal(
-    template(function(`.(argument.name)`) {
+    qq(function(`.(argument.name)`) {
       cat(.(argument.name), " is ", `.(argument.name)`, "\n")
     })
     ,
@@ -124,7 +124,7 @@ test_that("template interpolation in first argument", {
 
   argnames <- letters[1:4]
   expect_equal(
-    template(function(
+    qq(function(
                 .=...(setNames(missing_value(length(argnames)), argnames)))
              {
                list(.=...(lapply(argnames, as.name)))
@@ -134,14 +134,14 @@ test_that("template interpolation in first argument", {
     )
 })
 
-test_that("templates with ...(NULL)", {
-  template(list(1, 2, ...(NULL), 4)) %is% quote(list(1, 2, 4))
+test_that("qqs with ...(NULL)", {
+  qq(list(1, 2, ...(NULL), 4)) %is% quote(list(1, 2, 4))
 })
 
 test_that("expand_macro expands all visible macros (by one step)", {
   local({
-    addmacro <- macro(function(x, y) template(.(x) + .(y)))
-    doublemacro <- macro(function(x, y) template(.(x) * addmacro(.(y), .(y))))
+    addmacro <- macro(function(x, y) qq(.(x) + .(y)))
+    doublemacro <- macro(function(x, y) qq(.(x) * addmacro(.(y), .(y))))
     #
     expect_equal(expand_macros(quote(addmacro(a, b))), quote(a+b))
     expect_equal(expand_macros_q(addmacro(a, b*y)), quote(a+b*y))
@@ -177,11 +177,11 @@ test_that("with_arg", {
    %is% c(1, 2, a=1, b=2,1, a=1, b=2))
 })
 
-test_that("template descends into heads of calls,", local({
-  template( (.(as.name("list")))(1, 2, 3) ) %is% quote( (list)(1, 2, 3) )
+test_that("quasiquote descends into heads of calls,", local({
+  qq( (.(as.name("list")))(1, 2, 3) ) %is% quote( (list)(1, 2, 3) )
 
   tempfun <- function() {
-    template((function() {...(list(1, 2, 3))})())
+    qq((function() {...(list(1, 2, 3))})())
   }
 
   #the real problem here was call objects of length 1
@@ -191,8 +191,14 @@ test_that("template descends into heads of calls,", local({
 
 }))
 
-test_that("template non-call, non-primitive lists", {
+test_that("quasiquote non-call, non-primitive lists", {
   expect_equal(
-    do.call(template, list(alist(a, b, .(paste("foo", "bar")), d))),
+    do.call(qq, list(alist(a, b, .(paste("foo", "bar")), d))),
     alist(a, b, "foo bar", d))
+})
+
+test_that("qe(x) is a shortcut for eval(qq(x))", {
+  x <- 1; y <- 2; z <- 3;
+  foo <- c("x", "y", "z")
+  qe(sum(...(lapply(foo, as.name)))) %is% 6
 })

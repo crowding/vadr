@@ -39,12 +39,12 @@ chain.dwim <- function(expr, dot=quote(.)) {
     transforms <- list(...)
     arg <- transforms[[1]]
     if ((names(transforms[1]) %||% "") != "") {
-      transforms[[1]] <- template(.(as.name(names(transforms)[[1]])) <-
+      transforms[[1]] <- qq(.(as.name(names(transforms)[[1]])) <-
                                   .(as.name(names(args)[[1]])))
     } else {
       transforms <- transforms[-1]
     }
-    template(.(chain_function(args)(transforms))(.(arg)))
+    qq(.(chain_function(args)(transforms))(.(arg)))
   })
 })
 

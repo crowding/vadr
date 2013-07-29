@@ -9,8 +9,8 @@ unwind_protect <- function(body, unwind) {
 
 ##Quickie macro to help with setup and teardown.
 with_setup <- macro(JIT=FALSE, function(setup=NULL, ..., teardown=NULL) {
-  template({
-    ...( lapply(list(...), function(x) template({
+  qq({
+    ...( lapply(list(...), function(x) qq({
       .(setup)
       .(unwind_protect)(.(x), .(teardown))
     })))

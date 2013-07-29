@@ -101,7 +101,7 @@ make_unique_names <- function(new, context, sep=".") {
 #' \code{\link[plyr]{.}()} to capture environments explicitly.
 #'
 #' @author Peter Meilstrup
-#' @seealso template
+#' @seealso qq
 #' @import compiler
 #' @export
 macro <- function(fn, cache=TRUE, JIT=TRUE) {
@@ -146,44 +146,46 @@ macro <- function(fn, cache=TRUE, JIT=TRUE) {
   f
 }
 
-#' Perform template substitutions on a quoted R expressions.
+#' Quasiquotation. Perform template substitutions on a quoted R expressions.
 #'
 #' This is an extended version of the \code{\link{backquote}}
-#' utility.  'template' quotes its first argument, then scans for
+#' utility.  'qq' quotes its first argument, then scans for
 #' terms wrapped in \code{.()}, \code{...()}, or names that match
 #' \code{`.()`} The wrapped expressions or names are evaluated in the
 #' given environment.  Expressions wrapped in \code{...()} will be
 #' interpolated into the argument list in which they occur. Names
 #' wrapped in `.()` will be substituted and coerced to name.
 #'
-#' Invocations of template() can be nested within the \code{.()}'s
+#' Invocations of qq() can be nested within the \code{.()}'s
 #' section and they should work as promised.
 #'
 #' @param expr A language object.
 #' @param .envir An environment to evaluate the backquoted expressions in.
-#' @return A language object.
+#' @return For \code{qq}, A language object; for \code{qe}, evaluates
+#'         the expression in the calling environment.
 #' @author Peter Meilstrup
-#' @seealso macro bquote substitute recpitulating.env
+#' @aliases template qe
+#' @seealso macro bquote substitute quoting.env
 #' @examples
 #'
 #' #Basic substitution
 #' default <- 1
-#' template( function(x, y = .(default)) x+y )
+#' qq( function(x, y = .(default)) x+y )
 #' #function(x, y = 1) x + y
 #'
 #' # interpolating substitution:
 #' paste.before <- alist("hello", "cool")
 #' paste.after <- alist("!", "Now is", date())
-#' template(cat(...(paste.before), "world", ...(paste.after), '\n'))
+#' qq(cat(...(paste.before), "world", ...(paste.after), '\n'))
 #' #cat("hello", "cool", "world", "!", "Now is", date(), "\n")
 #'
 #' # Name substitution:
 #' element_to_access <- "x"
-#' template(function(data) data$`.(element_to_access)`)
+#' qq(function(data) data$`.(element_to_access)`)
 #' #function(data) data$x
 #'
 #' argument.name <- "x"
-#' template(
+#' qq(
 #'   function(`.(argument.name)`)
 #'   cat(.(argument.name), " is ", `.(argument.name)`, "\n")
 #' )
@@ -199,18 +201,18 @@ macro <- function(fn, cache=TRUE, JIT=TRUE) {
 #'
 #' # Building a function with an arbitrary list of arguments:
 #' argnames <- letters[1:4]
-#' template(function(.=...(setNames(missing_value(length(argnames)), argnames))) {
+#' qq(function(.=...(setNames(missing_value(length(argnames)), argnames))) {
 #'   list(...(lapply(argnames, as.name)))
 #' })
 #' #function(a, b, c, d) list(a, b, c, d)
 #'
 #' #' The poor .() function is overloaded. You can escape it thus:
 #' dfname <- "baseball"
-#' template(ddply(.(as.name(dfname)), .(quote(.(id, team))), identity))
+#' qq(ddply(.(as.name(dfname)), .(quote(.(id, team))), identity))
 #' #ddply(baseball, .(id.team), identity)
 #' @import stringr
 #' @export
-template <- function(expr, .envir=parent.frame()) {
+qq <- function(expr, .envir=parent.frame()) {
   unquote <- function(e) {
     if (is.pairlist(e)) {
       as.pairlist(unquote.list(e))
@@ -265,6 +267,14 @@ template <- function(expr, .envir=parent.frame()) {
   }
 
   unquote(substitute(expr))
+}
+
+#' @export
+template <- qq
+
+#' @export
+qe <- function(expr, .envir=parent.frame()) {
+  eval(do.call("qq", list(expr=substitute(expr), .envir=.envir)), .envir)
 }
 
 #' Expand any macros in the quoted expression.
