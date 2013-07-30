@@ -26,6 +26,7 @@ Imports:
     compiler (>= 2.15.2)
 Collate:
     'macro.R'
+    'quasiquote.R'
     'dots.R'
     'getPointer.R'
     'indexing.R'
