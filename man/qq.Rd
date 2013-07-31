@@ -4,12 +4,12 @@
 \alias{template}
 \title{Quasiquotation. Perform template substitutions on a quoted R expressions.}
 \usage{
-  qq(expr, .envir = parent.frame())
+  qq(expr, envir = parent.frame())
 }
 \arguments{
   \item{expr}{A language object.}
 
-  \item{.envir}{An environment to evaluate the backquoted
+  \item{envir}{An environment to evaluate the backquoted
   expressions in.}
 }
 \value{

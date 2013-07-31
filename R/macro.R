@@ -32,7 +32,7 @@
 ##' ##We can build a function that does something like substitute() like this:
 ##' ersatz.substitute <- function(expr, envir=parent.frame()) {
 ##'   parent <- as.environment(envir)
-##'   en <- recapitulating.env(setdiff(all.names(expr), ls(parent)), parent)
+##'   en <- quoting.env(setdiff(all.names(expr), ls(parent)), parent)
 ##'   eval(expr, en)
 ##' }
 ##'
@@ -64,7 +64,7 @@ quoting.env <- function(names, parent=emptyenv(), call.names=names) {
 ##'
 ##' A convenience extension of \code{\link{make.unique}}.
 ##'
-##' @param new Initial values for the new nmes
+##' @param new Initial values for the new names
 ##' @param context Existing names to avoid collisions with.
 ##' @return the values of \code{new} in order modified to avoid collisions.
 ##' @author Peter Meilstrup

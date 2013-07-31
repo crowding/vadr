@@ -6,7 +6,7 @@ existing set of (unmodified) character strings.}
   make_unique_names(new, context, sep = ".")
 }
 \arguments{
-  \item{new}{Initial values for the new nmes}
+  \item{new}{Initial values for the new names}
 
   \item{context}{Existing names to avoid collisions with.}
 }

@@ -194,11 +194,44 @@ test_that("quasiquote descends into heads of calls,", local({
 test_that("quasiquote non-call, non-primitive lists", {
   expect_equal(
     do.call(qq, list(alist(a, b, .(paste("foo", "bar")), d))),
-    alist(a, b, "foo bar", d))
+      alist(a, b, "foo bar", d))
+
+  expect_equal(
+      do.call(qq, list(alist(function(){test(quote(.(2+2)))}))),
+      list(quote(function() {test(quote(4))})))
 })
 
 test_that("qe(x) is a shortcut for eval(qq(x))", {
   x <- 1; y <- 2; z <- 3;
   foo <- c("x", "y", "z")
   qe(sum(...(lapply(foo, as.name)))) %is% 6
+  qe(function(.=...(list(a=1))) `.("a")`)() %is% 1
 })
+
+test_that("unquote strips srcrefs off 'function' ", {
+  x <- qe(function(.=...(list(a=1))) `.("a")`)
+  attr(x, "srcref") %is% NULL
+})
+
+test_that("qqply(expr)(args) substitutes args into expr", {
+  f <- qe(function(
+      .=...( qqply(`.(..1)`=.(..2))(letters, 1:26))) {
+    ...(qqply(.(as.name(x)) <- .(as.name(y)))(y=letters[2:26], x=letters[1:25]))
+    e
+  })
+  f() %is% 6
+})
+
+test_that("qeply() like qqply but evaluates each one", {
+  local({
+    xxx <- qeply(`.(x)`<-.(y))(x=letters, y=1:26)
+    e %is% 5
+    xxx[[6]] %is% 6
+  })
+})
+
+test_that("qqply computes names for its output", {
+  x <- qqply(`.(x)` = .(y))(x=letters[1:3], y=1:3)
+  x %is% list(a =1, b=2, c=3)
+})
+
