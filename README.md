@@ -1,12 +1,31 @@
-ptools
+vadr
 ======
 
-Look at your favorite language. Then at R. Then back to your 
-favorite language. Then back to R, Sadly, R isn't your favorite 
-language. But it could smell like your favorite language. Look 
-down. Now back to R. Where are you? You're writing code in the 
-language your language could smell like. Anything is possible. 
-R's on a horse. 
+> _R has been seduced by the dark S of the Force. It is more PHP now
+> than Lisp. Its mind is twisted and evil._
+
+> __But there is good in R, I can feel it. I can save it. I have to try.__
+
+R is a curious language. At its core is a Lisp interpreter with
+first-class environments and lazy evaluation implemented in terms of
+underlying `fexpr`s. It's a language whose core was made flexible
+enough to reimplement a weird old language like S-PLUS on top of.
+
+Oddly, all the good bits of R seem to have been buried under
+an implementation of weird old S-PLUS.
+
+I like the core language trapped underleath there. It's kind of like
+what John Shutt was talking about in his thesis on
+[Kernel][kernel]. I'd like to elevate the core above the S facade.
+
+[kernel]: http://web.cs.wpi.edu/~jshutt/kernel.html
+
+Look at your favorite language. Then at R. Then back to your
+favorite language. Then back to R, Sadly, R isn't your favorite
+language. But it could smell like your favorite language. Look
+down. Now back to R. Where are you? You're writing code in the
+language your language could smell like. Anything is possible.
+R's on a horse.
 
 This package implements workalikes for the author's (and perhaps your)
 favorite features from other languages, making R programs shorter and
@@ -64,9 +83,9 @@ deeply nested function call, which gets you
 *Example:* Let's compute the perimeter of the 137-gon inscribed in the
 unit circle.
 
-If you are comfortable with an APL influenced language (such as R), 
-you might see this task and think: "Ok, so get the (x,y) coordinates 
-of the vertices, then difference them to get edge lengths, then add 
+If you are comfortable with an array-oriented language (such as R),
+you might see this task and think: "Ok, so get the (x,y) coordinates
+of the vertices, then difference them to get edge lengths, then add
 lengths up for the perimiter."
 
 You could write it serial assignment style, until you run out of patience
@@ -94,21 +113,24 @@ sum(sqrt(rowSums(apply(sapply(c("sin", "cos"), do.call,
 
 This package provides an alternative for this kind of code,
 `chain`. Here's `chain` style. It's a bit like a Unix pipeline, and a
-bit more like the `->` macro in Clojure. It is compact and reads 
+bit more like the `->` macro in Clojure. It is compact and reads
 well; things start at the beginning and you read along to
 the end, no jumping around, the 2 is right next to `apply` where it
 belongs and it's not junked up with a bunch of temporary names.
 
 ```r
 n <- 137
-perimeter <- chain(n, seq(length=.+1, 0, 2*pi), cbind(sin(.), cos(.)),
-                   apply(2, diff), .^2, rowSums, sqrt, sum)
+perimeter <- chain(n,
+                   seq(length=.+1, 0, 2*pi),
+                   cbind(sin(.), cos(.)),
+                   apply(2, diff),
+                   .^2, rowSums, sqrt, sum)
 ```
 
-You can narrate this left to right. "Start with your number of 
+You can narrate this left to right. "Start with your number of
 sides. Sample that many times (plus one, oh fenceposts) over [0, 2*pi].
-Sine and cosine of that gives you coordinates. Take differences and apply 
-Pythagoras, squaring, summing and rooting to get the length of each side. 
+Sine and cosine of that gives you coordinates. Take differences and apply
+Pythagoras, squaring, summing and rooting to get the length of each side.
 Add it all up and you have your perimiter."
 
 ## Partial application (currying)
@@ -125,7 +147,7 @@ printReport %()% c("message one", "message two", "message three")
 ```
 
 These partial application utilities are fully integrated with good
-handling for dot-dot-dot lists mentioned in the next sections
+handling for dot-dot-dot lists mentioned in the next section
 
 ## Dot-Dot-Dot lists and missing values
 
@@ -136,44 +158,89 @@ are hairy and mostly serve other purposes. Mostly people treat `...`
 as an opaque block to pass along to another function. This package
 contains a number of functions that let you work explicitly with `...`
 lists, concatenating and subsetting them, while still allowing R's
-lazy-evaluation semantics to do the right thing.
+lazy-evaluation semantics to do the right thing. So a function using
+`dots` can decide whether and when to evaluate each of its unnamed
+arguments:
 
 ```r
-> scrambleMiddle <- function(...) {
-   d <- dots(...)
-   d[seq(2, len=length(d)-2)] <- sample(d[seq(2, len=length(d)-2)])
-   (cat %<<% "\n") %()% d
- }
-> scrambleMiddle("alpha", "bravo", "charlie", "delta", "echo", "foxtrot")
-alpha delta echo bravo charlie foxtrot
+inSomeOrder <- function(...) invisible(list %()% sample(dots(...)))
+inSomeOrder(print("Boing!"), print("Boom"), print("Tschack!"), print("Ping"),
+            print("Zong"), print("Pssh"))
+# [1] "Boing!"
+# [1] "Zong"
+# [1] "Ping"
+# [1] "Boom"
+# [1] "Pssh"
+# [1] "Tschack!"
+```
+
+For a more pointed example, consider `switch`. Switch takes its first
+argument and uses it to decide which if its subsequent arguments to
+evaluate.
+
+Consider trying to implement an R function that has the behavrior of
+`switch` properly (not as a C function, and not inspecting the
+stack using `match.call()` or `parent.frame()` which are evil.) This
+is doable in pure R but wacky and slow:
+
+```r
+switch2 <- function(expr, ...) {
+  n <- names(substitute(list(...)))[-1]
+  if (!is.null(n))
+      arglist <- as.pairlist(structure(
+          rep(list(quote(expr=)), length(n)),
+          names=n))
+  else
+      (arglist <- as.pairlist(alist(...=)))
+
+  if (is.numeric(expr))
+      body <- as.name(paste0("..", expr))
+  else
+      body <- as.name(expr)
+  f <- eval(substitute(`function`(arglist, body),
+                         list(arglist=arglist, body=body)))
+  f(...)
+}
+```
+
+With a direct interface to manipulate dotlists, `switch` is easy:
+
+```r
+switch3 <- function(expr, ...) {
+  dots(...)[[expr]]
+}
 ```
 
 You may also use `dots_unpack()` to inspect the contents of
 as-yet-unevaluated dots objects, exposing R's promise mechanism:
 
 ```r
-> x <- 1
-> y <- 2
-> d <- dots(a=x, b=y, c=x+y)
+x <- 1
+y <- 2
+d <- dots(a=x, b=y, c=x+y)
+unpack(d)
+#   name         envir  expr value
+# a    a <environment>     x  NULL
+# b    b <environment>     y  NULL
+# c    c <environment> x + y  NULL
+# > y <- 3
+(function(b, ...) b) %()% d #force the "b" slot to evaluate
+# [1] 3
+unpack(d)
+#   name         envir  expr value
+# a    a <environment>     x  NULL
+# b    b          NULL     y     3
+# c    c <environment> x + y  NULL
+c %()% d
+# a b c
+# 1 3 4
 > unpack(d)
-  name         envir  expr value
-a    a <environment>     x  NULL
-b    b <environment>     y  NULL
-c    c <environment> x + y  NULL
-> y <- 3
-> (function(b, ...) b) %()% d #force the "b" slot to evaluate
-[1] 3
-d> unpack(d)
-  name         envir  expr value
-a    a <environment>     x  NULL
-b    b          NULL     y     3
-c    c <environment> x + y  NULL
-> c %()% d
-a b c
-1 3 4
-> unpack(d)
-  name envir  expr value
-a    a  NULL     x     1
-b    b  NULL     y     3
-c    c  NULL x + y     4
+#   name envir  expr value
+# a    a  NULL     x     1
+# b    b  NULL     y     3
+# c    c  NULL x + y     4
 ```
+
+## Quasiquotation
+
+## Macros
