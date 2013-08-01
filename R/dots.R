@@ -30,7 +30,7 @@
 #' @seealso dots_names dots_missing dots_expressions dots
 #' @aliases unpack
 #' @author Peter Meilstrup
-#' @useDynLib ptools _dots_unpack
+#' @useDynLib vadr _dots_unpack
 #' @export
 dots_unpack <- function(...) {
   du <- .Call(`_dots_unpack`, get("..."))
@@ -41,14 +41,11 @@ dots_unpack <- function(...) {
 unpack <- function(x) UseMethod("unpack")
 
 #' @S3method unpack ...
-#' @useDynLib ptools _dots_unpack
+#' @useDynLib vadr _dots_unpack
 unpack.... <- function (x) {
   du <- .Call(`_dots_unpack`, x)
   data.frame(du, row.names=make.names(du$name, unique=TRUE), check.names=TRUE)
 }
-
-#' @export
-expressions <- function(...) UseMethod("expressions")
 
 #' Extract the expressions from a dots object.
 #'
@@ -56,6 +53,9 @@ expressions <- function(...) UseMethod("expressions")
 #' @return A named list of expressions.
 #' @seealso dots unpack
 #' @S3method expressions ...
+#' @export
+expressions <- function(...) UseMethod("expressions")
+
 expressions.... <- function(x) {
   y <- .Call(`_dots_unpack`, get("x"))
   unclass(structure(y$expr, names=y$name))
@@ -96,7 +96,7 @@ format.deparse <- function(x, ...) {
 #' @author Peter Meilstrup
 #' @aliases dots_missing list_missing list_quote alist
 #' @seealso is.missing dots curr
-#' @useDynLib ptools _dots_names
+#' @useDynLib vadr _dots_names
 #' @export
 dots_names <- function(...) .Call(`_dots_names`, get("..."))
 
@@ -419,7 +419,7 @@ as.list.... <- function(x) list %()% x
 as.dots.default <- function(x, .envir=parent.frame())
   do.call(dots, as.list(x), FALSE, .envir)
 
-#' @useDynLib ptools _as_dots_literal
+#' @useDynLib vadr _as_dots_literal
 #' @export
 as.dots.literal <- function(x)
   .Call(`_as_dots_literal`, as.list(x), do.call(dots, vector("list", length(x))))
@@ -458,7 +458,7 @@ is.missing.default <- function(f) {
 }
 
 #' @S3method "[" "..."
-#' @useDynLib ptools _list_to_dotslist
+#' @useDynLib vadr _list_to_dotslist
 `[....` <- function(x, ...) {
   temp <- .Call(`_dotslist_to_list`, x)
   temp <- temp[...]
@@ -466,7 +466,7 @@ is.missing.default <- function(f) {
 }
 
 #' @S3method "[[" "..."
-#' @useDynLib ptools _dotslist_to_list
+#' @useDynLib vadr _dotslist_to_list
 `[[....` <- function(x, ...) {
   temp <- .Call(`_dotslist_to_list`, x)
   do.call(force.first.arg, list(temp[[...]]))
@@ -476,7 +476,7 @@ is.missing.default <- function(f) {
 `[<-....` <- function(x, ix, value, ...) UseMethod("[<-....", value)
 
 #' @S3method "[<-...." "..."
-#' @useDynLib ptools _dotslist_to_list _list_to_dotslist
+#' @useDynLib vadr _dotslist_to_list _list_to_dotslist
 `[<-........` <- function(x, ix, value, ...) {
   into <- .Call(`_dotslist_to_list`, x)
   from <- .Call(`_dotslist_to_list`, value)
@@ -485,8 +485,8 @@ is.missing.default <- function(f) {
 }
 
 #' @S3method "[<-...." "default"
-#' @useDynLib ptools _list_to_dotslist
-#' @useDynLib ptools _dotslist_to_list
+#' @useDynLib vadr _list_to_dotslist
+#' @useDynLib vadr _dotslist_to_list
 `[<-.....default` <- function(x, ix, value, ...) {
   into <- .Call(`_dotslist_to_list`, x)
   from <- .Call(`_dotslist_to_list`, as.dots.literal(value))
@@ -495,8 +495,8 @@ is.missing.default <- function(f) {
 }
 
 #' @S3method "[[<-" "..."
-#' @useDynLib ptools _list_to_dotslist
-#' @useDynLib ptools _dotslist_to_list
+#' @useDynLib vadr _list_to_dotslist
+#' @useDynLib vadr _dotslist_to_list
 `[[<-....` <- function(x, ...) {
   into <- .Call(`_dotslist_to_list`, x)
   from <- .Call(`_dotslist_to_list`, dots(...))
@@ -509,15 +509,15 @@ is.missing.default <- function(f) {
 
 
 #' @S3method "$" "..."
-#' @useDynLib ptools _dotslist_to_list
+#' @useDynLib vadr _dotslist_to_list
 `$....` <- function(x, name) {
   temp <- .Call(`_dotslist_to_list`, x)
   do.call(force.first.arg, list(do.call(`$`, list(temp, name))))
 }
 
 #' @S3method "$<-" "..."
-#' @useDynLib ptools _dotslist_to_list
-#' @useDynLib ptools _list_to_dotslist
+#' @useDynLib vadr _dotslist_to_list
+#' @useDynLib vadr _list_to_dotslist
 `$<-....` <- function(x, name, ...) {
   into <- .Call(`_dotslist_to_list`, x)
   from <- .Call(`_dotslist_to_list`, dots(...))
@@ -526,10 +526,10 @@ is.missing.default <- function(f) {
 }
 
 #' @S3method "names" "..."
-#' @useDynLib ptools _dots_names
+#' @useDynLib vadr _dots_names
 names.... <- function(x) .Call(`_dots_names`, x)
 
-#' @useDynLib ptools _dotslist_to_list _list_to_dotslist
+#' @useDynLib vadr _dotslist_to_list _list_to_dotslist
 `names<-....` <- function(x, value) {
   temp <- .Call(`_dotslist_to_list`, x)
   names(temp) <- value

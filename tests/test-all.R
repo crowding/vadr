@@ -1,4 +1,4 @@
 library(testthat)
-library(ptools)
+library(vadr)
 
-test_package("ptools")
+test_package("vadr")
