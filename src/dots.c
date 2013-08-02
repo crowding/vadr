@@ -148,9 +148,9 @@ SEXP _dotslist_to_list(SEXP x) {
     SET_STRING_ELT(names, i, isNull(TAG(x)) ? R_BlankString : asChar(TAG(x)));
   }
   if (len > 0) {
-    setAttrib(output, R_NamesSymbol, names);
+  setAttrib(output, R_NamesSymbol, names);
   }
-  
+
   UNPROTECT(2);
   return output;
 }
@@ -260,6 +260,31 @@ SEXP _mutate_environments(SEXP dots, SEXP new_envs) {
   DUPLICATE_ATTRIB(out, dots);
   UNPROTECT(2);
   return out;
+}
+
+
+SEXP _getpromise_in(SEXP envir, SEXP names) {
+  assert_type(envir, ENVSXP);
+  assert_type(names, VECSXP);
+  SEXP tags = getAttrib(names, R_NamesSymbol);
+  int len = length(names);
+  
+  SEXP output = PROTECT(allocList(len));
+  SEXP output_iter = output;
+  for (int i = 0; i < len; i++, output_iter = CDR (output_iter)) {
+    SET_TYPEOF(output_iter, DOTSXP);
+    if ((tags != R_NilValue) && (STRING_ELT(tags, i) != R_BlankString)) {
+      SET_TAG(output_iter, install(CHAR(STRING_ELT(tags, i))));
+    }
+    SEXP name = VECTOR_ELT(names, i);
+    assert_type(name, SYMSXP);
+    SEXP promise = Rf_findVar(name, envir);
+    assert_type(promise, PROMSXP);
+    SETCAR(output_iter, promise);
+  }
+  setAttrib(output, R_ClassSymbol, ScalarString(mkChar("...")));
+  UNPROTECT(1);
+  return(output);
 }
 
 /*

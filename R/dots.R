@@ -602,6 +602,34 @@ names.... <- function(x) .Call(`_dots_names`, x)
   .Call(`_list_to_dotslist`, temp)
 }
 
+#' @export
+#' @useDynLib vadr _getpromise_in
+get_promise_in <- function(envir) function(...) {
+  names <- list_quote(...)
+  .Call(`_getpromise_in`, envir, names)
+}
+
+#' Fetch promises bound to variables.
+#'
+#' @usage getpromise(\dots)
+#' getpromise_in(envir)(\dots)
+#' @param ... Variable names (unevaluated). Arguments may be named; these names
+#' determine the names on the dots list (and not the variable names)
+#' @param envir for getpromise_in, the environment to search in.
+#' @return a \code{\link{dots}} object containing the promises that are bound to
+#' those variables in the calling environment.
+#' @author Peter Meilstrup
+#' @aliases getpromise_in
+#' @note The tags on the dots object are determined by argument names;
+#' variable names are discarded.
+#' @export
+#' @useDynLib vadr _getpromise_in
+get_promise <- function(...) {
+  envir = parent.frame()
+  names <- list_quote(...)
+  .Call(`_getpromise_in`, envir, names)
+}
+
 #force() forces "the argument named x", while force.first.arg is
 #agnostic to the name.
 force.first.arg <- function(...) ..1
