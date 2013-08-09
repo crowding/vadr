@@ -62,7 +62,6 @@
 #' @method "[<-" bind
 #' @return a "bind" object, since it is invoked via a subset on "bind".
 #' @author Peter Meilstrup
-#' @export
 #' @S3method "[<-" bind
 `[<-.bind` <- function(`*temp*`, ..., `*envir*`=parent.frame()) {
   #why square brackets?
@@ -91,9 +90,11 @@
     if (!missing(to)) {
         expr <- quote(a <- quote(b))
         expr[[2]] <- to
-        expr[[3]][[2]] <- vOut[[i]]
+        if (is.null(vOut[[i]])) {
+          expr[[3]][2] <- vOut[i]
+        } else expr[[3]][[2]] <- vOut[[i]]
         eval(expr, `*envir*`)
-    }
+      }
   }
 
   #a side effect is that R creates a variable named "bind" in local

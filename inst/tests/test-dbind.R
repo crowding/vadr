@@ -174,11 +174,14 @@ test_that("bind works with data frames", {
     expect_equal(quakes$long, long)
 })
 
-test_that('bind works with lists of language objects', {
-    l <- alist(`_data`, 5, 6, 7)
-    bind[arg, ...=args] <- l
-    expect_equal(arg, quote(`_data`))
-    expect_equal(args, list(5, 6, 7))
+test_that('bind works with lists of language objects and NULLs', {
+  l <- alist(`_data`, 5, 6, 7, NULL, , a(b))
+  bind[arg, ...=args, n, m, x] <- l
+  expect_equal(arg, quote(`_data`))
+  expect_equal(args, list(5, 6, 7))
+  expect_equal(n, NULL)
+  expect_true(missing("m"))
+  expect_equal(x, quote(a(b)))
 })
 
 test_that('bind works with missing values', {
