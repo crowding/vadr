@@ -173,3 +173,13 @@ SEXP _list_to_dotslist(SEXP list) {
   UNPROTECT(1);
   return output;
 }
+
+SEXP _unbound_value() {
+  return R_UnboundValue;
+}
+
+extern int R_DirtyImage;
+
+SEXP _dirty() {
+  R_DirtyImage = 1;
+}

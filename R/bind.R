@@ -41,17 +41,7 @@
 #'      dob=bind[month, day, year],
 #'      donotuse=, ...=notes, death] <- record
 #'
-#' @note This will incidentally create a local variable named "bind"
-#' in your environment. On the other hand if you have an object
-#' already named "bind" and not of class "bind" this method won't be
-#' found, so it's merely annoying and not destructive. It's not
-#' clear how to avoid this and still use an assignment operator to do
-#' the binding. (I could write a simple function, but I strongly
-#' prefer there to be a \code{<-} anywhere that there is a
-#' modification to the environment.)
-#'
-#' Nonlocal assignments (\code{<<-}) are not supported and will behave
-#' as local assignments.
+#' Nonlocal assignments using \code{<<-} are not supported.
 #'
 #' @param ... a list of assignments, key on left, target variable on
 #' right. That is, \code{bind[a=x] <- c(a=1)} creates a variable named
@@ -60,7 +50,9 @@
 #' @param *envir* The environment to bind in (defaults to the caller).
 #' @aliases bind bind<- [<-.bind <-.bind
 #' @method "[<-" bind
-#' @return a "bind" object, since it is invoked via a subset on "bind".
+#' @return The unbound value, as a means to avoid assigning a variable
+#' "bind" in every environment. So don't use the `bind<-`(...) form.
+#'
 #' @author Peter Meilstrup
 #' @S3method "[<-" bind
 `[<-.bind` <- function(`*temp*`, ..., `*envir*`=parent.frame()) {
@@ -97,9 +89,9 @@
       }
   }
 
-  #a side effect is that R creates a variable named "bind" in local
-  #workspace.
-  `*temp*`
+  #This will try to assign a variable 'bind' in the calling workspace,
+  #but we can be sneaky and assign the absence of a value.
+  unbound_value(`*envir*`)
 }
 
 bind_match <- function(nOut, vIn) {

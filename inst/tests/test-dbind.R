@@ -243,3 +243,12 @@ test_that("dots delayed assign respects origin environment of environments...", 
   expect_equal(x[[1]], 4)
   expect_equal(x[[2]], 4)
 })
+
+test_that("bind does not create a variable named 'bind'", {
+  local({
+    expect_false(exists("bind", inherits=FALSE))
+    bind <- vadr:::unbound_value(environment())
+    expect_false(exists("bind", inherits=FALSE))
+    expect_equal(find("bind"), "package:vadr")
+  })
+})

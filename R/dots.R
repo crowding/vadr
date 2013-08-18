@@ -539,3 +539,6 @@ names.... <- function(x) .Call(`_dots_names`, x)
 #force() forces "the argument named x", while force.first.arg is
 #agnostic to the name.
 force.first.arg <- function(...) ..1
+
+#' @useDynLib vadr _unbound_value
+unbound_value <- function() .Call(`_unbound_value`)
