@@ -3,7 +3,7 @@
 \title{Turn an expression-substituting function into a
 nonstandard-evaluating function.}
 \usage{
-  macro(fn, cache = TRUE, JIT = TRUE)
+  macro(fn, cache = TRUE, JIT = cache)
 }
 \arguments{
   \item{fn}{A function which takes some arguments and

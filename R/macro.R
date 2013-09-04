@@ -104,42 +104,25 @@ make_unique_names <- function(new, context, sep=".") {
 #' @seealso qq
 #' @import compiler
 #' @export
-macro <- function(fn, cache=TRUE, JIT=TRUE) {
+macro <- function(fn, cache=TRUE, JIT=cache) {
+  orig <- fn
   if(cache) {
-    #Cache all expansions of the macro by pointer-equality on the
-    #unevaluated args.
-    expansionCache <- new.env(hash=TRUE, parent=emptyenv())
-    #the cache is pointer-based and becomes meaningless on
-    #serialization, so we really want to make it not serialize.
-    #But how?
-  }
-
-  f <- function (...) {
-    fr <- parent.frame()
-    args <- eval(substitute(alist(...)))
-
-    if (cache) {
-      digest <- expressions_and_pointers(...)
-      key <- paste(names(digest), collapse=".")
-      if (exists(key, envir=expansionCache)) {
-        result <- expansionCache[[key]][[1]]
-      } else {
-        result <- do.call(fn, args, quote=TRUE)
-        if (JIT) result <- compile(result, fr)
-        #Hold on to the list of expression objects to keep them from
-        #getting stale; I probably want weak references though.
-        expansionCache[[key]] <- list(result, digest)
-      }
-    } else {
-      result <- do.call(fn, args, quote=TRUE)
-      #jitting is no help if you're not caching
-      #if (JIT) result <- compile(result, fr)
+    fn <- macro_cache(fn, JIT)
+    f <- function(...) {
+      fr <- parent.frame()
+      eval(fn(...), fr)
     }
-    eval(result, fr)
+  } else {
+    f <- function(...) {
+      fr <- parent.frame()
+      args <- eval(substitute(alist(...)))
+      expr <- do.call(fn, args, quote=TRUE)
+      eval(expr, fr)
+    }
   }
 
-  class(f) <- c("macro", class(f))
-  attr(f, "orig") <- fn
+  class(f) <- c("macro", class(fn))
+  attr(f, "orig") <- orig
   # set the source to look reasonable?
   #  attr(f, "srcref") <-
   #    paste("macro(", paste(attr(fn, "srcref") %||% deparse(fn), collapse="\n"), ")")
@@ -242,4 +225,9 @@ quote_args <- function(...) {
                structure(list(x), names=n)
              }
            }))
+}
+
+.onLoad_macro <- function(libname, pkgname) {
+#  message("debugging expressions_and_pointers")
+#  debug(expressions_and_pointers)
 }

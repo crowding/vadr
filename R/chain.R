@@ -139,18 +139,12 @@ chain <- function(...) NULL
 #Can define but can't actually execute the macro at package build time,
 #because it uses a binary that's not linked in yet.
 #so have to do it at load time:
-.onLoad <- function(libname, pkgname) {
+.onLoad_chain <- function(libname, pkgname) {
   mkchain <- `[.mkchain`(force, .)
   class(mkchain) <- c("mkchain", class(mkchain))
   mkchain <<- mkchain
 
-  #' @export
   chain <- `[.chain`(force, .)
   class(chain) <- c("chain", class(chain))
   chain <<- chain
-}
-
-#for debugging using auto_test...
-if (any(vapply(lapply(sys.calls(), `[[`, 1), identical, FALSE, quote(expr=source_dir)))) {
-  .onLoad()
 }

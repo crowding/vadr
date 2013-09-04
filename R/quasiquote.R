@@ -140,7 +140,7 @@ qe <- function(expr, envir=parent.frame()) {
 #' sequences (as in \code{\link{mapply}}).
 #'
 #' @usage qqply(...)(...)
-#' @usage qqply(...)(...)
+#' @usage qeply(...)(...)
 #' @param ... (in the first argument list) One or more expressions or expressions
 #' to expand. These may have names, which will also be expanded.
 #' @param ... (in the second argument list) Sequences. The expressions will
@@ -188,7 +188,7 @@ qqply_body <- function(exprs, envir) {
              structure(missing_value(length(anames)),
                       names=anames)),
         ...) {
-      ptools:::unquote(quote(.(exprs)))
+      .(unquote)(quote(.(exprs)))
     })
     environment(f) <- envir
     dots <- list(...)
