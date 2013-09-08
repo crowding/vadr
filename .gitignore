@@ -2,6 +2,7 @@
 *.asc
 *.mat
 *.dep
+*.so
 *.pdf
 *.eps
 *.dvi

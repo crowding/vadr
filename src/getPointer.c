@@ -131,7 +131,11 @@ SEXP stringify_item(SEXP item, char *bufptr) {
       }
       done = 1;
       break;
-
+    case VECSXP:
+      bufptr += sprintf(bufptr, "l%p", (void *)item);
+      result = item;
+      done = 1;
+      break;
     case SYMSXP:
     case LANGSXP:
     case EXPRSXP:
@@ -140,12 +144,13 @@ SEXP stringify_item(SEXP item, char *bufptr) {
       /* We have an expression-ish, represent its pointer. */
       bufptr += sprintf(bufptr, "e%p", (void *)item);
       result = item;
-      done=1;
+      done = 1;
       break;
     default:
       error("Unexpected type %s", type2char(TYPEOF(item)));
     }
   }
+  SET_NAMED(result, 2);
   return result;
 }
 

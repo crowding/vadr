@@ -11,9 +11,9 @@ expressions_and_pointers <- function(...) {
   else list("NULL"=NULL)
 }
 
+## turns out this is almost useless due to all sexps
+## being duped when they go into a list.
 #' @useDynLib vadr _object_pointers
-#' # turns out this is almost useless due to all sexps
-#' # being duped when they go into a list.
 object_pointers <- function(list) {
   .Call(`_object_pointers`, list)
 }
