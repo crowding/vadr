@@ -41,3 +41,4 @@ Collate:
     'ammoc.R'
     'vadr-description.R'
     'onLoad.R'
+    'qq_fast.R'

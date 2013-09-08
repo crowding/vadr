@@ -1,30 +1,27 @@
 #a newer, faster implementation of quasiquote.
 
-#works by compiling an expression that does that particular quasiquote,
-#rather than the quasiquote iteself.
+#works by compiling a function that does that particular quasiquote,
+#rather than walking over the list every time.
 
-#strategy: write qq in terms of the old slow implementation of qq.
-#Then replace the callbacks with functions that bootstrap themselves?
+#Unquote core. Take an expression, return a list of expressions that
+#when evaluated make the unquoted expression.
+uq <- function(expr, register) UseMethod("uq")
 
-#Takes in an expression UNQUOTED. Returns the expression that would
-#synthesize that expression?
-
-#The mechanism to obtain argument names is to call back to a
-#"registry" function that stores the expression and gives you a DDVAL
-#ticket. This has hte side effect of informing functions whether the
-#expression they are working on needs evaluation or can be quoted
-#directly.
-
+#Unquoting functions walk over a parse tree and use a callback to
+#obtain argument names substituting out sections that need to be
+#evaluated in the caller. The callbacks also let nested sections know
+#if they need to evaluate contents, or if they can get away with
+#literal quoting.
 new_registry <- function() {
   counter <- 0
-  expressions <- list(NULL)
-  argnames <- list(NULL)
+  expressions <- vector("list", 16)
+  argnames <- vector("list", 16)
   function(expression, op="store") {
     switch(op,
            store={
              #take in an expression, record it, return a variable name.
              if (counter == length(expressions)) {
-               #standard constand factor reallocation...
+               #constant factor reallocation
                length(expressions) <<- 2*length(expressions)
                length(argnames) <<- 2*length(argnames)
              }
@@ -41,6 +38,8 @@ new_registry <- function() {
   }
 }
 
+#Unquote methods sometimes need to know if subexpressions need to be
+#evaluated (or if they can just be quoted literally.)
 register_intercept <- function(register) {
   force(register)
   eval_needed <- FALSE
@@ -49,95 +48,100 @@ register_intercept <- function(register) {
              {eval_needed <<- TRUE; register(expr, op)})
 }
 
-uq <- function(expr) {
-  registry = new_registry()
-  qq(
-      ( function(
-          .=...(registry(op = "argnames"))
-          )
-       .(uq_element(expr, registry))
-       )(
-           ...(registry(op = "expressions"))))
-}
+#All unquote methods return objects that _when evaluated_ produce the
+#value enclosed in a _list_ This is first so that unquote-splicing
+#works straightforwardly (just return a longer list), second so that
+#unquoted parts can just be literal lists catenated on.
 
-uq_element <- function(expr, registry) {
-  if (is.pairlist(e))
-      qq(as.pairlist(.(uq_seq(e, registry))))
-  else if (is.call(e)) {
-    if (e[[1L]] == quote(`function`) && length(e) > 3)
-        e <- e[1:3] # strip srcref
-    if (e[[1L]] == quote(.))
-        call("list", .(registry(e[[2L]])))
-    else if (e[[1L]] == quote(...) )
-        as.call(c(list(quote(list))), registry(e[[2L]]))
-    else
-        qq( as.call( .( uq_seq(e, registry) )) )
-  } else if (!is.recursive(e)) {
-    if (is.name(e))
-        uq_name(e, registry)
-    else
-        e
-  } else
-      uq_seq(e, registry)
-}
-
-uq_pairlist <- function(l, register) {
-  contains_unquote <- FALSE
-  register2 <- function(expr) {
-    contains_unquote <<- TRUE
-    register(expr)
-  }
-  uq <- uq_seq(l)
-  if (contains_unquote)
-      l #directly return the pairlist.
-  else
-      call("as.pairlist", uq)
-}
-
-#Returns an expression that makes a list
-uq_seq <- function(l, register) {
-  contains_unquote <- vector("logical", length(l))
-  register2 <- function(expr) {
-    contains_unquote[i] <<- TRUE
-    register(expr)
-  }
-  l <- unquote
-  register2 = function(expr) {
-    eval_needed <<- TRUE;
-    register(expr)
-  }
-
-  for (i in 1:length(l)) {
-    uq_element(uq_l, register2)
-  }
-
-  if(any(contains_unquote)) {
-    stop("No")
-  } else as.list(x) #list
-}
-
-#unquote a single name...
-uq_name <- function(name, register) {
+#unquote a single expr...
+uq.name <- function(expr, register) {
   register <- register_intercept(register)
-  ch <- uq_char(as.character(name), register)
+  ch <- uq(as.character(expr), register)
   if (register(op="eval_needed"))
-      ch[[1]] <- quote(as.name)
+      ch[[2]][[1]] <- quote(as.name)
   else
-      ch <- as.name(ch)
+      ch <- list(as.name(ch[[1]]))
   ch
 }
 
 #unquote a single char...
-uq_char <- function(ch, register) {
-  match <- str_match(ch, "^\\.\\((.*)\\)$")
+uq.character <- function(expr, register) {
+  match <- str_match(expr, "^\\.\\((.*)\\)$")
   if (!is.na(match[2])) {
     expr <- parse(text=match[2])[[1]]
     if (is.language(expr)) {
-      call("as.character", register(expr))
+      call("list", call("as.character", register(expr)))
     } else {
-      as.character(expr)
+      list(as.character(expr))
     }
   } else {
-    ch
+    list(expr)
   }
 }
+
+uq.call <- function(expr, register) {
+  #if an unquote is found, returns expressions that produces a _list_.
+  if (length(expr) >= 2 && expr[[1]] == quote(...)) {
+    unquotable <- expr[[2]]
+    if (is.language(unquotable)) {
+      register(unquotable)
+    } else {
+      unquotable
+    }
+  } else if (length(expr) >= 2 && expr[[1]] == quote(.)) {
+    unquotable <- expr[[2]]
+    if (is.language(unquotable)) {
+      call("list", register(unquotable))
+    } else {
+      as.list(unquotable)
+    }
+  } else {
+    register <- register_intercept(register)
+    unquoted <- uq(as.list(expr), register)
+    if (register(op="eval_needed")) {
+      list(call("as.call", unquoted))
+    } else {
+      list(expr)
+    }
+  }
+}
+`uq.(` <- uq.call
+`uq.{` <- uq.call
+`uq.while` <- uq.call
+`uq.for` <- uq.call
+`uq.if` <- uq.call
+
+uq.list <- function(expr, register) {
+  needs_eval <- vector("logical", length(expr))
+  register_old <- register
+  register <- function(expr) {
+    needs_eval[i] <<- i
+    register_old(expr)
+  }
+  unquoted <- vector("list", length(expr))
+  for(i in 1:length(expr)) {
+    unquoted[[i]] <- uq(expr[[i]], register)
+  }
+  if (any(needs_eval) >= 1) {
+    #try to somewhat efficiently pack in quoted values
+    #by pre-concatenating adjacent literal values
+    runs <- rle(needs_eval)
+    runs$first_index <- (c(0, cumsum(runs$lengths)) + 1)[1:length(runs[[1]])]
+    args <- mapply(
+        runs$lengths, runs$values, runs$first_index,
+        FUN=function(len, value, first) {
+          if (value == 0) {
+            do.call(`c`, unquoted[seq(first, length.out=len)])
+          } else {
+            #length has to be 1 by construction
+            unquoted[[first]]
+          }
+        })
+    as.call(c(list(quote(c)), args))
+  } else {
+    do.call(c, unquoted)
+  }
+}
+
+
+#General rule: everything returns a LIST.
