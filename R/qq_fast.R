@@ -93,6 +93,7 @@ uq_dots <- function(expr, register) {
 }
 
 #RETURN_A_LIST_OF_EVALUABLES_THAT_EVAL_TO_LISTS
+#"." wraps each elmeent in a list. "..." lets them catenate.
 uq.call <- function(expr, register) {
   register <- register_intercept(register)
   if (length(expr) >= 1 && expr[[1]] == quote(...)) {
@@ -107,7 +108,8 @@ uq.call <- function(expr, register) {
     if (register(op="eval_needed")) {
       list(as.call(c(list(quote(list)), unquoted)))
     } else {
-      do.call(list, unquoted) #pre-evaluate
+      #lapply(lapply(unquoted, as.list), do.call, what=list) #pre-eval each
+      list(do.call(list, unquoted))     #pre-evaluate
     }
   } else {
     unquoted <- uq(as.list(expr), register)
@@ -136,6 +138,7 @@ uq.list <- function(expr, register) {
     register_old(expr, op)
   }
   unquoted <- vector("list", length(expr))
+  names(unquoted) <- names(expr)
   for(i in 1:length(expr)) {
     unquoted[[i]] <- uq(expr[[i]], register)
   }
@@ -157,7 +160,7 @@ uq.list <- function(expr, register) {
     ## list(as.call(c(list(quote(c)), args))) #catenate
     list(as.call(c %()% c(list(quote(c)), unquoted)))
   } else {
-    list(expr) #just quote
+    list(do.call(c, as.list(c %()% unquoted))) #eval eagerly
   }
 }
 

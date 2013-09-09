@@ -71,6 +71,15 @@ test_that("registry", {
 ## God and damn. I think the rule is that each piece returns a list of
 ## evaluabels that each evaluate to lists.
 
+test_that("register intercept", {
+  x <- new_registry()
+  r <- register_intercept(x)
+  r(op="eval_needed") %is% FALSE
+  r(quote(a+b)) %is% quote(..1)
+  r(op="eval_needed") %is% TRUE
+  r(op="expressions") %is% alist(..1=a+b)
+})
+
 test_that("unquote char", {
   expect_registers("hello", list(alist("hello")))
   expect_registers(".(4)", list(alist("4")))
@@ -82,15 +91,6 @@ test_that("unquote char", {
   expect_registers(".(as.name('foo'))",
                    alist(list(as.character(..1))),
                    alist(..1=as.name('foo')))
-})
-
-test_that("register intercept", {
-  x <- new_registry()
-  r <- register_intercept(x)
-  r(op="eval_needed") %is% FALSE
-  r(quote(a+b)) %is% quote(..1)
-  r(op="eval_needed") %is% TRUE
-  r(op="expressions") %is% alist(..1=a+b)
 })
 
 test_that("unquote name", {
@@ -144,7 +144,7 @@ test_that("unquote call", {
 
 test_that("unquote multiple args call", {
   expect_registers(quote(...("bar", "baz")), list(c("bar", "baz")))
-  expect_registers(quote(.("bar", "baz")), list("bar", "baz"))
+  expect_registers(quote(.("bar", "baz")), list(list("bar", "baz")))
   expect_uq(quote(.("bar", c("baz", "qux"))),
             list("bar", c("baz", "qux")))
   expect_uq(quote(...("bar", c("baz", "qux"))),
@@ -152,7 +152,7 @@ test_that("unquote multiple args call", {
 })
 
 test_that("unquote named .call", {
-  expect_registers(quote(.(a="bar")), list(a="bar"))
+  expect_registers(quote(.(a="bar")), list(list(a="bar")))
   expect_registers(quote(...(a="bar")), list(a="bar"))
   expect_registers(quote(.(a=1+1)), alist(list(a=..1)), alist(..1=1+1))
   expect_registers(quote(...(a=1+1)), alist(c(a=..1)), alist(..1=1+1))
@@ -180,23 +180,33 @@ test_that("unquote list", {
                    alist(..1=1+1, ..2=2+2))
 })
 
+test_that("unquote named multiple argument call", {
+  expect_uq(alist(a=...(b=1+1, c=2), q=1) ,
+            c(a.b=2, a.c=2, q=1))
+  expect_uq(alist(a=.(b=1+1, c=2), q=1),
+            list(a.b=2, a.c=2, q=1))
+  expect_uq(alist(a=1, b=.(1, 2)),
+            alist(a=1, b1=1, b2=2))
+  expect_uq(alist(a=1, b=...(1, 2)),
+            c(a=1, b1=1, b2=2))
+
+  expect_uq(quote(list(a=1, b=.(1, "foo"))),
+            alist(list(a=1, b1=1, b2="foo")))
+
+  expect_uq(quote(list(a=1, b=.(1, "foo"))),
+            alist(list(a=1, b1=1, b2="foo")))
+
+  expect_uq(quote(list(a=1, b=.(1, "foo"))),
+            alist(list(a=1, b1=1, b2="foo")))
+
+  expect_uq(alist(a=1, b=...()), c(a=1))
+  expect_uq(alist(c=...(a=1:3, b=2:4)),
+            c(c.a1=1, c.a2=2, c.a3=3, c.b1=2, c.b2=3, c.b3=4))
+})
+
 #I HAVE_GOT_THIS_FAR
 
 if(FALSE) {
-
-test_that("unquote named multiple argument call", {
-  expect_uq(alist(a=...(b=1+1, c=2), q=1),
-            alist(c(list()), a.b=2, a.c=2+3), q=1)
-  expect_uq(c(a=1, b=...(1, 2)),
-            alist(a=1, b1=1, b2=2))
-
-  expect_uq(quote( `.(letters)`=...(LETTERS)),
-            list(structure(LETTERS, names=letters)))
-
-  expect_uq(c(a=1, b=...()))
-  expect_uq(quote(a=...(`a`=1, `b`=2)),
-            alist(a1=1, a2=2, a3=3, b1=4, b2=5, b6=6))
-})
 
 test_that("unquote named list", {
   expect_uq(alist(a, b, `c`=c, d),
@@ -213,6 +223,11 @@ test_that("unquote named list", {
 
   expect_uq(alist(a, b, .(a=1), c, d),
             alist(a, b, a=1, d))
+})
+
+test_that("Unquote name substitution in argument lists tho", {
+  ## expect_uq(quote( `.(letters)`=...(LETTERS)),
+  ##           list(structure(LETTERS, names=letters)))
 })
 
 }
