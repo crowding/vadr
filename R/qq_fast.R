@@ -59,11 +59,15 @@ uq.name <- function(expr, register) {
   register <- register_intercept(register)
   ch <- uq(as.character(expr), register)
   if (register(op="eval_needed")) {
-    ch[[1]][[2]][[1]] <- quote(as.name)}
+    ch[[1]][[2]][[1]] <- quote(uq_as_name)}
   else
-      ch <- list(list(as.name(ch[[1]][[1]])))
+      ch <- list(list(uq_as_name(ch[[1]][[1]])))
   ch
 }
+
+uq_as_name <- function(x)
+    if (x == "") quote(expr=) else as.name(x)
+
 
 #unquote a single char...
 uq.character <- function(expr, register) {
@@ -164,9 +168,19 @@ uq.list <- function(expr, register) {
   }
 }
 
+uq.pairlist <- function(expr, register) {
+  register <- register_intercept(register)
+  unquoted <- uq(as.list(expr), register)
+  if (register(op="eval_needed")) {
+    list(call("list", as.call(c(list(quote(as.pairlist)), unquoted))))
+  } else {
+    list(list(as.pairlist(do.call(c, unquoted))))
+  }
+}
+
 uq.default <- function(expr, register) {
   if (is.language(expr)) {
-    stop("Language object should have been covered by another class.")
+    stop("Language object should have been covered by another method!")
   } else {
     list(expr)
   }

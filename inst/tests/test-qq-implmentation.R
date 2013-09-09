@@ -56,7 +56,7 @@ uq_makes <- function(unquotable) {
   r <- new_registry()
   fn <- eval(call("function", as.pairlist(alist(...=)),
                   as.call(c(list(quote(c)), uq(unquotable, r)))))
-  print(fn)
+  #print(fn)
   do.call(fn, unattr(r(op="expressions")), envir=parent.frame())
 }
 
@@ -97,9 +97,9 @@ test_that("unquote name", {
   expect_registers(quote(hello), list(alist(hello)))
   expect_registers(quote(`.(4)`), list(alist(`4`)))
   expect_registers(quote(`.(foo)`),
-                   alist(list(as.name(..1))), alist(..1=foo))
+                   alist(list(uq_as_name(..1))), alist(..1=foo))
   expect_registers(quote(`.(foo+bar+baz)`),
-                   alist(list(as.name(..1))), alist(..1=foo+bar+baz))
+                   alist(list(uq_as_name(..1))), alist(..1=foo+bar+baz))
 })
 
 #This part is trickier.
@@ -204,28 +204,36 @@ test_that("unquote named multiple argument call", {
             c(c.a1=1, c.a2=2, c.a3=3, c.b1=2, c.b2=3, c.b3=4))
 })
 
-#I HAVE_GOT_THIS_FAR
+test_that("Unquote pairlist/function arguments", {
+  testfn <- eval(uq_makes(quote(
+      function(x, y=.(3+4)) .(2+2)) )[[1]])
+
+  expect_equal(body(testfn), 4)
+  expect_equal(args(testfn), args(function(x, y=7) NULL))
+
+  testfn <- eval(uq_makes(quote(
+      function(x=...(letters[1:3])) {
+        list(...(lapply(letters[1:3], as.name)))
+      }  ))[[1]])
+  
+  expect_equal(body(testfn), quote({list(a, b, c)}))
+  expect_equal(args(testfn), args(function(x1="a", x2="b", x3="c") NULL))
+})
+
+test_that("unquote in for", {
+  expect_uq(quote(for (`.(letters[4])` in .(1:10)) {print(.(2+2)+d)}),
+            alist(for (d in 1:10) { print(4+d) }))
+})
 
 if(FALSE) {
 
-test_that("unquote named list", {
-  expect_uq(alist(a, b, `c`=c, d),
-            alist(a, b, c=c, d))
-
+test_that("Unquote name substitution in argument lists tho", {
   expect_uq(alist(a, b=.(1+2), `.(1+1)`=c, d),
             alist(a, b=3, `2`=c, d))
 
   expect_uq(alist(a, b, `.(1+1)`=.(1+2), d),
             alist(a, b, `2`=3, d))
 
-  expect_uq(alist(a, b, .(a=1), c, d),
-            alist(a, b, a=1, d))
-
-  expect_uq(alist(a, b, .(a=1), c, d),
-            alist(a, b, a=1, d))
-})
-
-test_that("Unquote name substitution in argument lists tho", {
   ## expect_uq(quote( `.(letters)`=...(LETTERS)),
   ##           list(structure(LETTERS, names=letters)))
 })
