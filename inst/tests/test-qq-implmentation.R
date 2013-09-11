@@ -30,8 +30,8 @@ expect_registers <- function(argument, expect, register=list()) {
 
 expect_uq <- function(unquotable, expected) {
   r <- new_registry()
-  fn <- eval(call("function", as.pairlist(alist(...=)),
-                  as.call(c(list(quote(c)), uq(unquotable, r)))))
+  evalable <- uq(unquotable, r)
+  fn <- eval(call("function", as.pairlist(alist(...=)), evalable))
 
   unquote_call_label <- paste0("uq", "(",
                                testthat:::find_expr("unquotable"),
@@ -39,7 +39,7 @@ expect_uq <- function(unquotable, expected) {
 
   expect_label <- testthat:::find_expr("expected")
   expect_that(
-      do.call(fn, unattr(r(op="expressions")), envir=parent.frame()),
+      do.call(fn, unattr(r(op="expressions")), envir=parent.frame())[[1]],
       label=unquote_call_label,
       equals(expected,
              label=expect_label)
@@ -54,10 +54,10 @@ with_registered <- function(argument) {
 
 uq_makes <- function(unquotable) {
   r <- new_registry()
-  fn <- eval(call("function", as.pairlist(alist(...=)),
-                  as.call(c(list(quote(c)), uq(unquotable, r)))))
+  evalable <- uq(unquotable, r)
+  fn <- eval(call("function", as.pairlist(alist(...=)), evalable))
   #print(fn)
-  do.call(fn, unattr(r(op="expressions")), envir=parent.frame())
+  do.call(fn, unattr(r(op="expressions")), envir=parent.frame())[[1]]
 }
 
 test_that("registry", {
@@ -81,25 +81,25 @@ test_that("register intercept", {
 })
 
 test_that("unquote char", {
-  expect_registers("hello", list(alist("hello")))
-  expect_registers(".(4)", list(alist("4")))
+  expect_registers("hello", alist("hello"))
+  expect_registers(".(4)", alist("4"))
   expect_registers(".(foo)",
-                   alist(list(as.character(..1))), alist(..1=foo))
+                   quote(list(as.character(..1))), alist(..1=foo))
   expect_registers(".(`+`(a,b))",
-                   alist(list(as.character(..1))),
+                   quote(list(as.character(..1))),
                    alist(..1=a+b))
   expect_registers(".(as.name('foo'))",
-                   alist(list(as.character(..1))),
+                   quote(list(as.character(..1))),
                    alist(..1=as.name('foo')))
 })
 
 test_that("unquote name", {
-  expect_registers(quote(hello), list(alist(hello)))
-  expect_registers(quote(`.(4)`), list(alist(`4`)))
+  expect_registers(quote(hello), alist(hello))
+  expect_registers(quote(`.(4)`), alist(`4`))
   expect_registers(quote(`.(foo)`),
-                   alist(list(uq_as_name(..1))), alist(..1=foo))
+                   quote(list(uq_as_name(as.character(..1)))), alist(..1=foo))
   expect_registers(quote(`.(foo+bar+baz)`),
-                   alist(list(uq_as_name(..1))), alist(..1=foo+bar+baz))
+                   quote(list(uq_as_name(as.character(..1)))), alist(..1=foo+bar+baz))
 })
 
 #This part is trickier.
@@ -133,80 +133,24 @@ test_that("unquote name", {
 # captured arguments -> ..1=1:3, ..2=4:6
 # evaluated form     -> list(a, b, c, {{1:3}}, d)
 
+test_that("unquote dots", {
+  expect_registers(quote(.(bar)),     quote(list(..1)),  alist(..1=bar))
+  expect_registers(quote(.("bar")),   list("bar"))
+  expect_registers(quote(...(bar)),   quote(..1),     alist(..1=bar))
+  expect_registers(quote(...("bar")), "bar")
+  expect_registers(quote(...("bar")), "bar")
+})
+
 test_that("unquote call", {
-  expect_registers(quote(.(bar)),     alist(list(..1)),  alist(..1=bar))
-  expect_registers(quote(.("bar")),   list(alist("bar")))
-  expect_registers(quote(...(bar)),   alist(c(..1)),     alist(..1=bar))
-  expect_registers(quote(...("bar")), list(alist("bar")))
-  expect_registers(quote(foo(bar)),   list(alist(foo(bar))))
-  expect_registers(quote(...("bar")), alist("bar"))
+  expect_uq(quote(foo(bar)), quote(foo(bar)))
+  expect_uq(quote(foo(.(1+1))), quote(foo(2)))
+  expect_uq(quote(.(as.name("foo"))(1+1)), quote(foo(1+1)))
+  expect_uq(quote(`.(paste0("f", "oo"))`(1+1)), quote(foo(1+1)))
 })
 
-test_that("unquote multiple args call", {
-  expect_registers(quote(...("bar", "baz")), list(c("bar", "baz")))
-  expect_registers(quote(.("bar", "baz")), list(list("bar", "baz")))
-  expect_uq(quote(.("bar", c("baz", "qux"))),
-            list("bar", c("baz", "qux")))
-  expect_uq(quote(...("bar", c("baz", "qux"))),
-            c(c("bar", "baz", "qux")))
-})
-
-test_that("unquote named .call", {
-  expect_registers(quote(.(a="bar")), list(list(a="bar")))
-  expect_registers(quote(...(a="bar")), list(a="bar"))
-  expect_registers(quote(.(a=1+1)), alist(list(a=..1)), alist(..1=1+1))
-  expect_registers(quote(...(a=1+1)), alist(c(a=..1)), alist(..1=1+1))
-  expect_registers(quote(.(a=1+1, b=2+2)), alist(list(a=..1, b=..2)),
-                   alist(..1=1+1, ..2=2+2))
-  expect_registers(quote(...(a=1+1, b=2+2)), alist(c(a=..1, b=..2)),
-                   alist(..1=1+1, ..2=2+2))
-})
-
-test_that("unquote list", {
-  expect_registers(alist(a, b, c, d), list(alist(a, b, c, d)))
-
-  expect_uq(alist(.(1+1)), alist(2))
-  expect_registers(alist(.(1+1)), alist(c(list(..1))),
-                   alist(..1=1+1))
-
-  expect_uq(alist(.(1+1), b), alist(2, b))
-  expect_registers(alist(.(1+1), b),
-                   list(bquote(c(list(..1), .(alist(b))))),
-                   alist(..1=1+1))
-
-  expect_uq(alist(a, ...(1+1, 2+2), c), alist(a, 2, 4, c))
-  expect_registers(alist(a, ...(1+1, 2+2), c),
-                   list(bquote(c(.(alist(a)), c(..1, ..2), .(alist(c))))),
-                   alist(..1=1+1, ..2=2+2))
-})
-
-test_that("unquote named multiple argument call", {
-  expect_uq(alist(a=...(b=1+1, c=2), q=1) ,
-            c(a.b=2, a.c=2, q=1))
-  expect_uq(alist(a=.(b=1+1, c=2), q=1),
-            list(a.b=2, a.c=2, q=1))
-  expect_uq(alist(a=1, b=.(1, 2)),
-            alist(a=1, b1=1, b2=2))
-  expect_uq(alist(a=1, b=...(1, 2)),
-            c(a=1, b1=1, b2=2))
-
-  expect_uq(quote(list(a=1, b=.(1, "foo"))),
-            alist(list(a=1, b1=1, b2="foo")))
-
-  expect_uq(quote(list(a=1, b=.(1, "foo"))),
-            alist(list(a=1, b1=1, b2="foo")))
-
-  expect_uq(quote(list(a=1, b=.(1, "foo"))),
-            alist(list(a=1, b1=1, b2="foo")))
-
-  expect_uq(alist(a=1, b=...()), c(a=1))
-  expect_uq(alist(c=...(a=1:3, b=2:4)),
-            c(c.a1=1, c.a2=2, c.a3=3, c.b1=2, c.b2=3, c.b3=4))
-})
-
-test_that("Unquote pairlist/function arguments", {
+test_that("Unquote function arguments", {
   testfn <- eval(uq_makes(quote(
-      function(x, y=.(3+4)) .(2+2)) )[[1]])
+      function(x, y=.(3+4)) .(2+2)) ))
 
   expect_equal(body(testfn), 4)
   expect_equal(args(testfn), args(function(x, y=7) NULL))
@@ -214,22 +158,22 @@ test_that("Unquote pairlist/function arguments", {
   testfn <- eval(uq_makes(quote(
       function(x=...(letters[1:3])) {
         list(...(lapply(letters[1:3], as.name)))
-      }  ))[[1]])
-  
+      }  )))
+
   expect_equal(body(testfn), quote({list(a, b, c)}))
   expect_equal(args(testfn), args(function(x1="a", x2="b", x3="c") NULL))
 })
 
 test_that("unquote in for", {
   expect_uq(quote(for (`.(letters[4])` in .(1:10)) {print(.(2+2)+d)}),
-            alist(for (d in 1:10) { print(4+d) }))
-})
-
-test_that("unquoted named elements", {
-  uq_named(list(a=1))
+            quote(for (d in 1:10) { print(4+d) }))
 })
 
 if(FALSE) {
+
+  test_that("unquoted named elements", {
+    uq_named(list(a=1))
+  })
 
   named_makes <- function(item) {
     reg <- new_registry()
@@ -244,13 +188,13 @@ if(FALSE) {
   named_makes(alist(a=.(foo+bar)))
   named_makes(alist(`.(1+2)`=.(foo+bar)))
 
-test_that("Unquote name substitution in argument lists tho", {
-  expect_uq(alist(a, b=.(1+2), `.(1+1)`=c, d),
-            alist(a, b=3, `2`=c, d))
+  test_that("Unquote name substitution in argument lists tho", {
+    expect_uq(alist(a, b=.(1+2), `.(1+1)`=c, d),
+              alist(a, b=3, `2`=c, d))
 
-  expect_uq(alist(a, b, `.(1+1)`=.(1+2), d),
-            alist(a, b, `2`=3, d))
+    expect_uq(alist(a, b, `.(1+1)`=.(1+2), d),
+              alist(a, b, `2`=3, d))
 
-  ## expect_uq(quote( `.(letters)`=...(LETTERS)),
-  ##           list(structure(LETTERS, names=letters)))
+    expect_uq(quote( `.(letters)`=...(LETTERS)),
+              list(structure(LETTERS, names=letters)))
 })}

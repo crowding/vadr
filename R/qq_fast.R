@@ -51,79 +51,78 @@ register_intercept <- function(register) {
 }
 
 #All unquote methods return objects that _when evaluated_ produce the
-#value enclosed in a _list_ This is first so that unquote-splicing
-#works straightforwardly (just return a longer list), second so that
-#unquoted parts can just be literal lists catenated on.
+#expression(s) enclosed in a _list_.
 
-#YOU RETURN LIST OF EVALUABLES THAT_EVAL_TO_LISTS
+#unquote a single char...
+#YOU RETURN A SINGLE EVALUABLE THAT EVALS TO A LIST
+uq.character <- function(expr, register) {
+  match <- str_match(expr, "^\\.\\((.*)\\)$")
+  if (!is.na(match[2])) {
+    expr <- parse(text=match[2])[[1]]
+    if (is.language(expr)) {
+      call("list", call("as.character", register(expr)))
+    } else {
+      list(as.character(expr))
+    }
+  } else {
+    list(expr)
+  }
+}
+
 uq.name <- function(expr, register) {
   register <- register_intercept(register)
   ch <- uq(as.character(expr), register)
-  if (register(op="eval_needed")) {
-    ch[[1]][[2]][[1]] <- quote(uq_as_name)}
+  if (register(op="eval_needed"))
+      ch <- call("list", call("uq_as_name", ch[[2]]))
   else
-      ch <- list(list(uq_as_name(ch[[1]][[1]])))
+      ch <- literal(list(do.call("uq_as_name", ch)))
   ch
 }
 
 uq_as_name <- function(x)
     if (x == "") quote(expr=) else as.name(x)
 
-#unquote a single char...
-uq.character <- function(expr, register) {
-  match <- str_match(expr, "^\\.\\((.*)\\)$")
-  if (!is.na(match[2])) {
-    expr <- parse(text=match[2])[[1]]
-    if (is.language(expr)) {
-      list(call("list", call("as.character", register(expr))))
-    } else {
-      list(list(as.character(expr)))
-    }
-  } else {
-    list(list(expr))
-  }
-}
-
-#called with call objects of form ".()" or "...()"
-#RETURN a list of evaluables
+#called with the argument of a form ".()" or "...()"
+#RETURN the SIMPLE, SINGLE evaluable (doesn't eval to a list)
 uq_dots <- function(expr, register) {
-  lapply(expr[-1], function(unquotable) {
-      if (is.language(unquotable)) {
-        register(unquotable)
-      } else {
-        unquotable
-      }
-    })
+  if(is.language(expr))
+      register(expr)
+  else
+      literal(expr)
 }
 
-#RETURN_A_LIST_OF_EVALUABLES_THAT_EVAL_TO_LISTS
+splice.symbols <- lapply(c("..", "..."), as.name)
+
 #"." wraps each elmeent in a list. "..." lets them catenate.
 uq.call <- function(expr, register) {
   register <- register_intercept(register)
-  if (length(expr) >= 1 && expr[[1]] == quote(...)) {
-    unquoted <- uq_dots(expr, register)
-    if (register(op="eval_needed")) {
-      list(as.call(c(list(quote(c)), unquoted)))
-    } else {
-      list(do.call(c, unquoted))        #pre-evaluate
-    }
+  if (length(expr) >= 1 && (   expr[[1]] == splice.symbols[[1]]
+                            || expr[[1]] == splice.symbols[[2]])) {
+    unquoted <- uq_dots(expr[[2]], register)
+    if (register(op="eval_needed"))
+        unquoted
+    else
+        literal(eval(unquoted))
   } else if (length(expr) >= 1 && expr[[1]] == quote(.)) {
-    unquoted <- uq_dots(expr, register)
-    if (register(op="eval_needed")) {
-      list(as.call(c(list(quote(list)), unquoted)))
-    } else {
-      #lapply(lapply(unquoted, as.list), do.call, what=list) #pre-eval each
-      list(do.call(list, unquoted))     #pre-evaluate
-    }
+    unquoted <- uq_dots(expr[[2]], register)
+    if (register(op="eval_needed"))
+        call("list", unquoted)
+    else
+        literal(list(eval(unquoted)))   #pre-evaluate
+  } else if (expr[[1]] == quote(`function`)) {
+    args <- uq_pairlist(expr[[2]], register)
+    body <- uq(expr[[3]], register)
+    if (register(op="eval_needed"))
+        call("list", call("do.call", "function",
+                          call("c", call("list", args), body)))
+    else
+        list(as.call(c(list(quote(`function`)), list(eval(args)), body)))
   } else {
-    unquoted <- uq(as.list(expr), register)
-    if (register(op="eval_needed")) {
-      as.call(c(quote(as.call), unquoted))
-    } else {
-      #this does have to be based on unquoted, because .() need stripped.
-      #but we eval the args and return literal list containing the call object.
-      list(list(as.call(do.call(c, unquoted))))
-    }
+    unquoted <- uq_call_args(as.list(expr), register)
+    if (register(op="eval_needed"))
+        call("list", call("as.call", unquoted))
+    else
+        list(as.call(eval(unquoted)))
   }
 }
 #Other syntax elements have different S3 classes but are just calls
@@ -133,20 +132,31 @@ uq.call <- function(expr, register) {
 `uq.for` <- uq.call
 `uq.if` <- uq.call
 
-#DOES_THIS_RETURN A_LIST OF EVALUABLES? THAT EACH_EVAL_TO_LISTS?
-uq.list <- function(expr, register) {
+#returns a single item
+uq_pairlist <- function(expr, register) {
+  register <- register_intercept(register)
+  unquoted <- uq_call_args(as.list(expr), register)
+  if (register(op="eval_needed")) {
+    call("as.pairlist", unquoted)
+  } else {
+    literal(as.pairlist(eval(unquoted)))
+  }
+}
+
+#Unquoting for argument lists (including the head).
+#This does NOT_eval to a list.
+uq_call_args <- function(expr, register) {
   needs_eval <- vector("logical", length(expr))
-  register_old <- register
-  register <- function(expr, op="store") {
+  reregister <- function(expr, op="store") {
     needs_eval[i] <<- i
-    register_old(expr, op)
+    register(expr, op)
   }
   unquoted <- vector("list", length(expr))
   names(unquoted) <- names(expr)
   for(i in 1:length(expr)) {
-    unquoted[[i]] <- uq_named(expr[i], register)
+    unquoted[[i]] <- uq(expr[[i]], reregister)
   }
-  if (any(needs_eval) >= 1) {
+  if (any(needs_eval)) {
     ## #try to somewhat efficiently pack in quoted values
     ## #by pre-concatenating adjacent literal values
     ## runs <- rle(needs_eval)
@@ -162,19 +172,9 @@ uq.list <- function(expr, register) {
     ##       }
     ##     })
     ## list(as.call(c(list(quote(c)), args))) #catenate
-    list(as.call(c %()% c(list(quote(c)), unquoted)))
+    as.call(c(quote(c), unquoted))
   } else {
-    list(do.call(c, as.list(c %()% unquoted))) #eval eagerly
-  }
-}
-
-uq.pairlist <- function(expr, register) {
-  register <- register_intercept(register)
-  unquoted <- uq(as.list(expr), register)
-  if (register(op="eval_needed")) {
-    list(call("list", as.call(c(list(quote(as.pairlist)), unquoted))))
-  } else {
-    list(list(as.pairlist(do.call(c, unquoted))))
+    literal(do.call("c", unquoted))
   }
 }
 
