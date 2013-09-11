@@ -225,7 +225,24 @@ test_that("unquote in for", {
             alist(for (d in 1:10) { print(4+d) }))
 })
 
+test_that("unquoted named elements", {
+  uq_named(list(a=1))
+})
+
 if(FALSE) {
+
+  named_makes <- function(item) {
+    reg <- new_registry()
+    result <- uq_named(item, reg)
+    list(unquoted=result, delayed=reg(op="expressions"))
+  }
+
+  named_makes(alist(a=1))
+  named_makes(alist(`.("foo")`=1))
+  named_makes(alist(`.(1+2)`=1))
+  named_makes(alist(a=.("foo")))
+  named_makes(alist(a=.(foo+bar)))
+  named_makes(alist(`.(1+2)`=.(foo+bar)))
 
 test_that("Unquote name substitution in argument lists tho", {
   expect_uq(alist(a, b=.(1+2), `.(1+1)`=c, d),
@@ -236,6 +253,4 @@ test_that("Unquote name substitution in argument lists tho", {
 
   ## expect_uq(quote( `.(letters)`=...(LETTERS)),
   ##           list(structure(LETTERS, names=letters)))
-})
-
-}
+})}

@@ -38,8 +38,10 @@ new_registry <- function() {
   }
 }
 
-#Unquote methods sometimes need to know if subexpressions need to be
-#evaluated (or if they can just be quoted literally.)
+#Unquote methods might like to know if subexpressions have any
+#unquotes in them evaluated If not, they can optimize by
+#pre-evaluating those pieces. So they use a flag on the registry to
+#pick these up.
 register_intercept <- function(register) {
   force(register)
   eval_needed <- FALSE
@@ -53,8 +55,7 @@ register_intercept <- function(register) {
 #works straightforwardly (just return a longer list), second so that
 #unquoted parts can just be literal lists catenated on.
 
-
-#YOU RETURN LIST OF EVALUABLES THAT_EVAL_TO_LIST
+#YOU RETURN LIST OF EVALUABLES THAT_EVAL_TO_LISTS
 uq.name <- function(expr, register) {
   register <- register_intercept(register)
   ch <- uq(as.character(expr), register)
@@ -68,7 +69,6 @@ uq.name <- function(expr, register) {
 uq_as_name <- function(x)
     if (x == "") quote(expr=) else as.name(x)
 
-
 #unquote a single char...
 uq.character <- function(expr, register) {
   match <- str_match(expr, "^\\.\\((.*)\\)$")
@@ -80,7 +80,7 @@ uq.character <- function(expr, register) {
       list(list(as.character(expr)))
     }
   } else {
-    list(expr)
+    list(list(expr))
   }
 }
 
@@ -144,7 +144,7 @@ uq.list <- function(expr, register) {
   unquoted <- vector("list", length(expr))
   names(unquoted) <- names(expr)
   for(i in 1:length(expr)) {
-    unquoted[[i]] <- uq(expr[[i]], register)
+    unquoted[[i]] <- uq_named(expr[i], register)
   }
   if (any(needs_eval) >= 1) {
     ## #try to somewhat efficiently pack in quoted values
@@ -186,4 +186,52 @@ uq.default <- function(expr, register) {
   }
 }
 
-#General rule: everything returns a LIST.
+#unlike the others, this returns a single item that evals to list.
+uq_named <- function(expr, register) {
+  #this unquotes a single element with possible names.
+  if (is.null(names(expr))) return(uq(expr[[1]], register))
+  eval.name <- FALSE
+  unquoted.name <- uq(
+      names(expr), function(expr, op="store") {
+        eval.name <<- TRUE; register(expr, op)})[[1]]
+  eval.value <- FALSE
+  unquoted.value <- uq(expr[[1]], function(expr, op="store") {
+    eval.value <<- TRUE; register(expr, op)})[[1]]
+  #We have two lists of items that evaluate to lists.
+  if (eval.value) {
+    if (eval.name) {
+      print("wat1")
+      calling("structure",
+              c(calling("c", unquoted.value),
+                names=calling("c", unquoted.name)))
+      do.call("structure", calling("c", c(unquoted.value, names=unquoted.name)))
+    } else {
+      print("wat2")
+      call("structure", calling("c", unquoted.value),
+           names=literal(do.call("c", unquoted.name)))
+    }
+  } else if (eval.name) {
+    print("wat3")
+    call("structure",
+         literal(do.call("c", unquoted.value)),
+         names=calling("c", unquoted.name))
+  } else {
+    print("wat4")
+    literal(do.call(structure,
+                    list(calling("c", unquoted.value),
+                         names=calling("c", unquoted.name))))
+  }
+}
+
+literal <- function(expr) {
+  if (is.call(expr) | is.name(expr)) {
+    call("quote", expr)
+  } else {
+    expr
+  }
+}
+
+calling <- function(f, args) {
+  #args is a list of things that can each be eval'ed to produce lists
+  c(eval, as.call(as.name(f)), args())
+}

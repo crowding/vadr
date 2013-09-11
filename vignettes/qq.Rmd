@@ -1,0 +1,175 @@
+<!--
+%\VignetteEngine{knitr::knitr}
+%\VignetteIndexEntry{qq}
+-->
+
+# Quasiquotation in the `vadr` package
+
+The `vadr` package includes a facility called _quasiquotation._ This is a technique that helps you build expressions and other data structures by template substitution.
+
+Quasiquotation is often described is as as a tool for writing code that writes code (or "metaprogramming.") But it's also useful in data processing. In a way quasiquotation is like an inverse of destructuring bind (which `vadr` also provides, in the `bind` operation.) While destructuring bind extracts data from a structure by writing an code that mirrors the structure, quasiquotation lets you populate data _into_ a structure by writing code that mirrors that structure.
+
+Base R has a very limited implementation of quasiquotation in the function `bquote`. The functions included in the `vadr` package are much more flexible, and should run faster (after they do initial expansion.)
+
+Quasiquotation is a language feature that descends from Lisp, and any language that claims to descend from the Lisp family ought to have a working implementaiton. If this vignette doesn't convince you it's a good thing to have, you could read Alan Bawden's essay [Quasiquotation in Lisp][1]. for some more background
+[1]: http://repository.readscheme.org/ftp/papers/pepm99/bawden.pdf
+
+## Examples of quasiquotation
+
+### Generating sophisticated plot labels
+
+The `expression` function is used to produce mathematical formatting and symbol characters in plots, as in the x-axis tick labels here:
+
+```{r, include=FALSE, cache=FALSE}
+opts_chunk$set(cache=TRUE, dev="svg", fig.width=5, fig.height=3)
+options(width=60)
+```
+
+```{r, plot=TRUE, height.out=1}
+par(las = 1, cex = 1, mai=c(1, 0, 0, 0))
+curve(sin(x)/x, -3*pi, 3*pi, axes = FALSE, ylab="")
+par(cex=0.7)
+axis(1, at=seq(-5, 5, 2)*pi/2,
+     labels=expression(over(-5, 2)*pi, over(-3,2)*pi,
+                       over(-1, 2)*pi, over(3,2)*pi,
+                       over(3,2)*pi, over(5,2)*pi),
+     padj=0.5)
+```
+
+`expression` is useful for one-shot annotations but is hard to generalize. It was kind of laborious to type in all those tick labels. If you have a lot of trigonometric functions to plot you'll quickly tire of labeling ticks this way. What if we had a function to generate the that of expressions?
+
+We might naively try something like the below.
+
+```{r}
+numerator <- seq(-5, 5, 2)
+denominator <- 2
+symbol <- quote(pi)
+at <- numerator * pi / denominator
+labels <- mapply(numerator, FUN = function(num) {
+  expression(over(num, denominator) * symbol)
+})
+labels
+```
+
+Unfortunately doesn't work because "expression" doesn't evaluate its operand. We got a bunch of this:
+
+```{r, echo=FALSE, fig.height=1.2}
+par(mai=c(1,0,0,0))
+plot(c(-3*pi,3*pi), c(0,1), type="n", axes=FALSE, xlab="", ylab="")
+axis(1, at=at, labels=labels, padj=0.5)
+```
+
+The thing is that `expression` will _quote_ an expression as we write it literally, but what we need is to _construct_ an expression out of bits of data we have. At this point many S users resort to something rebarbative using `parse` and `parse`:
+
+```{r}
+labels <- parse(text=paste0(
+    "over(", numerator , ", ", denominator, ") * ", symbol))
+labels
+```
+
+This works for simple cases but there are some obvious problems with this approach. First, because the code is manipulated in strings, it's possible to create syntax errors (on top of just semantic errors.) Mainly, it quickly becomes hard to read. Parentheses and commas belonging to two logically distinct sets of code interleave themselves together via quotation marks, making it hard to see if either expression is well formed.
+
+A more principled way to build expressions is to use "computing on the language" to build expression objects out of data, like the following.
+
+```{r}
+labels <- as.expression(sapply(numerator, function(num) {
+  call("*", call("over", num, denominator), symbol)
+  }))
+labels
+```
+
+This uses R's ability to represent code as data and vice versa, which is one fo the strengths of the language. An expression like `a*b` is really just a special type of list htat you can construct using `call("*", quote(a), quote(b))`. This avoids a round trip through the parser and the possibilty of forming syntactically ambiguous code, but I can't say that this version is any easier to read than the last.  Much of the resemblance between the expressions you want and the code being written is lost.
+
+You can get a little closer using `substitute`:
+
+```{r}
+(labels <- sapply( numerator, function(num) {
+  eval(substitute(
+      expression( over(num, denominator) * symbol),
+      list(num=num, denominator=denominator, symbol=symbol)))
+}))
+```
+
+The first argument to `substitute` does mirror the deisred results better but I often find constructing the second argument be tedious -- here it's more than half of the call to `substitute` and doesn't say much. I also dislike the fact that you can't tell _what_ is getting substituted out without cross-referencing the expression to the named list. It's not apparent that `num` is being substituted while `over` is not, unless you cross-reference both parts.
+
+A further problem is that `substitute` is limited to only substituting for symbols, when there are more things in R's syntax that are beyond its reach.
+
+(Another problem is that `substitute` has a dual, almost unrelated effect of extracting the unevaluated code from a function argument, so even if you are familiar with `substitute` in can be tricky to read code that uses it because you have to figure out which effect of `substitute` is being exploited.)
+
+### Building expressions with quasiquote
+
+What we'd like is a way to build expressions of the form `over(numerator, denominator) * symbol` that actually looks like that's what we're trying to make. That's what quasiquotation tries to do.
+
+```{r}
+labels <- as.expression(lapply(numerator, function(num) {
+  qq(
+      over(.(n), .(denominator)) * .(symbol)
+    )
+}))
+```
+
+Here, `qq` acts like `quote,` doing nothing to its argument, except for sections delineated with `.()`, which are evaluated and their results pasted in. This comes close to the ideal where the structure of the desired output is mirrored by the code that produces it.
+
+The places where code is being substituted in are visually delineated with the `.()` and we don't have to make reference to a parallel list of values while wirking out what this is going to do.
+
+## Quasiquote improves over `bquote`
+
+The above could be have been done using the base R function `bquote`, but `qq` has some extensions that make it much more flexible. Most importantly it implements _splicing_ when you use a marker with two dots, `..()`.
+
+### Splicing
+
+Splicing injects _several_ arguments into an expression marked with `..()`, where injected just one. You might think of it as the difference between `c` and `list`.
+
+```{r}
+x <- c(1,2,3)
+qq(list("normal:", .(x), "splicing:", ...(x)))
+```
+
+This is something you just can't to with `substitute` or `bquote`.
+
+*Exercise:* What explains the differences between 'data' and 'expr' here?
+
+```R
+data <- c(1,2,3)
+expr <- quote(c(1, 2, 3))
+qq(list("data normal:", .(data), " data spliced:", ...(data)))
+qq(list("expression normal:", .(expr), " expression spliced:", ...(expr)))
+```
+
+(R sometimes prints a vector or list in the same way that it prints a call _to_ `vector` or `list` but these two cases have different structure.)
+
+## Computed names
+
+The other place where `qq` and friends improve over `bquote` is in the treatment of names. In R, unlike most Lisps, every argument can have a name attached. So a quasiquotation overator that fits R will have to do something about names. With `qq`, any argument name, string or variable name that looks like `".()"` will be parsed and have its contents substituted in.
+
+Finally, `vadr` provides a mashup of quasiquotation with `mapply`, called `qqply` and `qeply`, which turns out to be very convenient.
+
+Using `qqply` we can simplify our label-production further:
+
+```r
+as.expression(
+    qqply(
+        over( .(num), .(denom) ) * .(symbol)
+    )(num=numerator)
+)
+```
+
+## An advanced example: Providing multiple versions of a function
+
+```
+define_standard_and_nonstandard <- macro(function(name, definition) {
+  bind[check(, `=`(quote(function))), args, body] <- definition
+  qq(
+      `.(paste(name, "_q")` <- function(.=...(args)) .(body)
+      `.(name)` <- function(.=...(args)) {
+        `.(names(args)[[1]])` <- substitute(`.(names(args)[[1]])`)
+        .(body)
+      }
+      )
+}
+```
+
+The main function for quasiquotation is called `qq`. This should do everything the base R function `bquote` does. `qq` is a macro (i.e. it operates on the text of its arguments without evaluating.) It returns a language object (similarly to `quote`, or `substitute`.)
+
+Other convenience functions provided are `qe()` which immediately evaluates the result, and `qqply()` and `qeply()` which are a mashup of quasiquotation with `mapply`, for constructing repetitive data and expressions.
+
