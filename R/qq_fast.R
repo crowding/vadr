@@ -3,9 +3,12 @@
 #works by compiling a function that does that particular quasiquote,
 #rather than walking over the list every time.
 
-#Unquote core. Take an expression, return a list of expressions that
-#when evaluated make the unquoted expression.
-uq <- function(expr, register) UseMethod("uq")
+#Unquote core. Take an expression, return an object that when evaluated
+#produces the unquoted expression wrapped in a list.
+uq <- function(expr, register) {
+  if (missing(expr)) quote(list(quote(expr=)))
+  else UseMethod("uq")
+}
 
 #Unquoting functions walk over a parse tree and use a callback to
 #obtain argument names substituting out sections that need to be
@@ -56,16 +59,36 @@ register_intercept <- function(register) {
 #unquote a single char...
 #YOU RETURN A SINGLE EVALUABLE THAT EVALS TO A LIST
 uq.character <- function(expr, register) {
-  match <- str_match(expr, "^\\.\\((.*)\\)$")
-  if (!is.na(match[2])) {
-    expr <- parse(text=match[2])[[1]]
-    if (is.language(expr)) {
+  match <- regexec("^\\.\\((.*)\\)$", expr)
+  if (any(match[[1]] >= 0)) {
+    expr <- parse(text=substring(
+        expr,
+        match[[1]][[2]],
+        match[[1]][[2]] + attr(match[[1]], "match.length")[[2]] - 1))[[1]]
+     if (is.language(expr)) {
       call("list", call("as.character", register(expr)))
     } else {
       list(as.character(expr))
     }
   } else {
     list(expr)
+  }
+}
+
+uq_character_nolist <- function(expr, register) {
+  match <- regexec("^\\.\\((.*)\\)$", expr)
+  if (any(match[[1]] >= 0)) {
+    expr <- parse(text=substring(
+        expr,
+        match[[1]][[2]],
+        match[[1]][[2]] + attr(match[[1]], "match.length")[[2]] - 1))[[1]]
+    if (is.language(expr)) {
+      call("as.character", register(expr))
+    } else {
+      as.character(expr)
+    }
+  } else {
+    expr
   }
 }
 
@@ -82,7 +105,7 @@ uq.name <- function(expr, register) {
 uq_as_name <- function(x)
     if (x == "") quote(expr=) else as.name(x)
 
-#called with the argument of a form ".()" or "...()"
+#called with the argument of a form ".()" or "..()"
 #RETURN the SIMPLE, SINGLE evaluable (doesn't eval to a list)
 uq_dots <- function(expr, register) {
   if(is.language(expr))
@@ -91,9 +114,11 @@ uq_dots <- function(expr, register) {
       literal(expr)
 }
 
+#because CRAN will complain if I do quote(...)
 splice.symbols <- lapply(c("..", "..."), as.name)
 
-#"." wraps each elmeent in a list. "..." lets them catenate.
+#Takes a call object
+#Returns something that evals to unquoted version wrapped in a list
 uq.call <- function(expr, register) {
   register <- register_intercept(register)
   if (length(expr) >= 1 && (   expr[[1]] == splice.symbols[[1]]
@@ -132,7 +157,8 @@ uq.call <- function(expr, register) {
 `uq.for` <- uq.call
 `uq.if` <- uq.call
 
-#returns a single item
+#Takes list of quoteds
+#Returns something the evals to a pairlist.
 uq_pairlist <- function(expr, register) {
   register <- register_intercept(register)
   unquoted <- uq_call_args(as.list(expr), register)
@@ -144,7 +170,8 @@ uq_pairlist <- function(expr, register) {
 }
 
 #Unquoting for argument lists (including the head).
-#This does NOT_eval to a list.
+#Takes a list of quoteds,
+#returns something that that evals to the whole argument list.
 uq_call_args <- function(expr, register) {
   needs_eval <- vector("logical", length(expr))
   reregister <- function(expr, op="store") {
@@ -152,10 +179,10 @@ uq_call_args <- function(expr, register) {
     register(expr, op)
   }
   unquoted <- vector("list", length(expr))
-  names(unquoted) <- names(expr)
   for(i in 1:length(expr)) {
-    unquoted[[i]] <- uq(expr[[i]], reregister)
+    unquoted[[i]] <- list(uq_named(expr[i], reregister))
   }
+  unquoted <- do.call("c", unquoted)
   if (any(needs_eval)) {
     ## #try to somewhat efficiently pack in quoted values
     ## #by pre-concatenating adjacent literal values
@@ -186,40 +213,41 @@ uq.default <- function(expr, register) {
   }
 }
 
-#unlike the others, this returns a single item that evals to list.
+#Takes a list of length 1. Returns evalable (not to a list.)
 uq_named <- function(expr, register) {
   #this unquotes a single element with possible names.
-  if (is.null(names(expr))) return(uq(expr[[1]], register))
+  name <- names(expr)
+  expr <- expr[[1]]
+  if (is.null(name) || all(name == "")) return(uq(expr, register))
+
+  #browser()
   eval.name <- FALSE
-  unquoted.name <- uq(
-      names(expr), function(expr, op="store") {
-        eval.name <<- TRUE; register(expr, op)})[[1]]
+  unquoted.name <- uq_character_nolist(
+      name, function(expr, op="store") {eval.name <<- TRUE; register(expr, op)})
+
   eval.value <- FALSE
-  unquoted.value <- uq(expr[[1]], function(expr, op="store") {
-    eval.value <<- TRUE; register(expr, op)})[[1]]
+  unquoted.value <- uq(
+      expr, function(expr, op="store") {eval.value <<- TRUE; register(expr, op)})
+
   #We have two lists of items that evaluate to lists.
   if (eval.value) {
     if (eval.name) {
-      print("wat1")
-      calling("structure",
-              c(calling("c", unquoted.value),
-                names=calling("c", unquoted.name)))
-      do.call("structure", calling("c", c(unquoted.value, names=unquoted.name)))
+      call("inner_dominating_names",
+           unquoted.value,
+           unquoted.name)
     } else {
-      print("wat2")
-      call("structure", calling("c", unquoted.value),
-           names=literal(do.call("c", unquoted.name)))
+      call("inner_dominating_names",
+           unquoted.value,
+           literal(unquoted.name))
     }
   } else if (eval.name) {
-    print("wat3")
-    call("structure",
-         literal(do.call("c", unquoted.value)),
-         names=calling("c", unquoted.name))
+    call("inner_dominating_names",
+         literal(eval(unquoted.value)),
+         unquoted.name)
   } else {
-    print("wat4")
-    literal(do.call(structure,
-                    list(calling("c", unquoted.value),
-                         names=calling("c", unquoted.name))))
+    literal(do.call("inner_dominating_names",
+                    list(eval(unquoted.value),
+                         eval(unquoted.name))))
   }
 }
 
@@ -231,7 +259,8 @@ literal <- function(expr) {
   }
 }
 
-calling <- function(f, args) {
-  #args is a list of things that can each be eval'ed to produce lists
-  c(eval, as.call(as.name(f)), args())
+inner_dominating_names <- function(value, name) {
+  if (is.null(names(value)) || all(names(value) == ""))
+      structure(value, names=name)
+  else value
 }

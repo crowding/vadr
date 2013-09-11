@@ -1,8 +1,8 @@
-context("Quasiquote implementation")
+context("Quasiquote low level")
 
-#these tests are for gettting the guts of fast macro-ized quasiquote
-#implementation in place. They test internal behavior (the particular
-#format of a quasiquote expansion) rather than behavior
+#these tests are for getting the guts of fast macro-ized quasiquote
+#implementation in place. They test internals (the particular
+#format of a quasiquote macro expansion) rather than behavior
 #(the effects of quasiquoting) so are not binding.
 
 `%is%` <- expect_equal
@@ -31,6 +31,7 @@ expect_registers <- function(argument, expect, register=list()) {
 expect_uq <- function(unquotable, expected) {
   r <- new_registry()
   evalable <- uq(unquotable, r)
+  args <- r(op="expressions")
   fn <- eval(call("function", as.pairlist(alist(...=)), evalable))
 
   unquote_call_label <- paste0("uq", "(",
@@ -39,7 +40,7 @@ expect_uq <- function(unquotable, expected) {
 
   expect_label <- testthat:::find_expr("expected")
   expect_that(
-      do.call(fn, unattr(r(op="expressions")), envir=parent.frame())[[1]],
+      do.call(fn, args, envir=parent.frame())[[1]],
       label=unquote_call_label,
       equals(expected,
              label=expect_label)
@@ -55,9 +56,10 @@ with_registered <- function(argument) {
 uq_makes <- function(unquotable) {
   r <- new_registry()
   evalable <- uq(unquotable, r)
+  args <- r(op="expressions")
   fn <- eval(call("function", as.pairlist(alist(...=)), evalable))
   #print(fn)
-  do.call(fn, unattr(r(op="expressions")), envir=parent.frame())[[1]]
+  do.call(fn, args, envir=parent.frame())[[1]]
 }
 
 test_that("registry", {
@@ -156,12 +158,12 @@ test_that("Unquote function arguments", {
   expect_equal(args(testfn), args(function(x, y=7) NULL))
 
   testfn <- eval(uq_makes(quote(
-      function(x=...(letters[1:3])) {
+      function(`.(letters[1:3])`=...(letters[1:3])) {
         list(...(lapply(letters[1:3], as.name)))
       }  )))
 
   expect_equal(body(testfn), quote({list(a, b, c)}))
-  expect_equal(args(testfn), args(function(x1="a", x2="b", x3="c") NULL))
+  expect_equal(args(testfn), args(function(a="a", b="b", c="c") NULL))
 })
 
 test_that("unquote in for", {
@@ -169,32 +171,44 @@ test_that("unquote in for", {
             quote(for (d in 1:10) { print(4+d) }))
 })
 
-if(FALSE) {
+named_makes <- function(item) {
+  reg <- new_registry()
+  uq_named(item, reg)
+}
 
-  test_that("unquoted named elements", {
-    uq_named(list(a=1))
-  })
+test_that("unquoted named elements", {
+  expect_uq(quote(list(a=1)), quote(list(a=1)))
+  expect_uq(quote(list(`.("foo")`=1)), quote(list(foo=1)))
+  expect_uq(quote(list(`.(1+2)`=1)), quote(list(`3`=1)))
+  expect_uq(quote(list(a=.("foo"))), quote(list(a="foo")))
+  expect_uq(quote(list(a=.(paste0("foo", "bar")))), quote(list(a="foobar")))
+  expect_uq(quote(list(`.(1+2)`=.(paste0("foo", "bar")))),
+            quote(list(`3`="foobar")))
+})
 
-  named_makes <- function(item) {
-    reg <- new_registry()
-    result <- uq_named(item, reg)
-    list(unquoted=result, delayed=reg(op="expressions"))
-  }
+test_that("Unquote name substitution in argument lists", {
+  expect_uq(quote(alist(a, b=.(1+2), `.(1+1)`=c, d)),
+            quote(alist(a, b=3, `2`=c, d)))
 
-  named_makes(alist(a=1))
-  named_makes(alist(`.("foo")`=1))
-  named_makes(alist(`.(1+2)`=1))
-  named_makes(alist(a=.("foo")))
-  named_makes(alist(a=.(foo+bar)))
-  named_makes(alist(`.(1+2)`=.(foo+bar)))
+  expect_uq(quote(alist(a, b, `.(1+1)`=.(1+2), d)),
+            quote(alist(a, b, `2`=3, d)))
 
-  test_that("Unquote name substitution in argument lists tho", {
-    expect_uq(alist(a, b=.(1+2), `.(1+1)`=c, d),
-              alist(a, b=3, `2`=c, d))
+  #when using ., inner name is obscured...
+  expect_uq(quote(alist(a, b, `x`=.(c(y=1+2)), d)),
+            bquote(alist(a, b, x=.(c(y=3)), d)))
 
-    expect_uq(alist(a, b, `.(1+1)`=.(1+2), d),
-              alist(a, b, `2`=3, d))
+  expect_uq(quote(alist(a, b, `.(c('x'))`=.(c(y=1+2)), d)),
+            bquote(alist(a, b, x=.(c(y=3)), d)))
 
-    expect_uq(quote( `.(letters)`=...(LETTERS)),
-              list(structure(LETTERS, names=letters)))
-})}
+  #But when using ..., the inner names dominate.
+  #(this asymmetry is required for function arg lists.)
+  expect_uq(quote(alist(a, b, `x`=...(c(y=1+2)), d)),
+            quote(alist(a, b, y=3, d)))
+
+  expect_uq(quote(alist(a, b, `.(c('x'))`=...(c(y=1+2)), d)),
+            quote(alist(a, b, y=3, d)))
+
+  #but we still allows this cuteness
+  expect_uq(quote(c(`.(letters)`=...(LETTERS))),
+            as.call(c(list(quote(c)), structure(LETTERS, names=letters))))
+})
