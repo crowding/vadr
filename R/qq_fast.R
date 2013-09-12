@@ -160,6 +160,7 @@ uq.call <- function(expr, register) {
 `uq.for` <- uq.call
 `uq.if` <- uq.call
 `uq.<-` <- uq.call
+`uq.=` <- uq.call
 
 #Takes list of quoteds
 #Returns something the evals to a pairlist.
