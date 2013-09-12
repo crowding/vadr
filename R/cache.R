@@ -15,9 +15,9 @@ macro_cache <- function(fn, JIT=FALSE) {
       result <- expansionCache[[key]][[1]]
     } else {
       result <- do.call(fn, list_quote(...), quote=TRUE)
-      if (JIT) {
-        result <- compile(result, options=(list(suppressAll=TRUE)))
-      }
+      if (JIT)
+          result <- compile(result, cacheenv,
+                            options=list(suppressUndefined=TRUE))
       #Hold on to the list of expression objects to keep them from
       #getting stale or updating.
       expansionCache[[key]] <- list(result, digest)
@@ -27,3 +27,7 @@ macro_cache <- function(fn, JIT=FALSE) {
     result
   }
 }
+
+#get compiler to shut up about "... may be used in an incorrect context"
+#which it seems to be wrong about
+cacheenv <- (function(...) environment())()

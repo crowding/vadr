@@ -121,23 +121,24 @@ splice.symbols <- lapply(c("..", "..."), as.name)
 #Returns something that evals to unquoted version wrapped in a list
 uq.call <- function(expr, register) {
   register <- register_intercept(register)
-  if (length(expr) > 1 && (   expr[[1]] == splice.symbols[[1]]
-                            || expr[[1]] == splice.symbols[[2]])) {
+  isName <- is.name(expr[[1]])
+  if (isName && length(expr) > 1 && (   expr[[1]] == splice.symbols[[1]]
+                                     || expr[[1]] == splice.symbols[[2]])) {
     unquoted <- uq_dots(expr[[2]], register)
     if (register(op="eval_needed"))
         unquoted
     else
         literal(eval(unquoted))
-  } else if (length(expr) > 1 && expr[[1]] == quote(.)) {
+  } else if (isName && length(expr) > 1 && expr[[1]] == quote(.)) {
     unquoted <- uq_dots(expr[[2]], register)
     if (register(op="eval_needed"))
         call("list", unquoted)
     else
         literal(list(eval(unquoted)))   #pre-evaluate
-  } else if (expr[[1]] == quote(`function`)) {
+  } else if (isName && expr[[1]] == quote(`function`)) {
     args <- uq_pairlist(expr[[2]], register)
     body <- uq(expr[[3]], register)
-    #obtimization: I could break this down into
+    #optimization: I could break this down into
     #either the args or body are evaluated (2 more special cases)
     if (register(op="eval_needed"))
         call("list", call("as.call",

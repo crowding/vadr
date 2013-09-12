@@ -148,6 +148,9 @@ test_that("unquote call", {
   expect_uq(quote(foo(.(1+1))), quote(foo(2)))
   expect_uq(quote(.(as.name("foo"))(1+1)), quote(foo(1+1)))
   expect_uq(quote(`.(paste0("f", "oo"))`(1+1)), quote(foo(1+1)))
+  expect_uq(quote(.(list)(a, b, c)), as.call(c(list(list), alist(a, b, c))))
+  uqable <- as.call(c(list(list), alist(a, b, c)))
+  expect_uq(uqable, as.call(c(list(list), alist(a, b, c))))
 })
 
 test_that("Unquote function arguments", {

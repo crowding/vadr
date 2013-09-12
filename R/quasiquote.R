@@ -111,23 +111,24 @@ qe <- macro(function(expr) {
 #'   e
 #' })
 #' @export
-qqply <- function(...) {
-  #TODO: the inner QQ gets recompiled every time, can we get qqply to be a macro
-  #fully expanded?
-  args = list_quote(...)
-  expander <- qe(function(...) as.list(qq(c(..(args))))[-1])
-  environment(expander) <- parent.frame()
-  qq_applicator(expander)
-}
+qqply <- macro(function(...) {
+  collection <- as.call(c(list(c), list(...)))
+  expand_expr <- qq_internal(collection)
+  expandfn <- qe(function(...) {
+    .(`[`)(.(as.list)(.(expand_expr)), -1)
+  })
+  qq_applicator(expandfn)
+})
 
 #' @export
-qeply <- function(...) {
-  #expander is a function in the target env
-  args = list_quote(...)
-  expander <- qe(function(...) list(eval(qq(c(..(args))), parent.frame(2))))
-  environment(expander) <- parent.frame()
-  qq_applicator(expander)
-}
+qeply <- macro(function(...) {
+  collection <- as.call(c(list(c), list(...)))
+  expand_expr <- qq_internal(collection)
+  expandfn <- qe(function(...) {
+    .(eval)({.(expand_expr)}, .(parent.frame)(2))
+  })
+  qq_applicator(expandfn)
+})
 
 qq_applicator <- function(expander) {
   function(...) {
