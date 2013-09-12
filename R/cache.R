@@ -15,7 +15,9 @@ macro_cache <- function(fn, JIT=FALSE) {
       result <- expansionCache[[key]][[1]]
     } else {
       result <- do.call(fn, list_quote(...), quote=TRUE)
-      if (JIT) result <- compile(result)
+      if (JIT) {
+        result <- compile(result, options=(list(suppressAll=TRUE)))
+      }
       #Hold on to the list of expression objects to keep them from
       #getting stale or updating.
       expansionCache[[key]] <- list(result, digest)

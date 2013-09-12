@@ -6,6 +6,7 @@ qq_internal <- function(expr) {
                    pairlist(...=quote(expr=)),
                    call("[[", uq(expr, reg), 1)))
   args <- reg(op="expressions")
+  names(args) <- NULL
   as.call(c(list(fun), args))
 }
 
@@ -23,7 +24,6 @@ qq_internal <- function(expr) {
 #' sections and they should work as promised.
 #'
 #' @param expr A language object.
-#' @param envir An environment to evaluate the backquoted expressions in.
 #' @return For \code{qq}, A language object; for \code{qe}, evaluates
 #'         the expression in the calling environment.
 #' @author Peter Meilstrup
@@ -73,75 +73,16 @@ qq_internal <- function(expr) {
 #' dfname <- "baseball"
 #' qq(ddply(.(as.name(dfname)), .(quote(.(id, team))), identity))
 #' #ddply(baseball, .(id.team), identity)
-#' @import stringr
 #' @export
 qq <- macro(qq_internal)
-
-unattr <- function(x) `attributes<-`(x, NULL)
-
-unquote <- function(e, envir=parent.frame()) {
-  if (is.pairlist(e)) {
-    as.pairlist(unquote.list(e, envir))
-  } else if (is.call(e)) {
-    if (e[[1]] == quote(`function`) && length(e) > 3)
-        e <- e[1:3] # strip srcref
-    if (e[[1L]] == as.name(".")) {
-      eval(e[[2L]], envir)
-    } else if (e[[1L]] == as.name("...")) {
-      structure(eval(e[[2L]], envir), ...=TRUE)
-    } else {
-      as.call(unquote.list(e, envir))
-    }
-  } else if (!is.recursive(e)) {
-    if (is.name(e)) {
-      ch <- unquote.char(as.character(e), envir)
-      if (ch == "") {
-        quote(expr=)
-      } else {
-        as.name(ch)
-      }
-    } else {
-      e
-    }
-  } else {
-    unquote.list(e, envir)
-  }
-}
-
-unquote.list <- function(e, envir=parent.frame) {
-  r <- lapply(e, unquote, envir)
-  n <- names(e)
-  to.interpolate <- vapply(r, function(x) attr(x, '...') %||% FALSE, FALSE)
-  if (!is.null(n)) {
-    n[to.interpolate] <- ""
-    n <- vapply(n, unquote.char, "", envir)
-    names(r) <- n
-  }
-  if (any(to.interpolate)) {
-    r[!to.interpolate] <- structure(lapply(r[!to.interpolate], list),
-                                    names = names(r)[!to.interpolate])
-    r <- unlist(r, recursive=FALSE)
-  }
-  r
-}
-
-unquote.char <- function(ch, envir=parent.frame()) {
-  match <- str_match(ch, "^\\.\\((.*)\\)$")
-  if (!is.na(match[2])) {
-    as.character(eval(parse(text = match[2]), envir))
-  } else {
-    ch
-  }
-}
-
 
 #' @export
 template <- qq
 
 #' @export
-qe <- function(expr, envir=parent.frame()) {
-  eval(unquote(substitute(expr), envir), envir)
-}
+qe <- macro(function(expr) {
+  as.call(c(list(eval), list(qq_internal(expr))))
+})
 
 #' Repeatedly expand an expression against sequences of values.
 #'
@@ -160,7 +101,6 @@ qe <- function(expr, envir=parent.frame()) {
 #' @aliases qeply
 #' @seealso qq bquote
 #' @author Peter Meilstrup
-#' @export
 #' @examples
 #'
 #' qqply(`.(x)` = .(y))(x=letters[1:3], y=1:3)
@@ -170,40 +110,37 @@ qe <- function(expr, envir=parent.frame()) {
 #'   ...(qqply(.(as.name(x)) <- .(as.name(y)))(y=letters[2:26], x=letters[1:25]))
 #'   e
 #' })
+#' @export
 qqply <- function(...) {
-  envir <- parent.frame()
-  exprs <- expressions(dots(...))
-  #we curry up a function that does the actual qqply'ing
-  qqply_body(exprs, envir)
+  #TODO: the inner QQ gets recompiled every time, can we get qqply to be a macro
+  #fully expanded?
+  args = list_quote(...)
+  expander <- qe(function(...) as.list(qq(c(..(args))))[-1])
+  environment(expander) <- parent.frame()
+  qq_applicator(expander)
 }
 
 #' @export
 qeply <- function(...) {
-  envir <- parent.frame()
-  exprs <- expressions(dots(...))
-  f <- qqply_body(exprs, envir)
+  #expander is a function in the target env
+  args = list_quote(...)
+  expander <- qe(function(...) list(eval(qq(c(..(args))), parent.frame(2))))
+  environment(expander) <- parent.frame()
+  qq_applicator(expander)
+}
+
+qq_applicator <- function(expander) {
   function(...) {
-    lapply(f(...), eval, envir)
+    dots <- list(...)
+    argnames <- names(dots)[names(dots) != ""]
+    formals(expander) <-
+        as.pairlist(c(list(...=quote(expr=)),
+                      structure(missing_value(length(argnames)), names=argnames)))
+
+    #this is fragile (actually requires "dots" in the environment)
+    #todo: replace with my own curry-mapply
+    x <- .Internal(mapply(expander, dots, NULL))
+    unlist(x, recursive=FALSE)
   }
 }
 
-qqply_body <- function(exprs, envir) {
-  function(...) {
-    #create a function in the target environment based on given argument names
-    anames <- names(dots(...))
-    anames <- anames[anames != ""]
-    f <- qe(function(
-        .=...(
-             structure(missing_value(length(anames)),
-                      names=anames)),
-        ...) {
-      .(unquote)(quote(.(exprs)))
-    })
-    environment(f) <- envir
-    dots <- list(...)
-    #this is fragile(actually requires "dots" in the environment)
-    #todo: replace with my own mapply
-    x <- .Internal(mapply(f, dots, NULL))
-    unlist(x, recursive=FALSE)
-   }
-}

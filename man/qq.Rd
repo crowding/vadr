@@ -4,32 +4,28 @@
 \alias{template}
 \title{Quasiquotation. Perform template substitutions on a quoted R expressions.}
 \usage{
-  qq(expr, envir = parent.frame())
+  qq(...)
 }
 \arguments{
   \item{expr}{A language object.}
-
-  \item{envir}{An environment to evaluate the backquoted
-  expressions in.}
 }
 \value{
   For \code{qq}, A language object; for \code{qe},
   evaluates the expression in the calling environment.
 }
 \description{
-  This is an extended version of the
-  \code{\link{backquote}} utility.  'qq' quotes its first
-  argument, then scans for terms wrapped in \code{.()},
-  \code{...()}, or names that match \code{`.()`} The
-  wrapped expressions or names are evaluated in the given
-  environment.  Expressions wrapped in \code{...()} will be
-  interpolated into the argument list in which they occur.
-  Names wrapped in `.()` will be substituted and coerced to
-  name.
+  This is an extended version of the \code{\link{bquote}}
+  utility.  'qq' quotes its first argument, then scans for
+  terms wrapped in \code{.()}, \code{..()}, or names that
+  match \code{`.()`} The wrapped expressions or names are
+  evaluated in the given environment.  Expressions wrapped
+  in \code{..()} will be interpolated into the argument
+  list in which they occur. Names wrapped in `.()` will be
+  substituted and coerced to name.
 }
 \details{
-  Invocations of qq() can be nested within the \code{.()}'s
-  section and they should work as promised.
+  Invocations of qq() can be nested within the \code{.()}
+  sections and they should work as promised.
 }
 \examples{
 #Basic substitution
@@ -37,7 +33,7 @@ default <- 1
 qq( function(x, y = .(default)) x+y )
 #function(x, y = 1) x + y
 
-# interpolating substitution:
+# splicing substitution:
 paste.before <- alist("hello", "cool")
 paste.after <- alist("!", "Now is", date())
 qq(cat(...(paste.before), "world", ...(paste.after), '\\n'))
