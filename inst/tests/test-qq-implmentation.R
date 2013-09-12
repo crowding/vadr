@@ -151,19 +151,31 @@ test_that("unquote call", {
 })
 
 test_that("Unquote function arguments", {
-  testfn <- eval(uq_makes(quote(
-      function(x, y=.(3+4)) .(2+2)) ))
+  expect_uq( quote(function(x, y=4) 4),
+             quote(function(x, y=4) 4))
 
-  expect_equal(body(testfn), 4)
-  expect_equal(args(testfn), args(function(x, y=7) NULL))
+  expect_uq(quote(function(x, y=1) .(2+2)),
+            quote(function(x, y=1) 4))
 
-  testfn <- eval(uq_makes(quote(
-      function(`.(letters[1:3])`=...(letters[1:3])) {
-        list(...(lapply(letters[1:3], as.name)))
-      }  )))
+  expect_uq(quote(function(x, y=.(3+4)) 5),
+            quote(function(x, y=7) 5) )
 
-  expect_equal(body(testfn), quote({list(a, b, c)}))
-  expect_equal(args(testfn), args(function(a="a", b="b", c="c") NULL))
+  expect_uq( quote(function(x, y=.(3+4)) .(2+2)),
+             quote(function(x, y=7) 4) )
+
+  expect_uq(quote(function(`.(letters[1:3])`=...(letters[1:3]))
+                  list(...(lapply(letters[1:3], as.name)))),
+            quote(function(a="a", b="b", c="c")
+                  list(a, b, c)))
+
+  expect_uq(quote(function() 2), quote(function() 2))
+})
+
+test_that("unquote splice empty", {
+  expect_uq(quote(list(1, 2, ...(NULL))), quote(list(1, 2)))
+
+  expect_uq(quote(function(x=...(NULL)) 2),
+            quote(function() 2))
 })
 
 test_that("unquote in for", {

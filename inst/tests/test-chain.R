@@ -31,8 +31,12 @@ test_that('chain immediate', {
 })
 
 test_that('chain lexical scope', {
-  pow <- 2
-  dist <- chain(path, apply(2,diff), .^pow, rowSums, sqrt, cumsum)
+  dist <- "oops"
+  pow <- 3
+  local({
+    pow <- 2
+    dist <<- chain(path, apply(2,diff), .^pow, rowSums, sqrt, cumsum)
+  })
   expect_equal(dist, check)
 })
 
@@ -55,11 +59,13 @@ test_that('chain remembers intermediate result', {
 })
 
 test_that('chain scope is local', {
-  x <- 1
-  y <- 100
-  expect_equal(chain[x](x, x+1, y=exp), exp(2))
-  expect_equal(x, 1)
-  expect_equal(y, 100)
+  local({
+    x <- 1
+    y <- 100
+    expect_equal(chain[x](x, x+1, y=exp), exp(2))
+    expect_equal(x, 1)
+    expect_equal(y, 100)
+  })
 })
 
 test_that('can use . as a function according to R pseudo-lisp-2 rules', {

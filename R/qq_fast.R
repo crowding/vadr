@@ -121,14 +121,14 @@ splice.symbols <- lapply(c("..", "..."), as.name)
 #Returns something that evals to unquoted version wrapped in a list
 uq.call <- function(expr, register) {
   register <- register_intercept(register)
-  if (length(expr) >= 1 && (   expr[[1]] == splice.symbols[[1]]
+  if (length(expr) > 1 && (   expr[[1]] == splice.symbols[[1]]
                             || expr[[1]] == splice.symbols[[2]])) {
     unquoted <- uq_dots(expr[[2]], register)
     if (register(op="eval_needed"))
         unquoted
     else
         literal(eval(unquoted))
-  } else if (length(expr) >= 1 && expr[[1]] == quote(.)) {
+  } else if (length(expr) > 1 && expr[[1]] == quote(.)) {
     unquoted <- uq_dots(expr[[2]], register)
     if (register(op="eval_needed"))
         call("list", unquoted)
@@ -137,9 +137,12 @@ uq.call <- function(expr, register) {
   } else if (expr[[1]] == quote(`function`)) {
     args <- uq_pairlist(expr[[2]], register)
     body <- uq(expr[[3]], register)
+    #obtimization: I could break this down into
+    #either the args or body are evaluated (2 more special cases)
     if (register(op="eval_needed"))
-        call("list", call("do.call", "function",
-                          call("c", call("list", args), body)))
+        call("list", call("as.call",
+                          call("c", list(quote(`function`)),
+                               call("list", args), body)))
     else
         list(as.call(c(list(quote(`function`)), list(eval(args)), body)))
   } else {
@@ -156,6 +159,7 @@ uq.call <- function(expr, register) {
 `uq.while` <- uq.call
 `uq.for` <- uq.call
 `uq.if` <- uq.call
+`uq.<-` <- uq.call
 
 #Takes list of quoteds
 #Returns something the evals to a pairlist.
@@ -179,10 +183,10 @@ uq_call_args <- function(expr, register) {
     register(expr, op)
   }
   unquoted <- vector("list", length(expr))
-  for(i in 1:length(expr)) {
+  for(i in seq_along(expr)) {
     unquoted[[i]] <- list(uq_named(expr[i], reregister))
   }
-  unquoted <- do.call("c", unquoted)
+  unquoted <- as.list(do.call("c", unquoted))
   if (any(needs_eval)) {
     ## #try to somewhat efficiently pack in quoted values
     ## #by pre-concatenating adjacent literal values
@@ -260,7 +264,8 @@ literal <- function(expr) {
 }
 
 inner_dominating_names <- function(value, name) {
-  if (is.null(names(value)) || all(names(value) == ""))
-      structure(value, names=name)
-  else value
+  if (!is.null(value) && (is.null(names(value)) || all(names(value) == ""))){
+    names(value)[seq_along(value)] <- name
+    value
+  } else value
 }

@@ -2,7 +2,7 @@
 chain_function <- function(args) {function(transforms) {
   var <- as.name(names(args)[[1]])
   names <- names(transforms) %||% ""
-  template(function(.=...(args)) {
+  chainexpr <- qq(function(.=...(args)) {
     ...(
       Map(transforms, names, f=function(a,n)
           if (n == "") template(.(var) <- .(chain.dwim(a, var)))
@@ -10,6 +10,7 @@ chain_function <- function(args) {function(transforms) {
       )
     .(var)
   })
+  chainexpr
 }}
 
 ## helper function that "guesses" the correct form of the arguments to

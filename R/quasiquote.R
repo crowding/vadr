@@ -1,15 +1,26 @@
+#Exposed user interface for quasiquotation
+#the internal engine (uq and friends) are defined in qq_fast.R
+qq_internal <- function(expr) {
+  reg <- new_registry()
+  fun <- eval(call('function',
+                   pairlist(...=quote(expr=)),
+                   call("[[", uq(expr, reg), 1)))
+  args <- reg(op="expressions")
+  as.call(c(list(fun), args))
+}
+
 #' Quasiquotation. Perform template substitutions on a quoted R expressions.
 #'
-#' This is an extended version of the \code{\link{backquote}}
+#' This is an extended version of the \code{\link{bquote}}
 #' utility.  'qq' quotes its first argument, then scans for
-#' terms wrapped in \code{.()}, \code{...()}, or names that match
+#' terms wrapped in \code{.()}, \code{..()}, or names that match
 #' \code{`.()`} The wrapped expressions or names are evaluated in the
-#' given environment.  Expressions wrapped in \code{...()} will be
+#' given environment.  Expressions wrapped in \code{..()} will be
 #' interpolated into the argument list in which they occur. Names
 #' wrapped in `.()` will be substituted and coerced to name.
 #'
-#' Invocations of qq() can be nested within the \code{.()}'s
-#' section and they should work as promised.
+#' Invocations of qq() can be nested within the \code{.()}
+#' sections and they should work as promised.
 #'
 #' @param expr A language object.
 #' @param envir An environment to evaluate the backquoted expressions in.
@@ -25,7 +36,7 @@
 #' qq( function(x, y = .(default)) x+y )
 #' #function(x, y = 1) x + y
 #'
-#' # interpolating substitution:
+#' # splicing substitution:
 #' paste.before <- alist("hello", "cool")
 #' paste.after <- alist("!", "Now is", date())
 #' qq(cat(...(paste.before), "world", ...(paste.after), '\n'))
@@ -64,9 +75,7 @@
 #' #ddply(baseball, .(id.team), identity)
 #' @import stringr
 #' @export
-qq <- function(expr, envir=parent.frame()) {
-  unquote(substitute(expr), envir)
-}
+qq <- macro(qq_internal)
 
 unattr <- function(x) `attributes<-`(x, NULL)
 

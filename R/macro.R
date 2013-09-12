@@ -110,6 +110,7 @@ macro <- function(fn, cache=TRUE, JIT=cache) {
     fn <- macro_cache(fn, JIT)
     f <- function(...) {
       fr <- parent.frame()
+      expansion <- fn(...)
       eval(fn(...), fr)
     }
   } else {
