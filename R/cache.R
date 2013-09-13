@@ -1,4 +1,13 @@
-#Lightweight in-memory caching
+#Cache for macro expansions
+cache <- new.env(hash=TRUE, parent=emptyenv())
+hits <- 0
+misses <- 0
+expired <- 0
+
+#Macro expansions may employ "...", and there's no way for the
+#compiler to tell here. This stops the "... may be used in an
+#incorrect context" warning.
+cacheenv <- (function(...) environment())()
 
 #Memoize a function based on the _expression_ representation
 #of its arguments. (this technique doesn't seem to work too well on
@@ -6,28 +15,35 @@
 #play around with object_pointers.
 macro_cache <- function(fn, JIT=FALSE) {
   force(fn)
-  expansionCache <- new.env(hash=TRUE, parent=emptyenv())
+  delayedAssign("fn_pointer", object_pointers(list(fn)))
 
   function(...) {
     digest <- expressions_and_pointers(...)
-    key <- paste(names(digest), collapse=".")
-    if (exists(key, envir=expansionCache)) {
-      result <- expansionCache[[key]][[1]]
+    key <- paste(c(fn_pointer, names(digest)), collapse=".")
+    if (exists(key, envir=cache)) {
+      hits <<- hits + 1
+      result <- cache[[key]][[1]]
     } else {
+      misses <<- misses + 1
       result <- do.call(fn, list_quote(...), quote=TRUE)
       if (JIT)
           result <- compile(result, cacheenv,
                             options=list(suppressUndefined=TRUE))
       #Hold on to the list of expression objects to keep them from
       #getting stale or updating.
-      expansionCache[[key]] <- list(result, digest)
+      cache[[key]] <- list(result, digest)
       #TODO make a method for expiring old objects from the cache.
-      #Perhaps a doubly linked list. whise head is moved up.
+      #LinkedHashMap or equivalent.
     }
     result
   }
 }
 
-#get compiler to shut up about "... may be used in an incorrect context"
-#which it seems to be wrong about
-cacheenv <- (function(...) environment())()
+#' Report on macro cache contents.
+#'
+#' @return list with entries "hits", "misses", and "size"
+#' @author Peter Meilstrup
+#' @export
+macro_cache_report <- function() {
+  list(hits=hits, misses=misses, size=length(cache), expired=expired)
+}

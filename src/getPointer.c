@@ -136,6 +136,14 @@ SEXP stringify_item(SEXP item, char *bufptr) {
       result = item;
       done = 1;
       break;
+    case CLOSXP:
+      bufptr += sprintf(bufptr, "c_%p/%p/%p",
+                        (void *) FORMALS(item),
+                        (void *) BODY(item),
+                        (void *) CLOENV(item));
+      result=item;
+      done = 1;
+      break;
     case SYMSXP:
     case LANGSXP:
     case EXPRSXP:

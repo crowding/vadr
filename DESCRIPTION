@@ -25,11 +25,11 @@ Imports:
     stringr (>= 0.6.1),
     compiler (>= 2.15.2)
 Collate:
+    'getPointer.R'
     'cache.R'
     'macro.R'
     'quasiquote.R'
     'dots.R'
-    'getPointer.R'
     'indexing.R'
     'programming.R'
     'fun.R'

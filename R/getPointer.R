@@ -1,5 +1,7 @@
 # Passed a list of dots arguments, returns their expressions and, in
-# names, their machine pointers
+# names, their machine pointers.
+#
+# This is used to obtain unique identifying strings for a list of arguments
 #
 # @param ... A varying number of arguments.
 # @return A vector of integers containing pointer values, one per argument.
@@ -12,7 +14,8 @@ expressions_and_pointers <- function(...) {
 }
 
 ## turns out this is almost useless due to all sexps
-## being duped when they go into a list.
+## being duped when they go into a list. Can be useful
+## for limited cases, but test them
 #' @useDynLib vadr _object_pointers
 object_pointers <- function(list) {
   .Call(`_object_pointers`, list)
