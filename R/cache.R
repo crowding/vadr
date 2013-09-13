@@ -22,10 +22,10 @@ macro_cache <- function(fn, JIT=FALSE) {
     digest <- expressions_and_pointers(...)
     key <- paste(c(fn_pointer, names(digest)), collapse=".")
     if (exists(key, envir=cache)) {
-      hitdata$hits <<- hitdata$hits + 1
+      assign("hits", hitdata$hits + 1, envir = hitdata)
       result <- cache[[key]][[1]]
     } else {
-      hitdata$misses <<- hitdata$misses + 1
+      assign("misses", hitdata$misses + 1, envir = hitdata)
       result <- do.call(fn, list_quote(...), quote=TRUE)
       if (JIT)
           result <- compile(result, cacheenv,
