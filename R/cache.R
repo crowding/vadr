@@ -1,8 +1,9 @@
 #Cache for macro expansions
 cache <- new.env(hash=TRUE, parent=emptyenv())
-hits <- 0
-misses <- 0
-expired <- 0
+hitdata <- as.environment(list(
+    hits = 0,
+    misses = 0,
+    expired = 0))
 
 #Macro expansions may employ "...", and there's no way for the
 #compiler to tell here. This stops the "... may be used in an
@@ -21,10 +22,10 @@ macro_cache <- function(fn, JIT=FALSE) {
     digest <- expressions_and_pointers(...)
     key <- paste(c(fn_pointer, names(digest)), collapse=".")
     if (exists(key, envir=cache)) {
-      hits <<- hits + 1
+      hitdata$hits <<- hitdata$hits + 1
       result <- cache[[key]][[1]]
     } else {
-      misses <<- misses + 1
+      hitdata$misses <<- hitdata$misses + 1
       result <- do.call(fn, list_quote(...), quote=TRUE)
       if (JIT)
           result <- compile(result, cacheenv,
@@ -45,5 +46,5 @@ macro_cache <- function(fn, JIT=FALSE) {
 #' @author Peter Meilstrup
 #' @export
 macro_cache_report <- function() {
-  list(hits=hits, misses=misses, size=length(cache), expired=expired)
+  c(as.list(hitdata), size=length(cache))
 }
