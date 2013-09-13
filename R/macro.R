@@ -195,7 +195,8 @@ find_macros <- function(what, where=parent.frame()) {
   if (is.null(what)) {
     what <- apropos(".*", where=FALSE, mode="function")
   }
-  functions <- lapply(what, getFunction, where=where, mustFind=FALSE)
+  functions <- sapply(what, mget, envir=where, mode="function",
+                      inherits=TRUE, ifnotfound=list(NULL))
   #search for every function with class "macro"
   is.macro <- vapply(functions, function(x) "macro" %in% class(x), FALSE)
   structure(functions[is.macro], names=what[is.macro])
