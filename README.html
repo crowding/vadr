@@ -1,0 +1,124 @@
+<h1 id="vadr">vadr</h1>
+<blockquote>
+<p><em>R has been seduced by the dark S of the Force. It is more PHP now than Lisp. Its mind is twisted and evil.</em></p>
+</blockquote>
+<blockquote>
+<p><strong>But there is good in R, I can feel it. I can save it. I have to try.</strong></p>
+</blockquote>
+<p>R is a curious language. At its core is a Lisp interpreter with first-class environments and lazy evaluation implemented in terms of underlying <code>fexpr</code>s. It's a language whose core was made flexible enough to reimplement a weird old language like S-PLUS on top of.</p>
+<p>Oddly, all the good bits of R seem to have been buried under an implementation of weird old S-PLUS.</p>
+<p>I like the core language trapped underleath there. It's kind of like what John Shutt was talking about in his thesis on <a href="http://web.cs.wpi.edu/~jshutt/kernel.html">Kernel</a>. I'd like to elevate the core above the S facade.</p>
+<p>Look at your favorite language. Then at R. Then back to your favorite language. Then back to R, Sadly, R isn't your favorite language. But it could smell like your favorite language. Look down. Now back to R. Where are you? You're writing code in the language your language could smell like. Anything is possible. R's on a horse.</p>
+<p>This package implements workalikes for the author's (and perhaps your) favorite features from other languages, making R programs shorter and more expressive. Here are some samples of what you can do:</p>
+<h2 id="destructuring-bind">Destructuring bind</h2>
+<p><code>bind[]</code> assigns to several variables at once, by unpacking a list. Say you have some data coming in with an awkward, messy format, and you want to extract and reorganize some of the data.</p>
+<pre class="sourceCode r"><code class="sourceCode r">record &lt;-<span class="st"> </span><span class="kw">list</span>(<span class="st">&quot;Marilyn&quot;</span>, <span class="st">&quot;Monroe&quot;</span>, <span class="dt">dob=</span><span class="kw">list</span>(<span class="st">&quot;June&quot;</span>, <span class="dv">1</span>, <span class="dv">1926</span>),
+               <span class="dt">profession=</span><span class="st">&quot;film star&quot;</span>, <span class="st">&quot;born Norma Jean Baker&quot;</span>,
+               <span class="dt">fbi_file_no=</span><span class="st">&quot;FFIJ8SN_65&quot;</span>,
+               <span class="st">&quot;1947 California Artichoke Queen&quot;</span>,
+               <span class="kw">list</span>(<span class="st">&quot;August&quot;</span>, <span class="dv">5</span>, <span class="dv">1962</span>))</code></pre>
+<p>You could do the ordinary way:</p>
+<pre class="sourceCode r"><code class="sourceCode r">first &lt;-<span class="st"> </span>record[[<span class="dv">1</span>]]
+last &lt;-<span class="st"> </span>record[[<span class="dv">2</span>]]
+bday &lt;-<span class="st"> </span>record$dob[[<span class="dv">2</span>]]
+bmonth &lt;-<span class="st"> </span>record$dob[[<span class="dv">1</span>]]
+byear &lt;-<span class="st"> </span>record$dob[[<span class="dv">3</span>]]
+dday &lt;-<span class="st"> </span>record[[<span class="kw">length</span>(record)]][[<span class="dv">2</span>]]
+dmonth &lt;-<span class="st"> </span>record[[<span class="kw">length</span>(record)]][[<span class="dv">1</span>]]
+dyear &lt;-<span class="st"> </span>record[[<span class="kw">length</span>(record)]][[<span class="dv">3</span>]]
+record[[<span class="st">&quot;fbi_file_no&quot;</span>]] &lt;-<span class="st"> </span><span class="ot">NULL</span>
+notes &lt;-<span class="st"> </span><span class="co">#....uhh, everything else, somehow?</span></code></pre>
+<p>My eyes glaze over. Or you could use <code>bind[]</code>:</p>
+<pre><code>bind[first, last, dob=bind[bmonth, bday, byear],
+     fbi_file_no=, ...=notes, bind[dmonth, dday, dyear]] &lt;- record</code></pre>
+<h2 id="chains">Chains</h2>
+<p>You ever take some data and pass it through a function, then pass the result theough another function, then pass that through another function, in a series of steps? I do that all the time.</p>
+<p>You basically have two options for how to write such code: assign every intermediate result to a var, probably reusing the same variable name, which I hate because I don't want to give a name to data until it actually <em>is</em> what it's name suggests; or do it all at once in a deeply nested function call, which gets you <a href="http://c2.com/cgi/wiki?ThickBreadSmell">Dagwood Sandwich Code</a>.</p>
+<p><em>Example:</em> Let's compute the perimeter of the 137-gon inscribed in the unit circle.</p>
+<p>If you are comfortable with an array-oriented language (such as R), you might see this task and think: &quot;Ok, so get the (x,y) coordinates of the vertices, then difference them to get edge lengths, then add lengths up for the perimiter.&quot;</p>
+<p>You could write it serial assignment style, until you run out of patience for naming things:</p>
+<pre class="sourceCode r"><code class="sourceCode r">n &lt;-<span class="st"> </span><span class="dv">137</span>
+radians &lt;-<span class="st"> </span><span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">2</span>*pi, <span class="dt">length=</span>n<span class="dv">+1</span>)
+coords &lt;-<span class="st"> </span><span class="kw">cbind</span>(<span class="kw">sin</span>(radians), <span class="kw">cos</span>(radians))
+differences &lt;-<span class="st"> </span><span class="kw">apply</span>(coords, <span class="dv">2</span>, diff)
+segment.lengths &lt;-<span class="st"> </span><span class="kw">sqrt</span>(<span class="kw">rowSums</span>(differences^<span class="dv">2</span>))
+perimeter &lt;-<span class="st"> </span><span class="kw">sum</span>(segment.lengths)</code></pre>
+<p>Or you could write inscrutable Dagwood sandwich style, where, for example, the <code>2</code> and the <code>^2</code> wind up an enormous distance from the functions (<code>apply</code> and <code>rowSums</code>) they are argument or subsequent to:</p>
+<pre class="sourceCode r"><code class="sourceCode r">n &lt;-<span class="st"> </span><span class="dv">137</span>
+<span class="kw">sum</span>(<span class="kw">sqrt</span>(<span class="kw">rowSums</span>(<span class="kw">apply</span>(<span class="kw">sapply</span>(<span class="kw">c</span>(<span class="st">&quot;sin&quot;</span>, <span class="st">&quot;cos&quot;</span>), do.call,
+                              <span class="kw">list</span>(<span class="kw">seq</span>(<span class="dv">0</span>, <span class="dv">2</span>*pi, <span class="dt">length=</span><span class="dv">137</span>))),
+                       <span class="dv">2</span>, diff)^<span class="dv">2</span>)))</code></pre>
+<p>This package provides an alternative for this kind of code, <code>chain</code>. Here's <code>chain</code> style. It's a bit like a Unix pipeline, and a bit more like the <code>-&gt;</code> macro in Clojure. It is compact and reads well; things start at the beginning and you read along to the end, no jumping around, the 2 is right next to <code>apply</code> where it belongs and it's not junked up with a bunch of temporary names.</p>
+<pre class="sourceCode r"><code class="sourceCode r">n &lt;-<span class="st"> </span><span class="dv">137</span>
+perimeter &lt;-<span class="st"> </span><span class="kw">chain</span>(n,
+                   <span class="kw">seq</span>(<span class="dt">length=</span>.+<span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">2</span>*pi),
+                   <span class="kw">cbind</span>(<span class="kw">sin</span>(.), <span class="kw">cos</span>(.)),
+                   <span class="kw">apply</span>(<span class="dv">2</span>, diff),
+                   .^<span class="dv">2</span>, rowSums, sqrt, sum)</code></pre>
+<p>You can narrate this left to right. &quot;Start with your number of sides. Sample that many times (plus one, oh fenceposts) over [0, 2*pi]. Sine and cosine of that gives you coordinates. Take differences and apply Pythagoras, squaring, summing and rooting to get the length of each side. Add it all up and you have your perimiter.&quot;</p>
+<h2 id="partial-application-currying">Partial application (currying)</h2>
+<p>If you ever want to provide default arguments to a function before handing it off somewhere else, or other such tricks, this package provide both &quot;leftward&quot; and &quot;rightward&quot; partial application functions, as well as <code>%()%</code>, a full-apply which can be less tricksy than <code>do.call()</code>.</p>
+<pre><code>printReport &lt;- cat %&lt;&lt;&lt;% &quot;Message: &quot; %&lt;&lt;% c(sep=&quot;\n&quot;, &quot;-----\n&quot;)
+printReport %()% c(&quot;message one&quot;, &quot;message two&quot;, &quot;message three&quot;)</code></pre>
+<p>These partial application utilities are fully integrated with good handling for dot-dot-dot lists mentioned in the next section</p>
+<h2 id="dot-dot-dot-lists-and-missing-values">Dot-Dot-Dot lists and missing values</h2>
+<p>Variadic arguments (<code>...</code>) and missing values are two of the trickiest spots of R's semantics, and there are very few tools to work with them -- besides <code>missing</code> there's <code>substitute</code> and <code>do.call</code>, both of which are hairy and mostly serve other purposes. Mostly people treat <code>...</code> as an opaque block to pass along to another function. This package contains a number of functions that let you work explicitly with <code>...</code> lists, concatenating and subsetting them, while still allowing R's lazy-evaluation semantics to do the right thing. So a function using <code>dots</code> can decide whether and when to evaluate each of its unnamed arguments:</p>
+<pre class="sourceCode r"><code class="sourceCode r">inSomeOrder &lt;-<span class="st"> </span>function(...) <span class="kw">invisible</span>(list %()%<span class="st"> </span><span class="kw">sample</span>(<span class="kw">dots</span>(...)))
+<span class="kw">inSomeOrder</span>(<span class="kw">print</span>(<span class="st">&quot;Boing!&quot;</span>), <span class="kw">print</span>(<span class="st">&quot;Boom&quot;</span>), <span class="kw">print</span>(<span class="st">&quot;Tschack!&quot;</span>), <span class="kw">print</span>(<span class="st">&quot;Ping&quot;</span>),
+            <span class="kw">print</span>(<span class="st">&quot;Zong&quot;</span>), <span class="kw">print</span>(<span class="st">&quot;Pssh&quot;</span>))
+<span class="co"># [1] &quot;Boing!&quot;</span>
+<span class="co"># [1] &quot;Zong&quot;</span>
+<span class="co"># [1] &quot;Ping&quot;</span>
+<span class="co"># [1] &quot;Boom&quot;</span>
+<span class="co"># [1] &quot;Pssh&quot;</span>
+<span class="co"># [1] &quot;Tschack!&quot;</span></code></pre>
+<p>For a more pointed example, consider <code>switch</code>. Switch takes its first argument and uses it to decide which if its subsequent arguments to evaluate.</p>
+<p>Consider trying to implement an R function that has the behavrior of <code>switch</code> properly (not as a C function, and not inspecting the stack using <code>match.call()</code> or <code>parent.frame()</code> which are evil.) This is doable in pure R but wacky and slow:</p>
+<pre class="sourceCode r"><code class="sourceCode r">switch2 &lt;-<span class="st"> </span>function(expr, ...) {
+  n &lt;-<span class="st"> </span><span class="kw">names</span>(<span class="kw">substitute</span>(<span class="kw">list</span>(...)))[-<span class="dv">1</span>]
+  if (!<span class="kw">is.null</span>(n))
+      arglist &lt;-<span class="st"> </span><span class="kw">as.pairlist</span>(<span class="kw">structure</span>(
+          <span class="kw">rep</span>(<span class="kw">list</span>(<span class="kw">quote</span>(<span class="dt">expr=</span>)), <span class="kw">length</span>(n)),
+          <span class="dt">names=</span>n))
+  else
+      (arglist &lt;-<span class="st"> </span><span class="kw">as.pairlist</span>(<span class="kw">alist</span>(<span class="dt">...=</span>)))
+
+  if (<span class="kw">is.numeric</span>(expr))
+      body &lt;-<span class="st"> </span><span class="kw">as.name</span>(<span class="kw">paste0</span>(<span class="st">&quot;..&quot;</span>, expr))
+  else
+      body &lt;-<span class="st"> </span><span class="kw">as.name</span>(expr)
+  f &lt;-<span class="st"> </span><span class="kw">eval</span>(<span class="kw">substitute</span>(<span class="st">`</span><span class="dt">function</span><span class="st">`</span>(arglist, body),
+                         <span class="kw">list</span>(<span class="dt">arglist=</span>arglist, <span class="dt">body=</span>body)))
+  <span class="kw">f</span>(...)
+}</code></pre>
+<p>With a direct interface to manipulate dotlists, <code>switch</code> is easy:</p>
+<pre class="sourceCode r"><code class="sourceCode r">switch3 &lt;-<span class="st"> </span>function(expr, ...) {
+  <span class="kw">dots</span>(...)[[expr]]
+}</code></pre>
+<p>You may also use <code>dots_unpack()</code> to inspect the contents of as-yet-unevaluated dots objects, exposing R's promise mechanism:</p>
+<pre class="sourceCode r"><code class="sourceCode r">x &lt;-<span class="st"> </span><span class="dv">1</span>
+y &lt;-<span class="st"> </span><span class="dv">2</span>
+d &lt;-<span class="st"> </span><span class="kw">dots</span>(<span class="dt">a=</span>x, <span class="dt">b=</span>y, <span class="dt">c=</span>x+y)
+<span class="kw">unpack</span>(d)
+<span class="co">#   name         envir  expr value</span>
+<span class="co"># a    a &lt;environment&gt;     x  NULL</span>
+<span class="co"># b    b &lt;environment&gt;     y  NULL</span>
+<span class="co"># c    c &lt;environment&gt; x + y  NULL</span>
+<span class="co"># &gt; y &lt;- 3</span>
+(function(b, ...) b) %()%<span class="st"> </span>d <span class="co">#force the &quot;b&quot; slot to evaluate</span>
+<span class="co"># [1] 3</span>
+<span class="kw">unpack</span>(d)
+<span class="co">#   name         envir  expr value</span>
+<span class="co"># a    a &lt;environment&gt;     x  NULL</span>
+<span class="co"># b    b          NULL     y     3</span>
+<span class="co"># c    c &lt;environment&gt; x + y  NULL</span>
+c %()%<span class="st"> </span>d
+<span class="co"># a b c</span>
+<span class="co"># 1 3 4</span>
+&gt;<span class="st"> </span><span class="kw">unpack</span>(d)
+<span class="co">#   name envir  expr value</span>
+<span class="co"># a    a  NULL     x     1</span>
+<span class="co"># b    b  NULL     y     3</span>
+<span class="co"># c    c  NULL x + y     4</span></code></pre>
+<h2 id="quasiquotation">Quasiquotation</h2>
+<h2 id="macros">Macros</h2>
