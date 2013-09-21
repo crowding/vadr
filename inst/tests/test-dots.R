@@ -192,7 +192,7 @@ test_that("%()% is like do.call(quote=TRUE) but doesn't overquote", {
   list %()% ff(x, y+z) %is% ff(x, y+z)
   ff %()% ff(x, y) %is% ff(x, y)
   ff %()% list(x,y) %is% ff(2, 5)
- })
+})
 
 test_that("x <- dots() captures dots and %()% calls with dots", {
   x <- 1;
@@ -471,6 +471,7 @@ test_that("dots [[<- and $<- inject evaluated promises into a dotslist", {
 test_that("dots names method extracts tags without forcing", {
   names(dots(a, b, c=, 4, d=x+y, )) %is% c("", "", "c", "", "d", "")
   names(dots(stop("no"), a=stop("no"))) %is%  c("", "a")
+  names(dots()) %is% NULL
 })
 
 test_that("dots names<- method can set tags w/o forcing", {

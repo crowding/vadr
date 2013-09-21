@@ -84,10 +84,10 @@ SEXP _dots_names(SEXP dots) {
   length = _dots_length(dots);
 
   int made = 0;
-  names=R_NilValue;
+  names = R_NilValue;
   PROTECT(names = allocVector(STRSXP, length));
 
-  for (s = dots, i = 0; s != R_NilValue; s = CDR(s), i++) {
+  for (s = dots, i = 0; i < length; s = CDR(s), i++) {
     if (isNull(TAG(s))) {
       SET_STRING_ELT(names, i, mkChar(""));
     } else {

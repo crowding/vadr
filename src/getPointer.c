@@ -165,9 +165,15 @@ SEXP stringify_item(SEXP item, char *bufptr) {
 /* measure the length of a dots object. */
 int _dots_length(SEXP dots) {
   SEXP s; int length;
-  if (TYPEOF(dots) != DOTSXP) {
+  switch (TYPEOF(dots)) {
+  case VECSXP:
+    if (LENGTH(dots) == 0) return 0;
+    break;
+  case DOTSXP:
+    for (s = dots, length = 0; s != R_NilValue; s = CDR(s)) length++;
+    return length;
+  default:
     error("Expected a dots object");
+    return 0;
   }
-  for (s = dots, length = 0; s != R_NilValue; s = CDR(s)) length++;
-  return length;
 }
