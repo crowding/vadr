@@ -42,3 +42,4 @@ Collate:
     'vadr-description.R'
     'onLoad.R'
     'qq_fast.R'
+    'mply.R'
