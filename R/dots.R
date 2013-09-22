@@ -438,14 +438,16 @@ is.missing <- function(x) if (missing(x)) TRUE else UseMethod("is.missing")
 #' @S3method is.missing "..."
 is.missing.... <- function(x) {
   out <- logical(length(x))
-  assign("...", x)
-  sym = paste("..", seq_len(length(x)), sep="")
-  for (i in seq_len(length(x))) {
-    n <- as.name(sym[[i]])
-    out[i] <- eval(substitute(missing(n)))
+  if (length(x) > 0) {
+    assign("...", x)
+    sym = paste("..", seq_len(length(x)), sep="")
+    for (i in seq_len(length(x))) {
+      n <- as.name(sym[[i]])
+      out[i] <- eval(substitute(missing(n)))
+    }
+    n <- dots_names(...)
+    if (!is.null(n)) names(out) <- n
   }
-  n <- dots_names(...)
-  if (!is.null(n)) names(out) <- n
   out
 }
 

@@ -381,6 +381,18 @@ test_that("dots() et al with empty inputs", {
   f %()% (d %__% a) %is% 4
 })
 
+test_that("dots methods on empty dots", {
+  x <- dots()
+  is.missing(x) %is% logical(0)
+  names(x) %is% NULL
+  expect_that(expressions(x), is_equivalent_to(list()))
+  test_that(unpack(x),
+            is_equivalent_to(list(
+                name=character(0), envir=list(), expr=list(), value=list())))
+  x[] %is% x
+  y <- dots(1, 2, 3)
+  list %()% y[c()] %is% list()
+})
 
 test_that("dots [] operator subsets without forcing promises", {
   with_setup(

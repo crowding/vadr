@@ -9,8 +9,9 @@
 #' @return A list.
 #'
 #' @note After more than a hundred or so elements, this
-#' has less overhead than \code{\link{mapply}}.
+#' has less overhead per loop than \code{\link{mapply}}.
 #' @author Peter Meilstrup
+#' @export
 mply <- function(...){
   fn <- curr(...)
   function(...) {

@@ -24,7 +24,7 @@ SEXP _dots_unpack(SEXP dots) {
   PROTECT(expressions = allocVector(VECSXP, length));
   PROTECT(values = allocVector(VECSXP, length));
 
-  for (s = dots, i = 0; s != R_NilValue; s = CDR(s), i++) {
+  for (s = dots, i = 0; i < length; s = CDR(s), i++) {
     if (TYPEOF(s) != DOTSXP && TYPEOF(s) != LISTSXP)
       error("Expected DOTSXP, got %s at index %d", type2char(TYPEOF(s)), i);
 
@@ -134,20 +134,24 @@ SEXP _as_dots_literal(SEXP list, SEXP dotlist) {
 
 /* Convert a DOTSXP into a list of raw promise objects. */
 SEXP _dotslist_to_list(SEXP x) {
-  if (TYPEOF(x) != DOTSXP)
-    error("Expected a ..., got %s", type2char(TYPEOF(x)));
-  int len = length(x);
   int i;
   SEXP output, names;
+  int len = length(x);
+
   PROTECT(output = allocVector(VECSXP, len));
   PROTECT(names = allocVector(STRSXP, len));
-
-  for (i = 0; x != R_NilValue; x=CDR(x), i++) {
+  if (len > 0) {
+    if (TYPEOF(x) != DOTSXP)
+      error("Expected a ..., got %s", type2char(TYPEOF(x)));
+  }
+  for (i = 0; i < len; x=CDR(x), i++) {
     SET_VECTOR_ELT(output, i, CAR(x));
     SET_STRING_ELT(names, i, isNull(TAG(x)) ? R_BlankString : asChar(TAG(x)));
   }
-  setAttrib(output, R_NamesSymbol, names);
-
+  if (len > 0) {
+    setAttrib(output, R_NamesSymbol, names);
+  }
+  
   UNPROTECT(2);
   return output;
 }
@@ -160,14 +164,18 @@ SEXP _list_to_dotslist(SEXP list) {
   int i;
   SEXP output, names;
   names = getAttrib(list, R_NamesSymbol);
-  output = PROTECT(allocList(len));
-  SEXP output_iter = output;
-  for (i = 0; i < len; i++, output_iter=CDR(output_iter)) {
-    SET_TYPEOF(output_iter, DOTSXP);
-    if ((names != R_NilValue) && (STRING_ELT(names, i) != R_BlankString)) {
-      SET_TAG(output_iter, install(CHAR(STRING_ELT(names, i)) ));
+  if (len > 0) {
+    output = PROTECT(allocList(len));
+    SEXP output_iter = output;
+    for (i = 0; i < len; i++, output_iter=CDR(output_iter)) {
+      SET_TYPEOF(output_iter, DOTSXP);
+      if ((names != R_NilValue) && (STRING_ELT(names, i) != R_BlankString)) {
+        SET_TAG(output_iter, install(CHAR(STRING_ELT(names, i)) ));
+      }
+      SETCAR(output_iter, VECTOR_ELT(list, i));
     }
-    SETCAR(output_iter, VECTOR_ELT(list, i));
+  } else {
+    output = PROTECT(allocVector(VECSXP, 0));
   }
   setAttrib(output, R_ClassSymbol, ScalarString(mkChar("...")));
   UNPROTECT(1);
