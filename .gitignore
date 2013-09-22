@@ -32,6 +32,10 @@ dependencies
 .Rdata
 tickets
 Rlibs
+cache
+figure
+*.html
+*.md
 eachplots
 descriptions
 collections
