@@ -114,8 +114,9 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' @return For \code{mkchain} return the constructed function. For
 #' \code{chain}, apply the chain to the dataset given in the first
 #' argument and return the result.
-#' @note \code{chain} is a bit like the \code{->} macro of Clojure.
-#' @aliases mkchain [.chain [.mkchain
+#' @note \code{chain} is a bit like the \code{->} macro of Clojure,
+#' or the \code{|>} operator in Elixir.
+#' @aliases mkchain [.chain [.mkchain %|>%
 #' @author Peter Meilstrup
 #' @export
 #' @examples
@@ -134,6 +135,9 @@ mkchain <- function(...) NULL
 #' @export
 chain <- function(...) NULL
 
+#' @export
+`%|>%` <- function(...) NULL
+
 #mkchain(...) is the same as mkchain[.](...)
 #which is done by making mkchain itself the value of mkchain[.]
 #(setting its class to mkchain)
@@ -148,4 +152,5 @@ chain <- function(...) NULL
   chain <- `[.chain`(force, .)
   class(chain) <- c("chain", class(chain))
   chain <<- chain
+  `%|>%` <<- chain
 }

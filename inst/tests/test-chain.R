@@ -98,3 +98,8 @@ test_that('chain/mkchain arguments', {
   expect_equal(chain[x, threshold=20](data, x>threshold, sum), sum(data > 20))
   #no way to change "threshold" in the chain form but that's ok
 })
+
+test_that('chain infix form', {
+  data <- c(13, 32, 54, 68, 12, 31, 14, 31,  5,  9)
+  expect_equal(5, data %|>% (.>20) %|>% sum)
+})

@@ -1,6 +1,7 @@
 \name{mkchain}
 \alias{[.chain}
 \alias{[.mkchain}
+\alias{\%|>\%}
 \alias{mkchain}
 \title{Chain the output of one expression into the input of another.}
 \usage{
@@ -87,7 +88,7 @@
 }
 \note{
   \code{chain} is a bit like the \code{->} macro of
-  Clojure.
+  Clojure, or the \code{|>} operator in Elixir.
 }
 \examples{
 # In help("match_df", package="plyr") there is this example:
