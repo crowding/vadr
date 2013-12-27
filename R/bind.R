@@ -63,7 +63,8 @@
 #' @return a "bind" object, since it is invoked via a subset on "bind".
 #' @author Peter Meilstrup
 #' @S3method "[<-" bind
-`[<-.bind` <- function(`*temp*`, ..., `*envir*`=parent.frame()) {
+`[<-.bind` <- function(`*temp*`, ..., value) {
+  `*envir*` = parent.frame()
   #why square brackets?
   #1. I want there to be a <- everywhere there is a change to the workspace.
   #2. we can't simply have
@@ -74,16 +75,10 @@
   #using `{<-` would allow more flexible syntax but won't work on account
   #of more involved mangling.
 
-  ##for instance the next three lines could be written
-  ## bind[...=eIn, eOut] <- eval(substitute(alist(...)))
   eOut <- eval(substitute(alist(...)))
-  eIn <- eOut[[length(eOut)]]
-  eOut[length(eOut)] <- NULL
-
-  vIn <- eval(eIn, `*envir*`)
   nOut <- if(is.null(names(eOut))) rep("", length(eOut)) else names(eOut)
 
-  vOut <- bind_match(nOut, vIn)
+  vOut <- bind_match(nOut, value)
 
   for (i in seq(len=length(nOut))) {
     to <- eOut[[i]]
@@ -102,14 +97,14 @@
   `*temp*`
 }
 
-bind_match <- function(nOut, vIn) {
+bind_match <- function(nOut, value) {
   ##Match according to name, and compute the values to assign to the outputs.
 
   ##You know, this might be a whole lot easier if I didn't support
   ##partial matching.
 
   ##First, match all names.
-  i_in_out <- pmatch(nOut, names(vIn))
+  i_in_out <- pmatch(nOut, names(value))
 
   if (any(is.na(i_in_out) & !(nOut %in% c("", "...")))) {
     stop(sprintf("no matches found for %s",
@@ -119,7 +114,7 @@ bind_match <- function(nOut, vIn) {
   }
   #From the front, assign inputs to outputs until you hit "..."
   i_out_unmatched <- which(is.na(i_in_out) & nOut %in% c("", "..."))
-  i_in_unmatched <- na.omit(`[<-`(seq(length(vIn)), i_in_out, NA))
+  i_in_unmatched <- na.omit(`[<-`(seq(length(value)), i_in_out, NA))
   for (i in seq(len=length(i_in_unmatched))) {
     if (i > length(i_out_unmatched)) {
       stop("Not enough items to bind")
@@ -132,7 +127,7 @@ bind_match <- function(nOut, vIn) {
 
   #same from the back
   i_out_unmatched <- rev(which(is.na(i_in_out) & nOut %in% c("", "...")))
-  i_in_unmatched <- rev(na.omit(`[<-`(seq(length(vIn)), i_in_out, NA)))
+  i_in_unmatched <- rev(na.omit(`[<-`(seq(length(value)), i_in_out, NA)))
   for (i in seq(len=length(i_in_unmatched))) {
     if (i > length(i_out_unmatched)) {
       stop("Not enough items to bind")
@@ -144,22 +139,22 @@ bind_match <- function(nOut, vIn) {
   }
 
   #data.frame objects choke on selecing columns with NAs, so...
-  vOut <- vIn[rep(1, length(nOut))]
+  vOut <- value[rep(1, length(nOut))]
   positional <- !is.na(i_in_out)
   if (any(positional)) {
-    vOut[positional] <- as.list(vIn[i_in_out[positional]])
+    vOut[positional] <- as.list(value[i_in_out[positional]])
   }
 
   #then put the rest into dots.
   if (!is.null(i) && nOut[i_out_unmatched[i]] == "...") {
     i_out_unmatched <- which(is.na(i_in_out) & nOut %in% c("", "..."))
-    i_in_unmatched <- na.omit(`[<-`(seq(length(vIn)), i_in_out, NA))
+    i_in_unmatched <- na.omit(`[<-`(seq(length(value)), i_in_out, NA))
     if (length(i_out_unmatched) > i) {
       stop("This should not happen")
     }
-    vOut[[i_out_unmatched]] <- vIn[i_in_unmatched]
+    vOut[[i_out_unmatched]] <- value[i_in_unmatched]
   } else {
-    if (any(!is.na(`[<-`(seq(length(vIn)), i_in_out, NA)))) {
+    if (any(!is.na(`[<-`(seq(length(value)), i_in_out, NA)))) {
       stop("More items supplied than names to bind")
     }
   }
