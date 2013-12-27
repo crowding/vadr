@@ -250,3 +250,14 @@ test_that("bind only evaluates RHS once", {
   bind[a] <- count()
   expect_equal(a, 1)
 })
+
+test_that("bind expects number of elements fits number of bindings", {
+  expect_error(bind[a, b, c, d] <- c(1, 2), 'Not enough')
+  expect_error(bind[a, b] <- c(1, 2, 3, 4), 'Too many')
+  expect_error(bind[a, b, ...=c, d, e] <- c(1, 2, 3), 'Not enough')
+  bind[a, b, ...=c] <- c(1,2)
+  expect_equal(a, 1)
+  expect_equal(b, 2)
+  expect_equal(c, numeric(0))
+  expect_error(bind[a=a, b=b, ...=c] <- c(a=1,2)) #no match for b
+})

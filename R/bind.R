@@ -114,10 +114,10 @@ bind_match <- function(nOut, value) {
   }
   #From the front, assign inputs to outputs until you hit "..."
   i_out_unmatched <- which(is.na(i_in_out) & nOut %in% c("", "..."))
-  i_in_unmatched <- na.omit(`[<-`(seq(length(value)), i_in_out, NA))
-  for (i in seq(len=length(i_in_unmatched))) {
+  i_in_unmatched <- na.omit(`[<-`(seq_along(value), i_in_out, NA))
+  for (i in seq_along(i_in_unmatched)) {
     if (i > length(i_out_unmatched)) {
-      stop("Not enough items to bind")
+      stop("Too many items to bind")
     }
     if (nOut[i_out_unmatched[i]] == "...") {
       break
@@ -130,7 +130,7 @@ bind_match <- function(nOut, value) {
   i_in_unmatched <- rev(na.omit(`[<-`(seq(length(value)), i_in_out, NA)))
   for (i in seq(len=length(i_in_unmatched))) {
     if (i > length(i_out_unmatched)) {
-      stop("Not enough items to bind")
+      stop("Too many items to bind at end") #shouldn't ever happen?
     }
     if (nOut[i_out_unmatched[i]] == "...") {
       break
@@ -139,24 +139,25 @@ bind_match <- function(nOut, value) {
   }
 
   #data.frame objects choke on selecing columns with NAs, so...
-  vOut <- value[rep(1, length(nOut))]
-  positional <- !is.na(i_in_out)
-  if (any(positional)) {
-    vOut[positional] <- as.list(value[i_in_out[positional]])
+  vOut <- vector(length(nOut), mode="list")
+  assigned <- !is.na(i_in_out)
+  if (any(assigned)) {
+    vOut[assigned] <- as.list(value[i_in_out[assigned]])
   }
 
   #then put the rest into dots.
-  if (!is.null(i) && nOut[i_out_unmatched[i]] == "...") {
-    i_out_unmatched <- which(is.na(i_in_out) & nOut %in% c("", "..."))
-    i_in_unmatched <- na.omit(`[<-`(seq(length(value)), i_in_out, NA))
-    if (length(i_out_unmatched) > i) {
-      stop("This should not happen")
+  if (any(!assigned)) {
+    if (identical(nOut[!assigned], "...")) {
+      i_out_dots <- which(!assigned)
+      i_in_out[i_out_dots] <- 0
+      i_in_dots <- `[<-`(seq_along(value), i_in_out, 0)
+      vOut[i_out_dots] <- list(value[i_in_dots])
+    } else {
+      stop("Not enough items to bind")
     }
-    vOut[[i_out_unmatched]] <- value[i_in_unmatched]
-  } else {
-    if (any(!is.na(`[<-`(seq(length(value)), i_in_out, NA)))) {
-      stop("More items supplied than names to bind")
-    }
+  }
+  if (any(is.na(i_in_out))) {
+    stop("Too many items to bind")
   }
 
   vOut
