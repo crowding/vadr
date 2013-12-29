@@ -1,5 +1,4 @@
-#include <R.h>
-#include <Rinternals.h>
+#include "vadr.h"
 
 int _dots_length(SEXP dots);
 SEXP stringify_item(SEXP, char *);
@@ -20,12 +19,8 @@ SEXP _expressions_and_pointers(SEXP dots) {
     char buf[99]; /* will hold a n optional tag and =, value, and |...*/
     char *bufptr = buf;
     if (TAG(s) != R_NilValue) {
-      if (TYPEOF(TAG(s)) != SYMSXP)
-        error("expected SYMSXP in tag, found %s",
-              type2char(TYPEOF(TAG(s))));
-      if (TYPEOF(PRINTNAME(TAG(s))) != CHARSXP)
-        error("expected CHARSXP in symbol name, found %s",
-              type2char(TYPEOF(PRINTNAME(TAG(s)))));
+      assert_type3(TAG(s), SYMSXP, "tag");
+      assert_type3(PRINTNAME(TAG(s)), CHARSXP, "symbol name");
       bufptr += sprintf(bufptr, "c%p=", CHAR(PRINTNAME(TAG(s))));
     }
     extract = stringify_item(item, bufptr);
@@ -45,18 +40,14 @@ SEXP _expressions_and_pointers(SEXP dots) {
 SEXP _object_pointers(SEXP list) {
   SEXP names;
   int i, length;
-  if (TYPEOF(list) != VECSXP)
-    error("expected VECSXP in tag, found %s",
-          type2char(TYPEOF(TAG(list))));
+  assert_type(list, VECSXP);
   length = LENGTH(list);
   PROTECT(names = allocVector(STRSXP, length));
 
   SEXP name_names;
   name_names = getAttrib(list, R_NamesSymbol);
   if (name_names != R_NilValue) {
-    if (TYPEOF(name_names) != STRSXP)
-      error("expected STRSXP in tag, found %s",
-            type2char(TYPEOF(name_names)));
+    assert_type3(name_names, STRSXP, "names property");
     if (LENGTH(name_names) < length)
       name_names = R_NilValue;
   }
@@ -112,7 +103,7 @@ SEXP stringify_item(SEXP item, char *bufptr) {
         case INTSXP: bufptr +=  sprintf(bufptr, "i0"); break;
         case LGLSXP: bufptr += sprintf(bufptr, "l0"); break;
         case STRSXP: bufptr += sprintf(bufptr, "s0"); break;
-        default: error("this should never happen");
+        default: error("Unexpected type %s (this shouldn't happen)", TYPEOF(item));
         }
       } else if (LENGTH(item) == 1) {
         switch(TYPEOF(item)) {
@@ -122,7 +113,7 @@ SEXP stringify_item(SEXP item, char *bufptr) {
         case STRSXP:
           bufptr += sprintf(bufptr, "s%p", CHAR(STRING_ELT(item, 0))); break;
           result = STRING_ELT(item, 0);
-        default: error("this should never happen");
+        default: error("Unexpected type %s (this shouldn't happen)", TYPEOF(item));
         }
       } else {
         /* for longer values, represent the pointer */
@@ -172,8 +163,11 @@ int _dots_length(SEXP dots) {
   case DOTSXP:
     for (s = dots, length = 0; s != R_NilValue; s = CDR(s)) length++;
     return length;
-  default:
-    error("Expected a dots object");
-    return 0;
   }
+  error("Expected a dots object");
+  return 0;
 }
+
+/*
+-*- previewing-build-command: '(previewing-run-R-unit-tests)
+ */
