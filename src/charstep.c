@@ -12,24 +12,24 @@ static const unsigned char utf8_table4[] = {
   3,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5
 };
 
-/* RReturn stepper and also pointer to buffer (in case reencoded) */
-step_t get_stepper(SEXP s, const char **buf_out) {
+/* Return stepper and also pointer to buffer (in case reencoded) */
+step_t get_stepper(SEXP s, const char **buf_out, cetype_t *encoding_out) {
   assert_type(s, CHARSXP);
-  switch(Rf_getCharCE(s)) {
+  cetype_t encoding = Rf_getCharCE(s);
+  if (encoding_out) *encoding_out = encoding;
+  switch(encoding) {
   case CE_UTF8:
-    Rprintf("UTF8 encoding\n");
     *buf_out = CHAR(s);
     return &step_utf8;
   case CE_ANY:
   case CE_LATIN1:
-    Rprintf("Latin encoding\n");
     *buf_out = CHAR(s);
     return &step_bytes;
   case CE_BYTES:
     error("Byte strings not supported");
   default:
-    Rprintf("Re-encoding to UTF8\n");
     *buf_out = Rf_reEnc(CHAR(s), getCharCE(s), CE_UTF8, 0);
+    if (encoding_out) *encoding_out = CE_UTF8;
     return &step_utf8;
   }
 }

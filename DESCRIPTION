@@ -43,3 +43,4 @@ Collate:
     'onLoad.R'
     'qq_fast.R'
     'mply.R'
+    'parse.R'
