@@ -95,6 +95,26 @@ test_that("unquote char", {
                    alist(..1=as.name('foo')))
 })
 
+## test_that("complicated unquote char", {
+##   expect_registers("testing.(this)",
+##                    quote(list(paste0("testing", as.character(..1)))),
+##                    alist(..1=as.name('this')))
+##   expect_registers(".(this) is a test",
+##                    quote(list(paste0(as.character(..1), " is a test"))),
+##                    alist(..1=as.name('this')))
+##   expect_registers("and .(this) is a .(harder) test",
+##                    quote(list(paste0("and ",
+##                                      as.character(..1), " is a ",
+##                                      as.character(..2), " test"))),
+##                    alist(..1=as.name('this'), ..2=as.name('harder')))
+##   expect_registers("this .( c('(', '')[p] )is.( c(\")\", 'n\\'t')[p] ) in parens",
+##                    quote(list(paste0("this ", as.character(..1),
+##                                      "is", as.character(..2),
+##                                      " in parens"))),
+##                    alist(..1=c('(', '')[p],
+##                          ..2=c(')', "n't")[p]))
+## })
+
 test_that("unquote name", {
   expect_registers(quote(hello), alist(hello))
   expect_registers(quote(`.(4)`), alist(`4`))

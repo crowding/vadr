@@ -7,7 +7,7 @@
  * Should correctly handle braces () [] {},
  * %operators%, and "strings" '(with \'escapes\' and parens)'
  * Example: given a string like
- *                 "this .( c('(', '')[p] )is.( c(')', '\\'nt')[p] ) in parens"
+ *                 "this .( c('(', '')[p] )is.( c(')', 'n\\'t')[p] ) in parens"
  * should locate these:  ^^^^^^^^^^^^^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^
  */
 
@@ -54,7 +54,8 @@ SEXP _find_subst_expressions_list(SEXP strs, SEXP begin, SEXP end) {
   }
 
   SEXP out = PROTECT(allocVector(VECSXP, nout));
-  setAttrib(out, R_NamesSymbol, getAttrib(strs, R_NamesSymbol));
+  if (ns == nout)
+    setAttrib(out, R_NamesSymbol, getAttrib(strs, R_NamesSymbol));
   for (int i = 0; i < nout; i++) {
     SET_VECTOR_ELT(out, i,
                    find_subst_expressions(STRING_ELT(strs, i%ns),
