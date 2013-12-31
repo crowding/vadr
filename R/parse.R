@@ -99,7 +99,7 @@ interply <- function(text, begin=".(", end=")", envir=parent.frame()) {
 }
 
 #' @rdname interpolate
-#' @usage text %#% args
+#' @usage text \%#\% args
 #' @export
 `%#%` <- function(text, args) {
   interply(text, envir=parent.frame()) %()% args
