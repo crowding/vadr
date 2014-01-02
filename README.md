@@ -243,4 +243,8 @@ c %()% d
 
 ## Quasiquotation
 
+`qq` implements quaqsiquotation, which is a way to build expressions and code out of data. `qq` is more capable than `substitute` or `bquote` and faster than the latter. See the `qq` vignette for more details.
+
 ## Macros
+
+Many of the facilities in `vadr` are implemented in terms of macros. Macros work similarly to the computing-on-the-language facilities you may be familiar with, but much of their work can be memoized so they can be faster. Vignette to follow.

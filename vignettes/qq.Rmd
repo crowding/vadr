@@ -5,14 +5,13 @@
 
 # Quasiquotation in the `vadr` package
 
-The `vadr` package includes a facility called _quasiquotation._ This is a technique that helps you build expressions and other data structures by template substitution.
-
-Never build code with `parse` and `paste`, stop baffling yourself with `substitute.`
+The `vadr` package includes a facility called _quasiquotation._ This is a technique that helps you build expressions and other data structures by template substitution. If you have found metaprogramming or ("programming on the language") to be difficult in R, `qq` might help.
 
 Base R has a very limited implementation of quasiquotation in the function `bquote`. The functions included in the `vadr` package are much more flexible, and are faster as well.
 
-Quasiquotation is a language feature that descends from Lisp, and any language that claims to descend from the Lisp family ought to have a working implementation. If this vignette doesn't convince you it's a good thing to have, you could read Alan Bawden's essay [Quasiquotation in Lisp][1] for some more background.
-[1]: http://repository.readscheme.org/ftp/papers/pepm99/bawden.pdf
+Quasiquotation is a language feature that descends from Lisp, and any language that claims to descend from the Lisp family ought to have a working implementation. For further examples and some history, see Alan Bawden's essay [Quasiquotation in Lisp][bawden].
+
+[bawden]: http://repository.readscheme.org/ftp/papers/pepm99/bawden.pdf
 
 ## Motivating quasiquotation
 
@@ -21,6 +20,7 @@ Quasiquotation is a language feature that descends from Lisp, and any language t
 The `expression` function is used to produce mathematical formatting and symbol characters in plots, as in the x-axis tick labels here:
 
 ```{r, include=FALSE, cache=FALSE}
+library(knitr)
 opts_chunk$set(cache=TRUE, dev="svg", fig.width=5, fig.height=3, tidy=FALSE)
 options(width=60)
 ```
@@ -36,7 +36,7 @@ axis(1, at=seq(-5, 5, 2)*pi/2,
      padj=0.5)
 ```
 
-`expression` is useful for one-shot annotations but is hard to generalize. It was kind of laborious to type in all those tick labels, and I might have made a typo If you have a lot of trigonometric functions to plot you'll quickly tire of labeling ticks this way. What if we had a function to generate the that of expressions?
+`expression` is useful for one-shot annotations but is hard to generalize. It was kind of laborious to type in all those tick labels, and I might have made a typo. If you have a lot of trigonometric functions to plot you'll quickly tire of labeling ticks this way. What if we had a function to generate the expressions?
 
 We might naively try something like the below.
 
@@ -66,7 +66,7 @@ numerator <- 5
 parse(text=paste0("over(", numerator , ", ", denominator, ") * ", symbol))
 ```
 
-This works for simple cases but there are some obvious problems with this approach. First, because the code is manipulated in strings, it's possible to create syntax errors (on top of just semantic errors.) Mainly, it quickly becomes hard to read. In examples much larger than this, parentheses and commas belonging to two logically distinct sets of code interleave themselves together via quotation marks, making it hard to see if either expression is well formed.
+This works for simple cases but there are some obvious problems with this approach. First, because the code is manipulated in strings, it's possible to create syntax errors (on top of just semantic errors.) If you are substituting strings into your code you have to worry about whether the strings themselves might contain quotes and escape them properly. Mainly, it quickly becomes hard to read. In examples much larger than this, parentheses and commas belonging to two logically distinct sets of code interleave themselves together via quotation marks, making it hard to see if either expression is well formed.
 
 A more principled way to build expressions is to use "computing on the language" to build expression objects out of data, like the following.
 
@@ -87,20 +87,18 @@ as.expression(substitute(
     list(num=numerator, denominator=denominator, symbol=symbol)))
 ```
 
-The first argument to `substitute` does mirror the deisred results better but I often find constructing the second argument to be tedious -- here it's more than half of the code and doesn't say much. I also dislike the fact that you can't tell _what_ is getting substituted out while looking at the expression, only by referencing it to the named list. It's not apparent that `num` is being substituted while `over` is not, unless you cross-reference the expression against the list. (And if you don't provide the list, `substitute` may well pick up some unintended `over` that you have lying around.)
+The first argument to `substitute` does mirror the desired results better but I often find constructing the second argument to be tedious -- here it's more than half of the code and doesn't say much. I also dislike the fact that you can't tell _what_ is getting substituted out while looking at the expression, only by referencing it to the named list. It's not apparent that `num` is being substituted while `over` is not, unless you cross-reference the expression against the list. (And if you don't provide the list, `substitute` may well pick up some unintended `over` that you have lying around.)
 
-A further problem is that `substitute` is limited to only substituting for symbols, when there are more things in R's syntax that are beyond its reach. For example, `substitute` doesn't touch function argument lists or names. This doesn't doesn't do what it looks like it wants to do:
+The biggest problem is that `substitute` is limited to only substituting for symbols, when there are more things in R's syntax that are beyond its reach. For example, `substitute` doesn't touch function argument lists or argument names. This doesn't doesn't do what it looks like it wants to do:
 
 ```{r}
 substitute( function(argname=default) list( output_name=argname ),
-            list(argname=quote(X), default=quote(Y), output_name=quote(Z)))
+            alist(argname=X, default=Y, output_name=Z))
 ```
-
-Yet another problem is that `substitute` has a second, almost unrelated effect of extracting the unevaluated expression from a function argument, so even if you are familiar with `substitute` it can be tricky to read other people's code that uses it because you have to figure out which effect of `substitute` is being exploited.
 
 ### Building expressions with quasiquote
 
-What we'd like is a way to build expressions of the form `over(numerator, denominator) * symbol` that actually looks like that's what we're trying to make. That's what quasiquotation tries to do.
+What we'd like is a way to build expressions of the form `over(numerator, denominator) * symbol` whose structure mirrors the desired result. That's what quasiquotation tries to do.
 
 ```{r qwer}
 library(vadr)
@@ -110,7 +108,7 @@ as.expression(qq(
 
 Here, `qq` acts like `quote,` doing nothing to its argument, except for sections delineated with `.()`, which are evaluated and their results pasted in. This comes close to the ideal where the structure of the desired output is mirrored by the code that produces it.
 
-The places where code is being substituted in are visually delineated with the `.()` and we don't have to make reference to a parallel list of values while working out what it is trying to do.
+The places where code is being substituted in are visually delineated with the `.()` without having to make reference to a parallel list of expressions.
 
 ## Quasiquote improves over `bquote`
 
@@ -125,7 +123,7 @@ x <- c(1, 2, 3)
 qq(list("normal:", .(x), "splicing:", ..(x)))
 ```
 
-This is something you can't do with `bquote` (and `substitute` only does splicing in a special case requiring you to get your data into a special, user-invisible `DOTSXP` object that can only live in the variable named `...`).
+This is something you can't do with `bquote` (while `substitute` only does splicing in a special case requiring you to get your data into a special, user-invisible `DOTSXP` object that can only live in the variable named `...`).
 
 ### Computed names
 
@@ -143,6 +141,8 @@ make_function_of <- function(argname) {
 make_function_of("X")
 ```
 
+Note the backticks: since the expression is appearing in a place where R's parser only allows a symbol name, we have to disguise the expression as a symbol name.
+
 ### `qq`, `qe`, `qqply` and `qeply`
 
 Note that `qq` returns a quoted expression while `qe` goes ahead and evaluates it. This convenience is more necessary in R than in Lisp because R distinguishes between language objects and data objects. So if you wanted to use substitution to make a call to "list", use `qq`, but use `qe` to make the list itself.
@@ -154,9 +154,10 @@ qe( c(`.(letters[17:26])` = ..(LETTERS[1:10])) )
 
 Quasiquotation is often described is as as a tool for writing code that writes code (or "metaprogramming.") But as the last example shows, it's also useful for building structured data. In a way quasiquotation is like an inverse of destructuring bind (which `vadr` also provides, in the `bind` operation.) While destructuring bind extracts data from a structure by writing an code that mirrors the structure, quasiquotation lets you populate data _into_ a structure by writing code that mirrors that structure.
 
-Finally, there are two convenience functions that combine quasiquotation with `mapply`, called `qqply` and `qeply`, which are convenient when you want to build expressions that contain parallel elements. For example, we can build our whole list of plot labels:
+Finally, there are two functions that combine quasiquotation with `mapply`, called `qqply` and `qeply`, which are convenient when you want to build expressions that contain parallel elements. For example, we can build our whole list of plot labels:
 
 ```{r}
+numerator <- seq(-5, 5, 2)
 as.expression(
     qqply(
         over( .(num), .(denominator) ) * .(symbol)
@@ -201,7 +202,7 @@ Implementing `chain` is a good example of code that writes code. Here we want  `
 })(data)
 ```
 
-That is, I want to treat `X` like a possibly [null subject][null], taken to be implicit if it is not given explicitly. Here's a simplified implementation of `mkchain`:
+That is, I want to treat `X` like a [null subject][null], taken to be implicit if it is not given explicitly. Here's a simplified implementation of `mkchain`:
 
 [null]: http://en.wikipedia.org/wiki/Null-subject_language
 
@@ -256,9 +257,9 @@ num <- 5
 print(eval(expr))
 ```
 
-(Note that the compiled code uses literal values rather than calls to "list" whenever it can. So it may not produce code that looks like it works. Here `list(over)` is actually a literal list containing `over`, rather than a call to `list` with the argument `over`; the former is not evaluated while the latter is. Unfortunately R's printer does not distinguish these cases.)
+(Note that the compiled code uses literal values rather than calls to "list" etc. whenever it can. So it may not produce code that looks like it works. Here what prints out as `list(over)` is actually a literal list containing the symbol `over`, rather than a call to `list` with the argument `over`; the former is not evaluated while the latter is. Unfortunately R's pretty-printer does not distinguish these cases.)
 
-Because it can remember and skip over the lexical analysis it did the first time, `qq` is often much faster than `bquote`.
+Because it can remember and skip over the lexical analysis it did the first time, `qq` is often faster than `bquote`.
 
 ```{r}
 library(microbenchmark)

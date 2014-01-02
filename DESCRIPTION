@@ -19,7 +19,8 @@ Suggests:
     testthat (>= 0.2),
     microbenchmark (>= 1.1.3),
     digest (>= 0.5.2),
-    roxygen2 (>= 2.2.2)
+    roxygen2 (>= 2.2.2),
+    knitr (>= 1.2)
 Imports:
     plyr (>= 1.8.0),
     stringr (>= 0.6.1),
@@ -44,3 +45,4 @@ Collate:
     'qq_fast.R'
     'mply.R'
     'parse.R'
+VignetteBuilder: knitr
