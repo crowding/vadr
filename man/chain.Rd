@@ -1,18 +1,33 @@
-\name{mkchain}
+\name{[.mkchain}
 \alias{[.chain}
 \alias{[.mkchain}
 \alias{\%|>\%}
+\alias{chain}
 \alias{mkchain}
 \title{Chain the output of one expression into the input of another.}
 \usage{
+  mkchain[...](...)
+
+  chain[...](., ...)
+
   mkchain(...)
+
+  chain(., ...)
+
+  . \%|>\% func
 }
 \arguments{
-  \item{.}{For \code{chain} the first parameter is the data
-  to run through the chain.}
+  \item{...}{Parameters in square brackets give the
+  placeholder name and default arguments.}
 
-  \item{...}{The remainder of parameters in \code{chain}
-  are a sequence of transforming expressions.}
+  \item{.}{For \code{chain} the first parameter in
+  parentheses is the data to run through the chain.}
+
+  \item{...}{Subsequent parameters in parentheses are
+  function names or calls.}
+
+  \item{func}{\code{\%|>\%} is a shortcut for a chain of
+  one step.}
 }
 \value{
   For \code{mkchain} return the constructed function. For
@@ -20,19 +35,18 @@
   first argument and return the result.
 }
 \description{
-  Many times in R programming you will want to take a
-  dataset and do a sqeuence of simple things to it.
-  \code{chain} aims to make this kind of code simpler and
-  more compact.
+  \code{chain} provides a different way to write
+  computations that pass a value through a chain of
+  transformations.
 }
 \details{
   For instance, suppose that you have a path \code{P}
   defined by a M-by-2 array of coordinates and you want to
   find the total length of the line segments connecting
-  each point in sequence. My stream of though for this goes
-  something like "okay , take the difference between rows,
-  square, sum along columns, square root, and sum." You
-  could write:
+  each point in sequence. My stream of thought for this
+  goes something like "okay, take the difference between
+  rows, square, sum along columns, square root, and sum."
+  You could write:
 
   \code{length <- sum(sqrt(rowSums(apply(P, 2, diff)^2)))}
 
@@ -65,26 +79,30 @@
 
   If you want to keep an intermediate value along the chain
   for use, you can name the arguments, as in
+
   \code{alphabetize <- mkchain(values=., names, order,
   values[.])}.
 
   You can also use a different placeholder than \code{"."}
   by supplying it in brackets, as in \code{chain[x](x^2,
-  mean, sqrt)}. This can make things less confusing for
-  nested invocations of \code{\link{chain}} or if another
-  package has a use for \code{"."}. When used with
-  \code{link{mkchain}}, you can specify other arguments and
-  defaults, as in \code{mkchain[., pow=2](x^pow, mean,
-  sqrt)}
+  mean, sqrt)}. This is useful for nested invocations of
+  \code{\link{chain}} or if another package has a use for
+  \code{"."}. When used with \code{\link{mkchain}}, you can
+  specify other arguments and defaults, as in
+  \code{mkchain[., pow=2](.^pow, mean, .^(1/pow))}.
 
-  Note that using subassignments, for example
-  \code{chain(x, names(.) <- toupper(.))} usually return
-  the rvalue, which is not usually what you want (here it
-  will return the upcased characters, not the object with
-  upcased names.) Currently you can cope with
-  subassignments by saying things like \code{mkchain(data,
-  `names<-`(., toupper(names(.))))}. Some better way to
-  cope with subassignments would be nice.
+  Too much usage of temporary names and alternate
+  placeholder names might indicate \code{chain} is not
+  helping clarity :)
+
+  Note that subassignments, for example \code{chain(x,
+  names(.) <- toupper(.))} return the rvalue, which is not
+  usually what you want (here it will return the upcased
+  characters, not the object with upcased names.) You can
+  cope with subassignments by saying things like
+  \code{mkchain(data, `names<-`(., toupper(names(.))))}.
+  Some better way to cope with subassignments would be
+  nice.
 }
 \note{
   \code{chain} is a bit like the \code{->} macro of
@@ -99,8 +117,8 @@ bb_longterm <- match_df(baseball, longterm, on="id")
 bb_longterm[1:5,]
 
 # Rewriting the above using chain:
-chain(baseball, count("id"), subset(freq>25),
-      match_df(baseball, ., on="id"), head(5))
+chain(b=baseball, count("id"), subset(freq>25),
+      match_df(b, ., on="id"), head(5))
 }
 \author{
   Peter Meilstrup

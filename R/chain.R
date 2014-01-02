@@ -22,11 +22,16 @@ chain.dwim <- function(expr, dot=quote(.)) {
     switch(mode(expr),
            name=call(as.character(expr),dot),
            call=as.call(c(expr[[1]], dot, as.list(expr[-1]))),
+           `function`=as.call(expr, dot),
            stop("don't know how to chain into a '", mode(expr), "'"))
   }
 }
 
 #' @S3method "[" mkchain
+#' @rdname chain
+#' @usage mkchain[...](...)
+#' @param ... Parameters in square brackets give the placeholder name
+#' and default arguments.
 `[.mkchain` <-
   macro(function(...) {
     args <- do.call(quote_args, list(...)[-1])
@@ -34,6 +39,8 @@ chain.dwim <- function(expr, dot=quote(.)) {
   })
 
 #' @S3method "[" chain
+#' @rdname chain
+#' @usage chain[...](., ...)
 `[.chain` <- macro(function(...) {
   args <- do.call(quote_args, list(...)[-1])
   macro(function(...) {
@@ -51,15 +58,13 @@ chain.dwim <- function(expr, dot=quote(.)) {
 
 #' Chain the output of one expression into the input of another.
 #'
-#' Many times in R programming you will want to take a dataset and do
-#' a sqeuence of simple things to it. \code{chain} aims to make this
-#' kind of code simpler and more compact.
-#'
+#' \code{chain} provides a different way to write computations that
+#' pass a value through a chain of transformations.
 #'
 #' For instance, suppose that you have a path \code{P} defined by a
 #' M-by-2 array of coordinates and you want to find the total length of
 #' the line segments connecting each point in sequence. My stream of
-#' though for this goes something like "okay , take the difference
+#' thought for this goes something like "okay, take the difference
 #' between rows, square, sum along columns, square root, and sum." You
 #' could write:
 #'
@@ -89,35 +94,38 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #'
 #' If you want to keep an intermediate value along the chain for use,
 #' you can name the arguments, as in
+#'
 #' \code{alphabetize <- mkchain(values=., names, order, values[.])}.
 #'
 #' You can also use a different placeholder than \code{"."} by
 #' supplying it in brackets, as in \code{chain[x](x^2, mean, sqrt)}.
-#' This can make things less confusing for nested invocations
-#' of \code{\link{chain}} or if another package has a use for
-#' \code{"."}. When used with \code{link{mkchain}}, you can specify
-#' other arguments and defaults, as in
-#' \code{mkchain[., pow=2](x^pow, mean, sqrt)}
+#' This is useful for nested invocations of \code{\link{chain}} or if
+#' another package has a use for \code{"."}. When used with
+#' \code{\link{mkchain}}, you can specify other arguments and
+#' defaults, as in \code{mkchain[., pow=2](.^pow, mean, .^(1/pow))}.
 #'
-#' Note that using subassignments, for example
-#' \code{chain(x, names(.) <- toupper(.))} usually return the rvalue,
-#' which is not usually what
-#' you want (here it will return the upcased characters, not the object with
-#' upcased names.) Currently you can cope with subassignments by saying
+#' Too much usage of temporary names and alternate placeholder names
+#' might indicate \code{chain} is not helping clarity :)
+#'
+#' Note that subassignments, for example \code{chain(x, names(.) <-
+#' toupper(.))} return the rvalue, which is not usually what you
+#' want (here it will return the upcased characters, not the object
+#' with upcased names.) You can cope with subassignments by saying
 #' things like \code{mkchain(data, `names<-`(., toupper(names(.))))}.
 #' Some better way to cope with subassignments would be nice.
 #'
-#' @param . For \code{chain} the first parameter is the data to run
-#' through the chain.
-#' @param ... The remainder of parameters in \code{chain} are a
-#' sequence of transforming expressions.
+#' @param . For \code{chain} the first parameter in parentheses is the
+#' data to run through the chain.
+#' @param ... Subsequent parameters in parentheses are
+#' function names or calls.
 #' @return For \code{mkchain} return the constructed function. For
 #' \code{chain}, apply the chain to the dataset given in the first
 #' argument and return the result.
 #' @note \code{chain} is a bit like the \code{->} macro of Clojure,
 #' or the \code{|>} operator in Elixir.
-#' @aliases mkchain [.chain [.mkchain %|>%
+#' @aliases mkchain [.chain [.mkchain %|>% chain
 #' @author Peter Meilstrup
+#' @rdname chain
 #' @export
 #' @examples
 #' # In help("match_df", package="plyr") there is this example:
@@ -128,14 +136,19 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' bb_longterm[1:5,]
 #'
 #' # Rewriting the above using chain:
-#' chain(baseball, count("id"), subset(freq>25),
-#'       match_df(baseball, ., on="id"), head(5))
+#' chain(b=baseball, count("id"), subset(freq>25),
+#'       match_df(b, ., on="id"), head(5))
 mkchain <- function(...) NULL
 
 #' @export
+#' @rdname chain
+#' @usage chain(., ...)
 chain <- function(...) NULL
 
 #' @export
+#' @rdname chain
+#' @usage . \%|>\% func
+#' @param func \code{\%|>\%} is a shortcut for a chain of one step.
 `%|>%` <- function(...) NULL
 
 #mkchain(...) is the same as mkchain[.](...)
