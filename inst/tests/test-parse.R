@@ -1,4 +1,4 @@
-context("String substitution parsing")
+context("String parsing")
 `%is%` <- expect_equal
 
 test_that("Matching expressions", {
@@ -10,8 +10,6 @@ test_that("Matching expressions", {
   find_subst_expressions("nana.(hey)") %is% list(c("nana", "hey", ""))
   (find_subst_expressions("nana{{hey}}", "{{", "}}")
      %is% list(c("nana", "hey", "")))
-  (find_subst_expressions("nana___hey___bye", "___", "___")
-   %is% list(c("nana", "hey", "bye")))
 
   find_subst_expressions("na\u0180na") %is% list(c("na\u0180na"))
   find_subst_expressions("na\u0180na") %is% list(c("na\u0180na"))
@@ -35,6 +33,21 @@ test_that("Matching expressions", {
 
   find_subst_expressions("foo .(bar #baz))") %is% list(c("foo .(bar #baz))"))
   find_subst_expressions("foo .(bar #baz)\n)") %is% list(c("foo ", "bar #baz)\n", ""))
+})
+
+test_that("Matching shell-style (no end delim)", {
+  (find_subst_expressions("hello, $x!", begin="$", end="") %is%
+   list(c("hello, ", "x", "!")))
+  (find_subst_expressions("hello, $hello!", begin="$", end="") %is%
+   list(c("hello, ", "hello", "!")))
+  (find_subst_expressions("hello, ${!other+things}!", begin="$", end="") %is%
+   list(c("hello, ", "{!other+things}", "!")))
+  (find_subst_expressions("$hello, ${paste(rep(hello))}, $'hi'",
+                          begin="$", end=""))
+  (find_subst_expressions("$hello, ${paste(rep(hello, 2), collapse='')}, $(hi)",
+                          begin="$", end=""))
+  (find_subst_expressions("$(hi)", begin="$", end="")
+   %is% list(c("", "(hi)", "")))
 })
 
 test_that("interpolation", {

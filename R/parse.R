@@ -27,12 +27,11 @@ find_subst_expressions <- function(str, begin=".(", end=")") {
 #' balancing of braces and quotes.
 #'
 #' \code{interply} generates a function that performs this
-#' interpolation for a particular string, when called with an
-#' argument. The interpolation is repeated along the arguments applied
-#' to the function (so the usage is
-#' \code{interply(".(x),.(y)")(x=val, y=val)}, similar to \code{\link{mply}} and
-#' \code{\link{qqply}}.) Note unnamed arguments can be referred to as
-#' \code{..1}, \code{..2}, etc.
+#' interpolation for a particular string. The interpolation is
+#' repeated along the arguments applied to the function (so the usage
+#' is \code{interply(".(x),.(y)")(x=val, y=val)}, similar to
+#' \code{\link{mply}} and \code{\link{qqply}}.) Note unnamed arguments
+#' can be referred to as \code{..1}, \code{..2}, etc.
 #'
 #' \code{\%#\%} is a shortcut for applying interpolation to data
 #' from a list or named vector. \code{string \%#\% values} is equivalent to
@@ -52,6 +51,7 @@ find_subst_expressions <- function(str, begin=".(", end=")") {
 #' @aliases interply %#%
 #' @rdname interpolate
 #' @author Peter Meilstrup
+#' @export
 #' @examples
 #' foo<-1; bar<-"two"; baz <- "III"
 #' interpolate(c(".(foo),", "a .(bar)", "a .(foo) .(bar) .(baz)"))
@@ -59,12 +59,17 @@ find_subst_expressions <- function(str, begin=".(", end=")") {
 #' interply("hello {{q}}", begin="{{", end="}}")(q=c("there", "you"))
 #' "hello .(x)" %#% c(x="world")
 #'
+#' #shell-style interpolation -- "$" start and no end delim
+#' interply("$hello, ${paste(rep('hello', 3), collapse=' ')}, $'hi'",
+#'          begin="$", end=""
+#'          )(hello="hola")
+#'
 #' # Compliant 99 Bottles implementation:
 #' bottles <- interply(
 #'   ".(ifelse(n%%100>0, n%%100, 'no more')) bottle.('s'[n%%100!=1]) of beer")
-#' initcap <- function(x) {substr(x,1,1) <- toupper(substr(x, 1, 1)); x}
+#' initcap <- function(x) {substr(x, 1, 1) <- toupper(substr(x, 1, 1)); x}
 #' verse <- interply(
-#'   paste0(".(bottles(n=n)) on the wall, .(bottles(n=n)).\n",
+#'   paste0(".(initcap(bottles(n=n))) on the wall, .(bottles(n=n)).\n",
 #'          ".(c('Go to the store and buy some more,',",
 #'          "    'Take one down and pass it around,')[(n%%100!=0)+1])",
 #'          " .(initcap(bottles(n=n-1))) on the wall."))
@@ -104,14 +109,3 @@ interply <- function(text, begin=".(", end=")", envir=parent.frame()) {
 `%#%` <- function(text, args) {
   interply(text, envir=parent.frame()) %()% args
 }
-
-#Some 'sequence' generators that work properly for a change.
-#The default step size is 1, not "automagic".
-#seq(1, 0, by=1) makes an empty vector, not an error.
-#Also an option to generate one-sided sequences.
-
-
-## %<=%
-## %<%
-## %>=%
-## %>%

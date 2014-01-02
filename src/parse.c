@@ -1,4 +1,5 @@
 #include <string.h>
+#include <ctype.h>
 #include "vadr.h"
 #include "charstep.h"
 
@@ -19,6 +20,7 @@ const char *block_search(const char *, const char *, const char *,
                          const char **, const char **,
                          step_t step);
 const char *forward_balanced(const char *str, step_t);
+const char *forward_word_or_char(const char *, step_t);
 const char *paren_match (const char *, step_t);
 const char *quoted_match(const char *open, step_t);
 const char *comment_match(const char *open, step_t);
@@ -148,9 +150,8 @@ const char *block_search(const char *str, // a string to search
   int m = strlen(end_mark);
   for (const char *s = str; *s; s=(*step)(s, 1)) {
     if (!strncmp(s, begin_mark, n)) {
-      for (const char* ss = s+n;
-           ss && *ss;
-           ss = forward_balanced(ss, step)) {
+      const char *ss = s+n;
+      while (ss = forward_balanced(ss, step)) {
         if (!strncmp(ss, end_mark, m)) {
           if (before_out) *before_out = s;
           if (begin_out) *begin_out = s+n;
@@ -164,9 +165,12 @@ const char *block_search(const char *str, // a string to search
   return NULL;
 }
 
-/* Go forward one char, or balanced subexpression. Return NULL if imbalanced. */
+/* Go forward one symbol, balanced subexpression, or other char. 
+ * Return NULL if imbalanced. */
 const char *forward_balanced(const char *str, step_t step) {
   switch (*str) {
+  case 0:
+    return NULL;
   case '(':
   case '{':
   case '[':
@@ -183,8 +187,22 @@ const char *forward_balanced(const char *str, step_t step) {
   case '#':
     return comment_match(str, step);
   default:
-    return (*step)(str, 1);
+    return forward_word_or_char(str, step);
   }
+}
+
+int isstartword(char c) {return (isalpha(c) || c == '.');}
+int iswordchar(char c) {return (isalnum(c) || c == '.' || c == '_');}
+
+const char *forward_word_or_char(const char *str, step_t step) {
+  if (*str && isstartword(*str)) {
+    for (str = (*step)(str, 1);
+         *str && iswordchar(*str);
+         str = (*step)(str, 1));
+  } else {
+    str = (*step)(str, 1);
+  }
+  return str;
 }
 
 /* Takes a pointer to an opening parenthetical.
@@ -211,7 +229,9 @@ const char *paren_match (const char *open, step_t step) {
     case '}':
       if (*open == '{') return (*step)(s,1); else return NULL;
     case ')':
-      if (*open == '(') return (*step)(s,1); else return NULL;
+      if (*open == '(') {
+        return (*step)(s,1);
+      } else return NULL;
     case '"':
     case '\'':
     case '%':
@@ -277,5 +297,8 @@ const char *comment_match(const char *open, step_t step) {
 }
 
 /*
--*- previewing-build-command: '(previewing-run-R-unit-tests) -*-
+ * Local Variables:
+ * eval: (previewing-mode)
+ * previewing-build-command: (previewing-run-R-unit-tests)
+ * End:
  */
