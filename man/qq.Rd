@@ -4,28 +4,28 @@
 \alias{template}
 \title{Quasiquotation. Perform template substitutions on a quoted R expressions.}
 \usage{
-  qq(...)
+qq(...)
 }
 \arguments{
   \item{expr}{A language object.}
 }
 \value{
-  For \code{qq}, A language object; for \code{qe},
-  evaluates the expression in the calling environment.
+For \code{qq}, A language object; for \code{qe}, evaluates
+the expression in the calling environment.
 }
 \description{
-  This is an extended version of the \code{\link{bquote}}
-  utility.  'qq' quotes its first argument, then scans for
-  terms wrapped in \code{.()}, \code{..()}, or names that
-  match \code{`.()`} The wrapped expressions or names are
-  evaluated in the given environment.  Expressions wrapped
-  in \code{..()} will be interpolated into the argument
-  list in which they occur. Names wrapped in `.()` will be
-  substituted and coerced to name.
+This is an extended version of the \code{\link{bquote}}
+utility.  'qq' quotes its first argument, then scans for
+terms wrapped in \code{.()}, \code{..()}, or names that
+match \code{`.()`} The wrapped expressions or names are
+evaluated in the given environment.  Expressions wrapped in
+\code{..()} will be interpolated into the argument list in
+which they occur. Names wrapped in `.()` will be
+substituted and coerced to name.
 }
 \details{
-  Invocations of qq() can be nested within the \code{.()}
-  sections and they should work as promised.
+Invocations of qq() can be nested within the \code{.()}
+sections and they should work as promised.
 }
 \examples{
 #Basic substitution
@@ -72,9 +72,9 @@ qq(ddply(.(as.name(dfname)), .(quote(.(id, team))), identity))
 #ddply(baseball, .(id.team), identity)
 }
 \author{
-  Peter Meilstrup
+Peter Meilstrup
 }
 \seealso{
-  macro bquote substitute quoting.env
+macro bquote substitute quoting.env
 }
 

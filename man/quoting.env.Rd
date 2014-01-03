@@ -4,8 +4,7 @@
 any expression using those names just gets you the expression
 back.}
 \usage{
-  quoting.env(names, parent = emptyenv(),
-    call.names = names)
+quoting.env(names, parent = emptyenv(), call.names = names)
 }
 \arguments{
   \item{names}{The names the environment should define.}
@@ -18,21 +17,21 @@ back.}
   you want these to be different.}
 }
 \value{
-  The environment constructed.
+The environment constructed.
 }
 \description{
-  Technically, this defines two nested environments, the
-  outer containing functions and the inner containing
-  names, and returns the inner.
+Technically, this defines two nested environments, the
+outer containing functions and the inner containing names,
+and returns the inner.
 }
 \details{
-  This somewhat esoteric function mostly intended to be
-  used by \code{\link{expand_macro}}
+This somewhat esoteric function mostly intended to be used
+by \code{\link{expand_macro}}
 }
 \note{
-  This will cause errors when the expression has missing
-  arguments. The expression might be preprocessed
-  (somewhow?) to take missing arguments out.
+This will cause errors when the expression has missing
+arguments. The expression might be preprocessed (somewhow?)
+to take missing arguments out.
 }
 \examples{
 en <- quoting.env(c('+', '(', 'a', 'b', '*'), environment())
@@ -52,6 +51,6 @@ ersatz.substitute <- function(expr, envir=parent.frame()) {
 ersatz.substitute(quote(a+b+c), list(b=quote(q+y))) # returns a+(q+y)+c
 }
 \author{
-  Peter Meilstrup
+Peter Meilstrup
 }
 

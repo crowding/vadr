@@ -2,15 +2,15 @@
 \alias{macro_cache_report}
 \title{Report on macro cache contents.}
 \usage{
-  macro_cache_report()
+macro_cache_report()
 }
 \value{
-  list with entries "hits", "misses", and "size"
+list with entries "hits", "misses", and "size"
 }
 \description{
-  Report on macro cache contents.
+Report on macro cache contents.
 }
 \author{
-  Peter Meilstrup
+Peter Meilstrup
 }
 

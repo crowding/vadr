@@ -5,8 +5,7 @@
 \alias{index<-}
 \title{index.data.frame}
 \usage{
-  index.data.frame(df, row = 1:nrow(df), col = NULL,
-    value = c())
+\method{index}{data.frame}(df, row = 1:nrow(df), col = NULL, value = c())
 }
 \arguments{
   \item{df}{The data frame to subset}
@@ -22,24 +21,24 @@
   specify the type of the output.}
 }
 \value{
-  The specified subset of data.
+The specified subset of data.
 }
 \description{
-  Improved subsetting and modification of data frames by
-  rows, columns and arrays.
+Improved subsetting and modification of data frames by
+rows, columns and arrays.
 }
 \details{
-  In particular, this handles the case of assigning to
-  several elements of a data frame in parallel.
+In particular, this handles the case of assigning to
+several elements of a data frame in parallel.
 
-  This handles a couple of cases that are not handled by
-  core data frame operations In particular, this allows you
-  to extract a vector of values from two vectors of row and
-  column indices (which may be numeric or character).
+This handles a couple of cases that are not handled by core
+data frame operations In particular, this allows you to
+extract a vector of values from two vectors of row and
+column indices (which may be numeric or character).
 
-  Unlike using \code{`[.data.frame`} wiht an n-by-2 array,
-  this does not downcast the array to matrix, and tries to
-  prezerve the type information.
+Unlike using \code{`[.data.frame`} wiht an n-by-2 array,
+this does not downcast the array to matrix, and tries to
+prezerve the type information.
 }
 \examples{
 #Here is a data frame with row names and mixed data types.
@@ -73,6 +72,6 @@ index(df, c(4,5,6), c("A", "letter", "lletter")) # -> list("6", "k", 5))
 index(df, c(1,2,3), c("A","B","C")) <- c(100, 1000, 10000)
 }
 \author{
-  Peter Meilstrup
+Peter Meilstrup
 }
 

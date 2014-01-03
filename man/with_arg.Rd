@@ -2,7 +2,7 @@
 \alias{with_arg}
 \title{Inject named arguments into several calls and evaluate those calls.}
 \usage{
-  with_arg(...)
+with_arg(...)
 }
 \arguments{
   \item{...}{Named arguments are interpreted as arguments
@@ -16,24 +16,24 @@
   the environment that called with_arg.}
 }
 \value{
-  The results of the evaluated calls, collected using
-  \code{.collect}.
+The results of the evaluated calls, collected using
+\code{.collect}.
 }
 \description{
-  For a simple example, writing \code{with_args(a="repeated
-  argument", func(b=2), func(c=3), .collect=list)}
+For a simple example, writing \code{with_args(a="repeated
+argument", func(b=2), func(c=3), .collect=list)}
 }
 \details{
-  is equivalent to writing
+is equivalent to writing
 
-  \code{list(fun(a="repeated argument",b=2),
-  func(a="repeated argument",c=3))}
+\code{list(fun(a="repeated argument",b=2), func(a="repeated
+argument",c=3))}
 
-  so that with_args handles the job of distributing the
-  repeated 'a' argument. This can save some typing in some
-  situations, like heavily layered ggplot constructions.
+so that with_args handles the job of distributing the
+repeated 'a' argument. This can save some typing in some
+situations, like heavily layered ggplot constructions.
 }
 \author{
-  Peter Meilstrup
+Peter Meilstrup
 }
 

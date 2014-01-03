@@ -2,7 +2,7 @@
 \alias{fun}
 \title{A very compact way to define a function.}
 \usage{
-  fun(expr, .all.names = FALSE, .envir = parent.frame())
+fun(expr, .all.names = FALSE, .envir = parent.frame())
 }
 \arguments{
   \item{expr}{The expression to use as the function's
@@ -24,31 +24,30 @@
   \code{fun}.}
 }
 \value{
-  A newly constructed function.
+A newly constructed function.
 }
 \description{
-  \code{fun} captures its first argument unevaluated and
-  turns it into a function. Every name used in the
-  expression becomes an argument, unless it looks like a
-  function call. If you don't intend to capture a
-  particular variable, you can not provide it, and it will
-  use a default value that pulls from the enclosing scope.
-  For example:
+\code{fun} captures its first argument unevaluated and
+turns it into a function. Every name used in the expression
+becomes an argument, unless it looks like a function call.
+If you don't intend to capture a particular variable, you
+can not provide it, and it will use a default value that
+pulls from the enclosing scope. For example:
 }
 \details{
-  \code{ > f <- fun(x/y) > f(10,2) [1] 5 > f function (x =
-  evalq(x,parent.frame(), y = evalq(y,parent.frame()) x/y}
+\code{ > f <- fun(x/y) > f(10,2) [1] 5 > f function (x =
+evalq(x,parent.frame(), y = evalq(y,parent.frame()) x/y}
 
-  "\code{fun}" is used with "\code{dm_ply}" the way that
-  "\code{with}" is used with "\link[plyr]{d_ply}".
+"\code{fun}" is used with "\code{dm_ply}" the way that
+"\code{with}" is used with "\link[plyr]{d_ply}".
 
-  "\code{...}" is supported in the function definitions and
-  should behave as you expect.
+"\code{...}" is supported in the function definitions and
+should behave as you expect.
 }
 \author{
-  Peter Meilstrup
+Peter Meilstrup
 }
 \seealso{
-  fsummarise fmutate dm_ply
+fsummarise fmutate dm_ply
 }
 

@@ -2,7 +2,7 @@
 \alias{mply}
 \title{Alternative to mapply with a cleaner calling convention.}
 \usage{
-  mply(fn, ...)(...)
+mply(fn, ...)(...)
 }
 \arguments{
   \item{fn}{A function to apply.}
@@ -14,16 +14,16 @@
   apply; they are expected to be all of the same length.}
 }
 \value{
-  A list.
+A list.
 }
 \description{
-  Alternative to mapply with a cleaner calling convention.
+Alternative to mapply with a cleaner calling convention.
 }
 \note{
-  After more than a hundred or so elements, this has less
-  overhead per loop than \code{\link{mapply}}.
+After more than a hundred or so elements, this has less
+overhead per loop than \code{\link{mapply}}.
 }
 \author{
-  Peter Meilstrup
+Peter Meilstrup
 }
 

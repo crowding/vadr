@@ -3,9 +3,8 @@
 \title{run_as_command Interpret command line arguments and invokes some
 function with them.}
 \usage{
-  run_as_command(func = parent.frame()$main,
-    arguments = commandArgs(trailingOnly = TRUE),
-    require.toplevel = TRUE)
+run_as_command(func = parent.frame()$main,
+  arguments = commandArgs(trailingOnly = TRUE), require.toplevel = TRUE)
 }
 \arguments{
   \item{func}{Which function to invoke. Defaults to
@@ -22,26 +21,26 @@ function with them.}
   non-interactive R session.}
 }
 \value{
-  Nothing. Things printed will naturally go out stdout and
-  errors during execution will naturally result in a
-  nonzero exit code.
+Nothing. Things printed will naturally go out stdout and
+errors during execution will naturally result in a nonzero
+exit code.
 }
 \description{
-  The idea is that to write a command line utility with R,
-  you just write a main() function use Rscript as your
-  hashbang interpreter, and at the end of your R script
-  call run_as_command.
+The idea is that to write a command line utility with R,
+you just write a main() function use Rscript as your
+hashbang interpreter, and at the end of your R script call
+run_as_command.
 }
 \details{
-  TODO: Named arguments given with two dashes, GNU style,
-  will be translated into named arguments passed to the
-  function. A bare double dash means to discontinue
-  named-argument parsing for the rest of the command line.
+TODO: Named arguments given with two dashes, GNU style,
+will be translated into named arguments passed to the
+function. A bare double dash means to discontinue
+named-argument parsing for the rest of the command line.
 
-  TODO: A help argument will be constructed according to
-  the Roxygen documentation for the function.
+TODO: A help argument will be constructed according to the
+Roxygen documentation for the function.
 }
 \author{
-  Peter Meilstrup
+Peter Meilstrup
 }
 

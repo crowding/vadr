@@ -14,6 +14,6 @@
   Extract the expressions from a dots object.
 }
 \seealso{
-  dots unpack
+  dots unpack list_quote
 }
 

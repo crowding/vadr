@@ -3,7 +3,7 @@
 \alias{qqply}
 \title{Repeatedly expand an expression against sequences of values.}
 \usage{
-  qqply(...)(...)
+qqply(...)(...)
 }
 \arguments{
   \item{...}{(in the first argument list) One or more
@@ -16,13 +16,12 @@
   (inheriting from the calling frame).}
 }
 \value{
-  For \code{qqply}, a list of expressions. For
-  \code{qeply}, the expressions will be evaluated in the
-  calling frame.
+For \code{qqply}, a list of expressions. For \code{qeply},
+the expressions will be evaluated in the calling frame.
 }
 \description{
-  Performs template expansion as for \code{\link{qq}}, but
-  evaluates over sequences (as in \code{\link{mapply}}).
+Performs template expansion as for \code{\link{qq}}, but
+evaluates over sequences (as in \code{\link{mapply}}).
 }
 \examples{
 qqply(`.(x)` = .(y))(x=letters[1:3], y=1:3)
@@ -34,9 +33,9 @@ qe(function(
 })
 }
 \author{
-  Peter Meilstrup
+Peter Meilstrup
 }
 \seealso{
-  qq bquote
+qq bquote
 }
 

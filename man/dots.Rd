@@ -1,21 +1,21 @@
 \name{dots}
 \alias{dots}
-\title{Capture the list of "dot-dot-dot" arguments as an object.}
+\title{Capture a list of \dots arguments as an object.}
 \usage{
-  dots(...)
+dots(...)
 }
 \arguments{
   \item{...}{Any number of arguments.}
 }
 \value{
-  A dots object. This is currently just the raw DOTSXP with
-  the object bit set and the class set to "..." so that
-  method dispatch works.
+A dots object. This is currently just the raw DOTSXP with
+the object bit set and the class set to "..." so that
+method dispatch works.
 }
 \description{
-  \code{dots} and methods of class \code{...} provide a
-  more convenient interface to capturing lists of
-  unevaluated arguments and applying them to functions.
+\code{dots} and methods of class \code{...} provide a more
+convenient interface to capturing lists of unevaluated
+arguments and applying them to functions.
 }
 \examples{
 reverse.list <- function(...) {
@@ -31,9 +31,9 @@ named.list <- function(...) {
 named.list(a=1, b=2*2, stop("this is not evaluated"))
 }
 \author{
-  Peter Meilstrup
+Peter Meilstrup
 }
 \seealso{
-  "%<<%" "%<<<%" "%()%" "[...." "[[....", "names...."
+"%<<%" "%<<<%" "%()%" "[...." "[[....", "names...."
 }
 
