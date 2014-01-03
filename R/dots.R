@@ -93,15 +93,15 @@ dots_expressions <- list_quote
   UseMethod("expressions<-")
 }
 
-#' @S3method environments<- ...
+#' @S3method expressions<- ...
 #' @useDynLib vadr _mutate_expressions
 `expressions<-....` <- function(x, value) {
   .Call(`_mutate_expressions`, x, value)
 }
 
-#' Extract the environments attached to each item of a dots list.
+#' Extract or manipulate environments contained in dots lists.
 #'
-#' \code{environments} works on a dots list created by \{code{\link{dots}},
+#' \code{environments} works on a dots list created by \{code{\link{dots}} w,
 #' while \code{dots_environments} works on arguments you pass in.#' @export
 #' @rdname dots_environments
 #' @param ... Any arguments.
@@ -117,12 +117,28 @@ dots_environments <- function(...) {
 
 #' @export
 #' @rdname dots_environments
+#' @param x a \{code{\link{dots}} object.
+environments <- function(x) {
+  UseMethod("environments")
+}
+
+#' @S3method environments ...
+#' @rdname dots_environments
+environments.... <- function(x) {
+  y <- .Call(`_dots_unpack`, get("x"))
+  unclass(structure(y$envir, names=y$name))
+}
+
+#' @export
+#' @rdname dots_environments
 #' @param value A new list of environments to apply.
 `environments<-` <- function(x, value) {
   UseMethod("environments<-")
 }
 
 #' @S3method environments<- ...
+#' @rdname dots_environments
+#' @useDynLib vadr _mutate_environments
 `environments<-....` <- function(x, value) {
   .Call(`_mutate_environments`, x, value)
 }

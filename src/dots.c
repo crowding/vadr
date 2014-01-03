@@ -43,7 +43,7 @@ SEXP _dots_unpack(SEXP dots) {
 
     SET_STRING_ELT(names, i, isNull(TAG(s)) ? mkChar("") : asChar(TAG(s)));
     SET_VECTOR_ELT(environments, i, PRENV(item));
-    SET_VECTOR_ELT(expressions, i, PRCODE(item));
+    SET_VECTOR_ELT(expressions, i, PREXPR(item));
 
     if (PRVALUE(item) != R_UnboundValue) {
       SET_VECTOR_ELT(values, i, PRVALUE(item));
@@ -157,8 +157,7 @@ SEXP _dotslist_to_list(SEXP x) {
 
 /* Convert a list of promise objects into a DOTSXP. */
 SEXP _list_to_dotslist(SEXP list) {
-  if (TYPEOF(list) != VECSXP)
-    error("Expected a list, got %s", type2char(TYPEOF(list)));
+  assert_type(list, VECSXP);
   int len = length(list);
   int i;
   SEXP output, names;
@@ -218,6 +217,48 @@ SEXP _mutate_expressions(SEXP dots, SEXP new_exprs) {
     SETCAR(o, newprom);
   }
   DUPLICATE_ATTRIB(out, dots);
+  UNPROTECT(2);
+  return out;
+}
+
+SEXP _mutate_environments(SEXP dots, SEXP new_envs) {
+  assert_type(dots, DOTSXP);
+  assert_type(new_envs, VECSXP);
+
+  int n = length(dots);
+  if (LENGTH(new_envs) != length(dots)) {
+    error("Length mismatch");
+  }
+    
+  /* Hackish. These get turned into dots and promises respectively... */
+  SEXP out = PROTECT(allocList(LENGTH(new_envs)));
+  SEXP promises = PROTECT(allocList(LENGTH(new_envs)));
+
+  SEXP next_prom, p, o; int i;
+  next_prom = promises;
+  for(i = 0, p = dots, o = out;
+      i < n;
+      i++, p = CDR(p), o = CDR(o)) {
+    SEXP newprom = next_prom;
+    SEXP oldprom = CAR(p);
+    next_prom = CDR(next_prom);
+
+    while (TYPEOF(PRCODE(oldprom)) == PROMSXP) {
+      oldprom = PRCODE(oldprom);
+    }
+    
+    SET_TYPEOF(o, DOTSXP);
+    SET_TAG(o, TAG(p));
+    SET_TYPEOF(newprom, PROMSXP);
+    assert_type(VECTOR_ELT(new_envs, i), ENVSXP);
+    SET_PRENV(newprom, VECTOR_ELT(new_envs, i));
+    SET_PRVALUE(newprom, R_UnboundValue);
+    SET_PRCODE(newprom, PRCODE(oldprom));
+    SET_PRSEEN(newprom, 0);
+    SETCAR(o, newprom);
+  }
+  DUPLICATE_ATTRIB(out, dots);
+  UNPROTECT(2);
   return out;
 }
 

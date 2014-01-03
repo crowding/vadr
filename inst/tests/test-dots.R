@@ -222,11 +222,34 @@ test_that("expression mutator", local({
   y[[1]] %is% 4
 }))
 
-test_that("environment", local({
-  f <- function(...) {
-    
+test_that("dots_environments and mutator", local({
+  f1 <- function(...) {
+    where <- "e1E"
+    f2(..., toupper(where))
   }
+  f2 <- function(...) {
+    where <- "e2E"
+    f(..., tolower(where))
+  }
+  f <- function(...) {
+    dots(...)
+  }
+
+  test <- f1() 
+  environments(test)[[1]]$where %is% "e1E"
+  environments(test)[[2]]$where %is% "e2E"
+  as.list(test) %is% list("E1E", "e2e")
+
+  test <- f1()
+  environments(test) <- rev(environments(test))
+  as.list(test) %is% list("E2E", "e1e")
 }))
+
+test_that("expressions unpacks bytecode", {
+  f <- function(x) dots(y=x+1)
+  f <- compiler::cmpfun(f)
+  expressions(f(5)) %is% alist(y=x+1)
+})
 
 test_that("list_quote", {
   a <- list_quote(a, b, d=c, d, e)
