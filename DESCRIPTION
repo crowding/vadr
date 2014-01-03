@@ -45,4 +45,5 @@ Collate:
     'qq_fast.R'
     'mply.R'
     'parse.R'
+    'anaphora.R'
 VignetteBuilder: knitr
