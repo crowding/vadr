@@ -27,6 +27,7 @@ chain.dwim <- function(expr, dot=quote(.)) {
   }
 }
 
+#' @name chain
 #' @S3method "[" mkchain
 #' @rdname chain
 #' @usage mkchain[...](...)
@@ -123,7 +124,7 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' argument and return the result.
 #' @note \code{chain} is a bit like the \code{->} macro of Clojure,
 #' or the \code{|>} operator in Elixir.
-#' @aliases mkchain [.chain [.mkchain %|>% chain
+#' @aliases chain mkchain [.chain [.mkchain %|>%
 #' @author Peter Meilstrup
 #' @rdname chain
 #' @export

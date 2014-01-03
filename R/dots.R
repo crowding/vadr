@@ -12,7 +12,7 @@
 #' @param ... Any number of arguments. Usually, you will pass in the
 #' ... from the body of a function,
 #' e.g. \code{dots_unpack(...)}. Technically this creates a copy of the
-#' dots list, but it should be identical.
+#' dots list, but it should have identical effect.
 #'
 #' @return A data frame, with one row for each element of
 #' \code{\dots}, and columns: \describe{ \item{"name"}{The name of
@@ -37,7 +37,14 @@ dots_unpack <- function(...) {
   data.frame(du, row.names=make.names(du$name, unique=TRUE), check.names=TRUE)
 }
 
+# speed bumming 'rm'
+del <- function(x, envir=parent.frame()) {
+  .Internal(remove(x, envir, FALSE))
+}
+
 #' @export
+#' @rdname dots_unpack
+#' @param x A \code{\link{dots}} object.
 unpack <- function(x) UseMethod("unpack")
 
 #' @S3method unpack ...
@@ -47,18 +54,77 @@ unpack.... <- function (x) {
   data.frame(du, row.names=make.names(du$name, unique=TRUE), check.names=TRUE)
 }
 
-#' Extract the expressions from a dots object.
+#' Extract unevaluated expressions.
+#'
+#' From any set of arguments (typically passing \code{\dots},
+#' \code{dots_expressions} retreives the associated expressions.) The
+#' corresponding method \code{expressions} method of
+#' \code{\link{dots}} objects extracts the dots argument.
 #'
 #' @param x A dots object (see \code{\link{dots}}
-#' @return A named list of expressions.
-#' @seealso dots unpack
-#' @S3method expressions ...
+#' @return A named list of expressions. The mutator \{expressions<-} applies new
+#' expressions to the given promises (which must be unevaluated.)
+#' @seealso dots_unpack dots_environments
+#' @rdname dots_expressions
 #' @export
-expressions <- function(...) UseMethod("expressions")
+expressions <- function(x) UseMethod("expressions")
 
+#' @S3method expressions ...
+#' @rdname dots_expressions
 expressions.... <- function(x) {
   y <- .Call(`_dots_unpack`, get("x"))
   unclass(structure(y$expr, names=y$name))
+}
+
+#' @export
+#' @rdname dots_expressions
+list_quote <- function(...) as.list(substitute(alist(...))[-1])
+
+#' @export
+#' @rdname dots_expressions
+#' @param ... Any arguments.
+#' @note dots_expressions is the same as \code{\link{list_quote}}.
+#' @usage dots_expressions(...)
+dots_expressions <- list_quote
+
+#' @export
+#' @rdname dots_expressions
+`expressions<-` <- function(x, value) {
+  UseMethod("expressions<-")
+}
+
+#' @S3method environments<- ...
+#' @useDynLib vadr _mutate_expressions
+`expressions<-....` <- function(x, value) {
+  .Call(`_mutate_expressions`, x, value)
+}
+
+#' Extract the environments attached to each item of a dots list.
+#'
+#' \code{environments} works on a dots list created by \{code{\link{dots}},
+#' while \code{dots_environments} works on arguments you pass in.#' @export
+#' @rdname dots_environments
+#' @param ... Any arguments.
+#' @param value A list of environments to apply.
+#' @aliases dots_environments environments
+#' @return A named list of environment objects. The mutator
+#' \code{environments<-} constructs a new list of unevaluated promises
+#' with the same expressions but different environments.
+dots_environments <- function(...) {
+  y <- .Call(`_dots_unpack`, get("x"))
+  unclass(structure(y$expr, names=y$name))
+}
+
+#' @export
+#' @rdname dots_environments
+#' @param value A new list of environments to apply.
+`environments<-` <- function(x, value) {
+  UseMethod("environments<-")
+}
+
+#' @S3method environments<- ...
+`environments<-....` <- function(x, value) {
+  .Call(`_mutate_environments`, x, value)
 }
 
 #' @S3method format deparse
@@ -66,7 +132,7 @@ format.deparse <- function(x, ...) {
   format(vapply(x, deparse, "", nlines=1, width.cutoff=100), ... )
 }
 
-#' Functions to work with dot-dot-dot (\dots) arguments.
+#' Manipulating (\dots) arguments.
 #'
 #' These are useful for writing functions that accept any number of
 #' arguments but some may be missing. For example, arrays in R can
@@ -86,21 +152,24 @@ format.deparse <- function(x, ...) {
 #' @return \itemize{
 #' \item For \code{\link{dots_names}}, the names of all arguments. Names are
 #' also attached to results from the other functions listed here.
-#' \item For \code{\link{dots_missing}}, a logical vector with TRUE for each
-#' missing argument.
 #' \item For \code{\link{list_missing}}, a named list of all evaluated
 #' arguments, where any missing arguments are set to missing.value.
 #' \item For \code{\link{list_quote}}, a list of quoted arguments. This extracts
 #' the original expressions from a dotlist without forcing evaluation.
 #' }
 #' @author Peter Meilstrup
-#' @aliases dots_missing list_missing list_quote alist
-#' @seealso is.missing dots curr
+#' @aliases list_missing list_quote dots_names
+#' @seealso dots curr alist dots_expressions dots_missing
 #' @useDynLib vadr _dots_names
+#' @name dots_methods
+#' @rdname dots_methods
 #' @export
 dots_names <- function(...) .Call(`_dots_names`, get("..."))
 
 #' @export
+#' @rdname is.missing
+#' @param ... \For \code{\link{dots_missing}}, any number of
+#' arguments, each being checked for missingness, without being evaluated.
 dots_missing <- function(...) {
   result = logical(nargs())
   sym = paste("..", seq_len(nargs()), sep="")
@@ -110,6 +179,7 @@ dots_missing <- function(...) {
 }
 
 #' @export
+#' @rdname dots_methods
 list_missing <- function(...) {
   out <- vector("list", nargs())
   sym = paste("..", seq_len(nargs()), sep="")
@@ -126,10 +196,7 @@ list_missing <- function(...) {
   out
 }
 
-#' @export
-list_quote <- function(...) as.list(substitute(alist(...))[-1])
-
-#' Capture the list of "dot-dot-dot" arguments as an object.
+#' Capture a list of \dots arguments as an object.
 #'
 #' \code{dots} and methods of class \code{...} provide a more
 #' convenient interface to capturing lists of unevaluated arguments
@@ -159,15 +226,17 @@ dots <- function(...) structure(if (nargs() > 0) get("...") else NULL,
 #' Return an empty symbol.
 #'
 #' The empty symbol is used to represent missing values in the R
-#' language; for instance in the value of formal function function
-#' arguments when there is no default; in the expression slot of a
-#' promise when a missing argument is given; bound to the value of a
-#' variable when it is called with a missing value;
+#' language; for instance in the value of formal function arguments
+#' when there is no default; in the expression slot of a promise when
+#' a missing argument is given; and bound to the value of a variable
+#' when it is called with a missing value. When computing on the
+#' language, then, you may need to explicitly invoke the "missing"
+#' value.
 #'
 #' @param n Optional; a number. If provided, will return a list of
 #' missing values with this many elements.
 #' @return A symbol with empty name, or a list of such.
-#' @seealso list_missing is.missing
+#' @seealso list_missing dots_missing
 #' @examples
 #' # These statements are equivalent:
 #' quote(function(x, y=1) x+y)
@@ -179,7 +248,8 @@ dots <- function(...) structure(if (nargs() > 0) get("...") else NULL,
 #'
 #' # These statements are also equivalent:
 #' quote(function(a, b, c, d, e) print("hello"))
-#' call("function", as.pairlist(setNames(missing_value(5), letters[1:5])), quote(print("hello")))
+#' call("function", as.pairlist(setNames(missing_value(5), letters[1:5])),
+#'                              quote(print("hello")))
 #' @export
 missing_value <- function(n) {
   if (missing(n)) {
@@ -207,7 +277,8 @@ missing_value <- function(n) {
 #' \code{...} as produced by \code{\link{dots}}.
 #' @param f a function, to be called, or to to have arguments attached to.
 #' @aliases %()% %<<% %<<<% %__% curr curl
-#' @name grapes-open-paren-close-paren-grapes
+#' @rdname curr
+#' @name curr
 #' @return \itemize{ \item For \code{\%()\%}, the result of calling
 #' the function with the arguments provided. When \code{x} is a
 #' \code{\dots} object, its contents are passed inithout
@@ -251,9 +322,11 @@ missing_value <- function(n) {
 }
 
 #' @export
+#' @rdname curr
 `%<<%` <- function(f, x) UseMethod("%<<%", x)
 
 #' @export
+#' @rdname curr
 `%<<<%` <- function(f, x) UseMethod("%<<<%", x)
 
 #' @S3method "%<<%" "..."
@@ -266,7 +339,7 @@ missing_value <- function(n) {
       f(...)
     } else {
       dotslist[1] <<- list(get("..."))
-      rm("...")
+      del("...")
       count <- 0
       makeActiveBinding("...", function(x) {
         count <<- count+1
@@ -282,6 +355,7 @@ missing_value <- function(n) {
 }
 
 #' @S3method "%<<<%" "..."
+#' @rdname curr
 `%<<<%....` <- function(f, x) {
   if (length(x) == 0) return(f)
   dotslist <- list(x, NULL)
@@ -291,7 +365,7 @@ missing_value <- function(n) {
       f(...)
     } else {
       dotslist[2] <<- list(get("..."))
-      rm("...")
+      del("...")
       count <- 0
       makeActiveBinding("...", function(x) {
         count <<- count+1
@@ -306,6 +380,7 @@ missing_value <- function(n) {
 #S3-dispatched dots objects.
 
 #' @export
+#' @rdname curr
 curr <- function(f, ...) {
   if (missing(...)) {
     f
@@ -317,7 +392,7 @@ curr <- function(f, ...) {
         f(...)
       } else {
         stored_dots[1] <- list(get("..."))
-        rm("...")
+        del("...")
         selector <- 0
         makeActiveBinding("...",
                           function() stored_dots[[selector <<- selector+1]],
@@ -329,6 +404,7 @@ curr <- function(f, ...) {
 }
 
 #' @export
+#' @rdname curr
 curl <- function(f, ...) {
   if (missing(...)) {
     f
@@ -340,7 +416,7 @@ curl <- function(f, ...) {
         f(...)
       } else {
         stored_dots[2] <- list(get("..."))
-        rm("...")
+        del("...")
         selector <- 0
         makeActiveBinding("...",
                           function() stored_dots[[selector <<- selector+1]],
@@ -362,10 +438,10 @@ curl <- function(f, ...) {
 `%<<<%.default` <- function(f, x) `%<<<%....`(f, as.dots.literal(x))
 
 #' @export
+#' @rdname curr
 `%__%` <- function(x, y) UseMethod("%__%", x)
 
 #' @S3method "%__%" "..."
-#' @export
 `%__%....` <- function(x, y) UseMethod("%__%....", y)
 
 #' @S3method "%__%...." "..."
@@ -374,7 +450,7 @@ curl <- function(f, ...) {
   if (length(y) == 0) return(x)
   dotslists <- list(x, y)
   count <- 0
-  rm("...")
+  del("...")
   makeActiveBinding("...", function(x) {
     count <<- count+1
     dotslists[[count]]
@@ -386,7 +462,6 @@ curl <- function(f, ...) {
 `%__%.....default` <- function (x, y) `%__%........`(x, as.dots.literal(y))
 
 #' @S3method "%__%" default
-#' @export
 `%__%.default` <- function(x, y) UseMethod("%__%.default", y)
 
 #' @S3method "%__%.default" "..."
@@ -421,6 +496,7 @@ as.dots.default <- function(x, .envir=parent.frame())
 
 #' @useDynLib vadr _as_dots_literal
 #' @export
+#' @rdname as.dots
 as.dots.literal <- function(x)
   .Call(`_as_dots_literal`, as.list(x), do.call(dots, vector("list", length(x))))
 
@@ -428,10 +504,12 @@ as.dots.literal <- function(x)
 #'
 #' For \code{\dots} objects as made by \code{\link{dots}}, performs
 #' this check without forcing evaluation.
-#' @param x An object
+#' @param x If given a list, compares each
+#' element with the missing value. Given a \code{\link{dots}} object,
+#' determines whether each argument is empty or missing.
 #' @return A vector of boolean values.
 #' @author Peter Meilstrup
-#' @seealso dots dots_missing missing_value
+#' @seealso missing_value
 #' @export
 is.missing <- function(x) if (missing(x)) TRUE else UseMethod("is.missing")
 
@@ -529,9 +607,14 @@ is.missing.default <- function(f) {
 
 #' @S3method "names" "..."
 #' @useDynLib vadr _dots_names
+#' @rdname dots_methods
+#' @usage names(x)
 names.... <- function(x) .Call(`_dots_names`, x)
 
 #' @useDynLib vadr _dotslist_to_list _list_to_dotslist
+#' @rdname dots_methods
+#' @usage names(x) <- value
+#' @param value New names to be applied (without forcing evaluation.)
 `names<-....` <- function(x, value) {
   temp <- .Call(`_dotslist_to_list`, x)
   names(temp) <- value

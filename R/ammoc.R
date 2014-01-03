@@ -5,8 +5,10 @@
 #' the C comma operator. There is an infix alias, \code{\%\'\%}, (i.e.,
 #' inverted comma; use whichever you feel a worse pun.)
 #'
+#' @note In most Lisps, this is called \code{prog1}.
 #' @param ... any number of arguments.
 #' @aliases %'%
+#' @rdname ammoc
 #' @return The first argument.
 #' @author Peter Meilstrup
 #' @export
@@ -14,4 +16,5 @@ ammoc <- function (...) list(...)[[1]]
 
 
 #' @export "%'%"
+#' @rdname ammoc
 `%'%` <- ammoc

@@ -171,6 +171,63 @@ test_that("list_missing evaluates arguments in the original scopes", {
                list(four="four", one="one", two="two", three="three"))
 })
 
+test_that("dots_expressions", {
+  x <- 4
+  f <- function(x, ...) {dots_expressions(...)}
+  f(one, two, y=x<-3) %is% alist(two, y=x<-3)
+  x %is% 4
+  f <- function(x, ...) {expressions(dots(...))}
+  f(one, two, y=x<-3) %is% alist(two, y=x <-3)
+  x %is% 4
+})
+
+test_that("expression mutator", local({
+  f <- function(...) {
+    x <- dots(...)
+    y <- x
+#    browser()
+    expressions(x) <- qqply( `.(paste0("temp",x))` <- .(e)
+                            )(e=expressions(x), x=seq_along(x))
+    list %()% x
+    unpack(x)
+  }
+  e1 <- NULL
+  e2 <- NULL
+  f1 <- function(...) {
+    where<-"f1"
+    temp1 <- 40
+    temp2 <- 30
+    e1 <<- environment()
+    f(20, ...)
+  }
+  f2 <- function(...) {
+    where<-"f2"
+    temp1 <- 2
+    temp2 <- 3
+    e2 <<- environment()
+    x <- f1(5, ...)
+  }
+
+  test <- f2()
+  e2$temp2 %is% 5
+  e1$temp1 %is% 20
+
+  #error to set expressions for fulfilled promises
+  forced <- function(...) {list(...); dots(...)}
+  r <- 3
+  x <- forced(r+2)
+  y <- dots(r+2)
+  expect_error(expressions(x) <- alist(r+1))
+  expressions(y) <- alist(r+1)
+  y[[1]] %is% 4
+}))
+
+test_that("environment", local({
+  f <- function(...) {
+    
+  }
+}))
+
 test_that("list_quote", {
   a <- list_quote(a, b, d=c, d, e)
   f <- function(a, b, ...) list_quote(a+b, ...)

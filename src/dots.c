@@ -1,5 +1,4 @@
-#include <R.h>
-#include <Rinternals.h>
+#include "vadr.h"
 
 int _dots_length(SEXP dots);
 
@@ -181,3 +180,50 @@ SEXP _list_to_dotslist(SEXP list) {
   UNPROTECT(1);
   return output;
 }
+
+SEXP _mutate_expressions(SEXP dots, SEXP new_exprs) {
+  assert_type(dots, DOTSXP);
+  assert_type(new_exprs, VECSXP);
+
+  int n = length(dots);
+  if (LENGTH(new_exprs) != length(dots)) {
+    error("Length mismatch");
+  }
+    
+  /* Hackish. These get turned into dots and promises respectively... */
+  SEXP out = PROTECT(allocList(length(dots)));
+  SEXP promises = PROTECT(allocList(length(dots)));
+
+  SEXP next_prom, p, o; int i;
+  next_prom = promises;
+  for(i = 0, p = dots, o = out;
+      i < n;
+      i++, p = CDR(p), o = CDR(o)) {
+    SEXP newprom = next_prom;
+    SEXP oldprom = CAR(p);
+    while (TYPEOF(PRCODE(oldprom)) == PROMSXP) {
+      oldprom = PRCODE(oldprom);
+    }
+    if (PRENV(oldprom) == R_NilValue) {
+      error("Can't put new expression on already-evaluated promise");
+    }
+    next_prom = CDR(next_prom);
+    
+    SET_TYPEOF(o, DOTSXP);
+    SET_TAG(o, TAG(p));
+    SET_TYPEOF(newprom, PROMSXP);
+    SET_PRCODE(newprom, VECTOR_ELT(new_exprs, i));
+    SET_PRVALUE(newprom, PRVALUE(oldprom));
+    SET_PRENV(newprom, PRENV(oldprom));
+    SETCAR(o, newprom);
+  }
+  DUPLICATE_ATTRIB(out, dots);
+  return out;
+}
+
+/*
+ * Local Variables:
+ * eval: (previewing-mode)
+ * previewing-build-command: (previewing-run-R-unit-tests)
+ * End:
+ */
