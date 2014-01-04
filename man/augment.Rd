@@ -29,6 +29,6 @@ x \%<~\% .[2:3]
 Peter Meilstrup
 }
 \seealso{
-chain
+chain put
 }
 
