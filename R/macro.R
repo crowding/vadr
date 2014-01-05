@@ -1,3 +1,6 @@
+#' @include cache.R
+NULL
+
 ##' Given a list of names, build an environment such that evaluating
 ##' any expression using those names just gets you the expression
 ##' back.

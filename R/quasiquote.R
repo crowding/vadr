@@ -1,3 +1,6 @@
+#' @include macro.R
+NULL
+
 #Exposed user interface for quasiquotation
 #the internal engine (uq and friends) are defined in qq_fast.R
 qq_internal <- function(expr) {

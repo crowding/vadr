@@ -1,3 +1,6 @@
+#' @include macro.R
+NULL
+
 #generate the function y both forms of chain
 chain_function <- function(args) {function(transforms) {
   var <- as.name(names(args)[[1]])

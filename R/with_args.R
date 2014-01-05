@@ -1,3 +1,6 @@
+#' @include macro.R
+NULL
+
 ##' Inject named arguments into several calls and evaluate those calls.
 ##'
 ##' For a simple example, writing

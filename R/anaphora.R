@@ -1,3 +1,6 @@
+#' @include macro.R
+NULL
+
 #' Augmented assignment.
 #'
 #' Assigns to a variable the result of a transformation applied to that
