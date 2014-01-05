@@ -36,9 +36,10 @@ test_that("alter() sets a sebset to the chain of the subset", {
   expect_equal(ww, c(a=1, BBB=2, c=3, d=4, e=5))
 })
 
-## test_that("inject() sets a subelement of a value to the chain of the value", {
-##   x <- inject(1:10, names, letters[], rev)
-## })
+test_that("inject() sets a subset of a value to the chain of the value", {
+  x <- inject(1:10, names, letters[.], rev)
+  expect_equal(x, c(j=1, i=2, h=3, g=4, f=5, e=6, d=7, c=8, b=9, a=10))
+})
 
 ## test_that("with_attrs is a list of a thing and its attributes", {
 ## })

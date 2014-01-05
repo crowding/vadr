@@ -79,6 +79,7 @@ NULL
 #' @author Peter Meilstrup
 #' @seealso chain %<~%
 #' @aliases put
+#' @usage put(it, subset, value)
 #' @export
 #' @examples
 #' put(1:10, names, letters[1:10])
@@ -105,18 +106,20 @@ put <- macro(function(it, subset, value) {
   }
 })
 
-#' @rdname modifying
-#' @aliases alter
-#' \code{alter} takes the selected subset of \code{it},
-#' then filters it through additional functions in the manner
-#' \code{\link{chain}}, then replaces the subset with the result,
-#' returning the modified object. That is,
+#' a title line here is ignored but expected by roxygen
 #'
-#' \code{x %<~% alter(names[5], toupper)} is equivalent to
+#' \code{alter} takes the selected subset of \code{it},
+#' then filters it through additional functions in the manner of
+#' \code{\link{chain}}, then replaces the subset with the result,
+#' returning the modified object.
+#'
+#' \code{x %<~% alter(names[5], toupper)} is equivalent to:
 #'
 #' \code{names(x)[5] <- toupper(names(x)[5])}
+#' @rdname modifying
+#' @aliases alter
+#' @usage alter(it, subset, ...)
 #' @param ... A \code{\link{chain}} of code transformations.
-#' @seealso chain
 #' @export
 #' @examples
 #' x <- alter(structure(1:10, names=letters[1:10]), names)
@@ -143,6 +146,31 @@ alter <- macro(function(it, subset, ...) {
       it
     })( .(it) ))
   ## }
+})
+
+#' a title line here is ignored but expected by roxygen
+#'
+#' \code{inject} takes the entire object, filters it through a chain, then
+#' places the result in the specified subset.
+#'
+#' \code{x <- inject(1:10, names, letters[.], toupper)} is equivalent to:
+#'
+#' \code{x <- 1:10; names(x) <- toupper(letters[x])}
+#'
+#' @rdname modifying
+#' @usage inject(it, subset, ...)
+#' @aliases inject
+#' @export
+#' @examples
+#' x <- inject(1:10, names[1:5], letters[.], rev)
+inject <- macro(function(it, subset, ...) {
+  addr <- address_expand(quote(it), subset)
+  qq(
+    (function(it) {
+      .(addr) <-
+          .(chain_function(alist(`.`=))(list(...)))(it)
+      it
+    })( .(it) ))
 })
 
 address_expand <- function(arg, address) {
