@@ -5,7 +5,6 @@
 #'
 #' @param a The first argument to evaluate.
 #' @param b The second argument to evaluate. Only evaluated if A evaluates to NULL.
-#' @name grapes_or_or_grapes
 #' @return the value of \code{a} if not null, else \code{b}
 #' @author Peter Meilstrup
 #' @export "%||%"

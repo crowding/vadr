@@ -1,5 +1,5 @@
-\name{grapes_or_or_grapes}
-\alias{grapes_or_or_grapes}
+\name{\%||\%}
+\alias{\%||\%}
 \title{Evaluate the first argument; if null, evaluate and return the
 second argument.}
 \usage{

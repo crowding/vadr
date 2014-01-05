@@ -2,7 +2,7 @@
 \alias{\%<~\%}
 \title{Augmented assignment.}
 \usage{
-... \%<~\% NA
+x %<~% y
 }
 \arguments{
   \item{x}{A variable to assign to,}
@@ -29,6 +29,6 @@ x \%<~\% .[2:3]
 Peter Meilstrup
 }
 \seealso{
-chain put
+chain put alter
 }
 

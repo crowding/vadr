@@ -89,16 +89,17 @@ sqrt)}. This is useful for nested invocations of
 specify other arguments and defaults, as in
 \code{mkchain[., pow=2](.^pow, mean, .^(1/pow))}.
 
-Too much usage of temporary names and alternate placeholder
-names might indicate \code{chain} is not helping clarity :)
+More than the occasional use of temporary names and
+alternate placeholder names might indicate \code{chain} is
+not helping clarity :)
 
-Note that subassignments, for example \code{chain(x,
+Note that subassignments, for example \code{chain(letters,
 names(.) <- toupper(.))} return the rvalue, which is not
 usually what you want (here it will return the upcased
-characters, not the object with upcased names.) You can
-cope with subassignments by saying things like
-\code{mkchain(data, `names<-`(., toupper(names(.))))}. Some
-better way to cope with subassignments would be nice.
+characters, not the object with upcased names.) Instead use
+\code{\link{put}}, as in \code{ chain(letters, put(.,
+names, toupper(.))}, or even better in this case,
+\code{chain(letters, \link{inject}(names, toupper))}.
 }
 \note{
 \code{chain} is a bit like the \code{->} macro of Clojure,
@@ -118,5 +119,8 @@ chain(b=baseball, count("id"), subset(freq>25),
 }
 \author{
 Peter Meilstrup
+}
+\seealso{
+put
 }
 

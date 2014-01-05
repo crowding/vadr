@@ -7,8 +7,9 @@
 #' @return The rvalue of the assignment.
 #' @rdname augment
 #' @aliases %<~%
+#' @usage x %<~% y
 #' @author Peter Meilstrup
-#' @seealso chain put
+#' @seealso chain put alter
 #' @export
 #' @examples
 #' library(stringr)
@@ -32,7 +33,7 @@
 #' The macro \code{put} provides syntax for modifying part of an
 #' object in a functional context (i.e. creating a modified value
 #' without necessarily modifying without binding the result to a
-#' name.) Unlike \code{link{<-}}, the value of the expression is the
+#' name.) Unlike \code{\link{<-}}, the value of the expression is the
 #' modified object, not the value that was injected. This is
 #' particularly useful in combination with 'chain.'
 #'
@@ -47,32 +48,34 @@
 #'
 #' However even this explanation is misleading, because the value
 #' returned from a subassignment is the value applied, not the value
-#' assigned. Consider calling a function with a modification of an
-#' existing value:
+#' assigned. Consider if you wanted to call a function with a
+#' modification of an existing value:
 #'
 #' \code{do_something(names(x)[1] <- "head")}
 #'
-#' This actually does the equivalent of \code{do_something("head")},
-#' rather than pass a modified \code{x} to \code{do_something}.
+#' Aside from changing the value of \code{x} this actually doesn't
+#' pass the value to \code{do_something}, but rather performs the
+#' equivalent of \code{do_something("head")}.
 #'
-#' Using \code{put}, one can write:
+#' In this situation, using \code{put}, one can write:
 #'
 #' \code{do_something(put(x, names[1], "head"))}
 #'
-#' \put() and friends are particularly useful in conjunction with
+#' code{put} and friends are particularly useful in conjunction with
 #' \code{\link{chain}}.
 #'
+#' @rdname modifying
 #' @param it A value.
-#' @param subset An expression; this is interpreted literally if the
-#' symbol \code{it} is used, otherwise \code{it} is injected as far down the
-#' leftmost arguments of the expression as possible. (Thus
-#' \code{names} is interpreted as {names(it)}, and \code{names[1]} as
-#' \code{names(it)[1]}.)
+#' @param subset A subassignment target expression; this is
+#' interpreted literally if the symbol \code{it} is used, otherwise
+#' \code{it} is injected as far down the leftmost arguments of the
+#' expression as possible. (Thus \code{names} is interpreted as
+#' \code{names(it)}, and \code{names[1]} as \code{names(it)[1]}.)
+#' @param value The value to assign
 #' @return The modified value.
 #' @author Peter Meilstrup
-#' @seealso chain
+#' @seealso chain %<~%
 #' @aliases put
-#' @rdname put
 #' @export
 #' @examples
 #' put(1:10, names, letters[1:10])
@@ -81,13 +84,62 @@
 #' put(x, names[4], 'a')
 #' x #x is unchanged
 put <- macro(function(it, subset, value) {
-  qq( (function(it)
-       {
-         .(address_expand(quote(it), subset)) <- .(value)
-         it
-       }
-      )( .(it) )
-    )
+  if (nargs()==2) {
+    # Some of my projects use this 2-argument syntax. Not officially supported.
+    target <- assignment_target(it)
+    qq( (function(`.(target)`) {
+      .(assignment) <- .(subset);
+      .(target)
+    })( .(subset) ))
+  } else {
+    qq( (function(it)
+         {
+           .(address_expand(quote(it), subset)) <- .(value)
+           it
+         }
+         )( .(it) )
+       )
+  }
+})
+
+#' @rdname modifying
+#' @aliases alter
+#' \code{alter} takes the selected subset of \code{it},
+#' then filters it through additional functions in the manner
+#' \code{\link{chain}}, then replaces the subset with the result,
+#' returning the modified object. That is,
+#'
+#' \code{x %<~% alter(names[5], toupper)} is equivalent to
+#'
+#' \code{names(x)[5] <- toupper(names(x)[5])}
+#' @param ... A \code{\link{chain}} of code transformations.
+#' @seealso chain
+#' @export
+#' @examples
+#' x <- alter(structure(1:10, names=letters[1:10]), names)
+#' y <- alter(x, names[5], toupper, str_dup(3))
+alter <- macro(function(it, subset, ...) {
+  ## if (nargs()==2) {
+  ## Er, possible to distinguish 2-arg form?
+  ##   target <- assignment_target(subset)
+  ##   template(
+  ##     (
+  ##       function(`.(target)`) {
+  ##         .(assignment) <-
+  ##             .(vadr:::chain_function(alist(`.`=))(list(...)))(.(assignment));
+  ##         .(target)
+  ##       }
+  ##       )(.(target))
+  ##     )
+  ## } else {
+  addr <- address_expand(quote(it), subset)
+  qq(
+    (function(it) {
+      .(addr) <-
+          .(chain_function(alist(`.`=))(list(...)))(.(addr))
+      it
+    })( .(it) ))
+  ## }
 })
 
 address_expand <- function(arg, address) {
@@ -104,9 +156,24 @@ address_expand <- function(arg, address) {
           as.call(c(as.list(x), list(arg)))
         }
       } else {
+        if (!is.language(x)) {
+          stop("that doesn't look like an assignment target")
+        }
         as.call(list(x, arg))
       }
     }
     address_inject(address)
   }
+}
+
+assignment_target <- function(x) {
+  switch(
+      class(x),
+      name=x,
+      character=as.name(x),
+      call = switch(class(x[[1]]),
+                    name = assignment_target(x[[2]]),
+                    character = assignment_target(x[[2]]),
+                    stop("that doesn't look like an assignment target")),
+      stop("that doesn't look like an assignment target"))
 }

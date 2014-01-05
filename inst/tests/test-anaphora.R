@@ -25,12 +25,16 @@ test_that("put() changes a subset to a value", {
   expect_equal(x, 1:10)
 })
 
-## test_that("alter() sets a sebset to the chain of the subset", {
-##   x <- structure(1:5, letters[1:5])
-##   y <- alter(x, names(it)[5], toupper)
-##   x <- alter(x, names(it[5]), toupper)
-##   x <- alter(x, names[5], toupper)
-## })
+test_that("alter() sets a sebset to the chain of the subset", {
+  x <- structure(1:5, names=letters[1:5])
+  y <- alter(x, names(it)[5], toupper)
+  w <- alter(x, names[3], toupper)
+  ww <- alter(x, names[2], toupper, str_dup(3))
+  expect_equal(x, c(a=1, b=2, c=3, d=4, e=5))
+  expect_equal(y, c(a=1, b=2, c=3, d=4, E=5))
+  expect_equal(w, c(a=1, b=2, C=3, d=4, e=5))
+  expect_equal(ww, c(a=1, BBB=2, c=3, d=4, e=5))
+})
 
 ## test_that("inject() sets a subelement of a value to the chain of the value", {
 ##   x <- inject(1:10, names, letters[], rev)

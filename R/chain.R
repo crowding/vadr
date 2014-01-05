@@ -105,15 +105,16 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' \code{\link{mkchain}}, you can specify other arguments and
 #' defaults, as in \code{mkchain[., pow=2](.^pow, mean, .^(1/pow))}.
 #'
-#' Too much usage of temporary names and alternate placeholder names
-#' might indicate \code{chain} is not helping clarity :)
+#' More than the occasional use of temporary names and alternate
+#' placeholder names might indicate \code{chain} is not helping
+#' clarity :)
 #'
-#' Note that subassignments, for example \code{chain(x, names(.) <-
-#' toupper(.))} return the rvalue, which is not usually what you
+#' Note that subassignments, for example \code{chain(letters, names(.)
+#' <- toupper(.))} return the rvalue, which is not usually what you
 #' want (here it will return the upcased characters, not the object
-#' with upcased names.) You can cope with subassignments by saying
-#' things like \code{mkchain(data, `names<-`(., toupper(names(.))))}.
-#' Some better way to cope with subassignments would be nice.
+#' with upcased names.) Instead use \code{\link{put}}, as in \code{
+#' chain(letters, put(., names, toupper(.))}, or even better in this
+#' case, \code{chain(letters, \link{inject}(names, toupper))}.
 #'
 #' @param . For \code{chain} the first parameter in parentheses is the
 #' data to run through the chain.
@@ -122,6 +123,7 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' @return For \code{mkchain} return the constructed function. For
 #' \code{chain}, apply the chain to the dataset given in the first
 #' argument and return the result.
+#' @seealso put
 #' @note \code{chain} is a bit like the \code{->} macro of Clojure,
 #' or the \code{|>} operator in Elixir.
 #' @aliases chain mkchain [.chain [.mkchain %|>%
