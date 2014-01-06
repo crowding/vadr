@@ -10,7 +10,7 @@ df <- data.frame(  A = c(1,4,2,6,7,3,6)
                  )
 
 test_that("can index data columns by number", {
-  expect_that( index(df, col=df$index) , equals( c(1, 7, 2, 2, 3, 5, 5) ))
+  expect_equal( index(df, col=df$index) , c(1, 7, 2, 2, 3, 5, 5) )
 })
 
 test_that("can index a single row and col, by number or by name", {

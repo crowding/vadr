@@ -1,6 +1,6 @@
 Package: vadr
 Type: Package
-Title: Favorite features from your favorite language, in R
+Title: Macros, control of evaluation, and pleasant programming idioms.
 Version: 0.01
 Date: 2012-09-21
 Author: Peter Meilstrup <peter.meilstrup@gmail.com>
@@ -14,7 +14,7 @@ Description: This package implements workalikes for the author's (and
     with `...` arguments and missing values. Behind the scenes is an
     efficient macro utility, with a much improved alternative to the
     bquote() function.
-License: MIT
+License: MIT + file LICENSE
 Suggests:
     testthat (>= 0.2),
     microbenchmark (>= 1.1.3),

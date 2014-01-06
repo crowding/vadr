@@ -18,10 +18,6 @@ fun(expr, .all.names = FALSE, .envir = parent.frame())
   appearance" means in the s-expression order, so that
   \code{"fun(x+y, .all.names=TRUE)"} will have arguments
   named "+", "x" and "y" in that order.}
-
-  \item{.envir}{The environment the function should be
-  enclosed in. Defaults to the environment that called
-  \code{fun}.}
 }
 \value{
 A newly constructed function.
@@ -44,10 +40,14 @@ evalq(x,parent.frame(), y = evalq(y,parent.frame()) x/y}
 "\code{...}" is supported in the function definitions and
 should behave as you expect.
 }
+\note{
+Since it doesn't know which symbols you intend to be
+arguments and which you intend to take from the enclosing
+environment, it captures all symbols in defaults; therefore
+it won't work as a closure that reflects changes in the
+enclosing environment.
+}
 \author{
 Peter Meilstrup
-}
-\seealso{
-fsummarise fmutate dm_ply
 }
 

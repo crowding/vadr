@@ -8,11 +8,11 @@ test_that("func captures expressions", {
 test_that("func captures lexical scope", {
    xinc <- NULL
    if (exists("y")) rm("y", inherits=TRUE)
-   f <- local({
+   f <- (function(){ #nb. this breaks when using "local" because of lazy eval???
      x <- 4
      xinc <<- function() {x <<- x + 1}
      fun(y+x)
-   })
+   })()
 
    expect_equal(f(y=5), 9)
    expect_equal(f(y=6), 10)

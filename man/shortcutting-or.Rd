@@ -1,5 +1,6 @@
-\name{\%||\%}
+\name{shortcutting-or}
 \alias{\%||\%}
+\alias{shortcutting-or}
 \title{Evaluate the first argument; if null, evaluate and return the
 second argument.}
 \usage{

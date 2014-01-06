@@ -6,7 +6,7 @@ promises.)}
 \usage{
 as.dots(x, .envir = parent.frame())
 
-\method{as.dots}{literal}(x)
+\method{as.dots}{literal}(x, .envir = NULL)
 }
 \arguments{
   \item{x}{a vector or list.}

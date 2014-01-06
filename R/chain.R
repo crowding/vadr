@@ -5,8 +5,8 @@ NULL
 chain_function <- function(args) {function(transforms) {
   var <- as.name(names(args)[[1]])
   names <- names(transforms) %||% ""
-  chainexpr <- qq(function(.=...(args)) {
-    ...(
+  chainexpr <- qq(function(.=..(args)) {
+    ..(
       Map(transforms, names, f=function(a,n)
           if (n == "") template(.(var) <- .(chain.dwim(a, var)))
           else template(.(as.name(n)) <- .(var) <- .(chain.dwim(a, var))))
@@ -25,7 +25,7 @@ chain.dwim <- function(expr, dot=quote(.)) {
     switch(mode(expr),
            name=call(as.character(expr),dot),
            call=as.call(c(expr[[1]], dot, as.list(expr[-1]))),
-           `function`=as.call(expr, dot),
+           `function`=as.call(list(expr, dot)),
            stop("don't know how to chain into a '", mode(expr), "'"))
   }
 }
@@ -135,6 +135,7 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' @export
 #' @examples
 #' # In help("match_df", package="plyr") there is this example:
+#' library(plyr)
 #' data(baseball)
 #'
 #' longterm <- subset(count(baseball, "id"), freq > 25)

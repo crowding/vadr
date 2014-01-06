@@ -1,16 +1,12 @@
-##' Improved subsetting and modification of data frames by rows,
-##' columns and arrays.
-##'
-##' In particular, this handles the case of assigning to several
-##' elements of a data frame in parallel.
+##' Scatter and gather over data frames.
 ##'
 ##' This handles a couple of cases that are not handled by core data
-##' frame operations In particular, this allows you to extract a
+##' frame operations. In particular, this allows you to extract a
 ##' vector of values from two vectors of row and column
 ##' indices (which may be numeric or character).
 ##'
-##' Unlike using \code{`[.data.frame`} wiht an n-by-2 array, this does
-##' not downcast the array to matrix, and tries to prezerve the type
+##' Unlike using \code{`[.data.frame`} with an n-by-2 array, this does
+##' not downcast the array to matrix, and tries to preserve the type
 ##' information.
 ##'
 ##' @examples
@@ -22,11 +18,10 @@
 ##'                  , letter = I(letters[7:13])
 ##'                  , lletter = I(list("a",1,"b",3,NULL,5,"d"))
 ##'                  , row.names = c( "foo", "bar", "baz", "qux"
-##'                                  , "quux", "quuux", "quuuux")
-##'
+##'                                  , "quux", "quuux", "quuuux"))
 ##'
 ##' #select values from column A,B,C for every row
-##' index(df, col=c("A","B","A","C","B","B","C") # -> c(1, 7, 2, 2, 3, 5, 5)
+##' index(df, col=c("A","B","A","C","B","B","C")) # -> c(1, 7, 2, 2, 3, 5, 5)
 ##'
 ##' #indexing by a 1x2 array extracts a single element unboxed
 ##' index(df, array(c(3,2), dim=c(1,2))) # -> 2
@@ -44,8 +39,9 @@
 ##' # We can do a scattered assignment in the same way
 ##' index(df, c(1,2,3), c("A","B","C")) <- c(100, 1000, 10000)
 ##'
+##' @S3method index<- data.frame
 ##' @title index.data.frame
-##' @param df The data frame to subset
+##' @param obj The data frame to subset
 ##' @param row Rows to subset by. These may be numeric indices,
 ##' character names, a logical mask, or a 2-d logical array
 ##' @param col The columns to index by. If `row` is a 2-d array, this
@@ -53,15 +49,16 @@
 ##' @param value Provide a an empty vector of some type to specify the
 ##' type of the output.
 ##' @return The specified subset of data.
+##' @S3method index data.frame
 ##' @aliases index.data.frame index index<- index.data.frame<-
 ##' @author Peter Meilstrup
-index.data.frame <- function(df, row = 1:nrow(df), col=NULL, value=c()) {
-  ##Index a data frame, puling out selected rows and columns
-  ix <- index.data.frame.core(df, row, col)
+index.data.frame <- function(obj, row = 1:nrow(obj), col=NULL, value=c()) {
+  ##Index a data frame, pulling out selected rows and columns
+  ix <- index.data.frame.core(obj, row, col)
   length(value) <- max(0, vapply(ix$indices.out, max, 0))
 
   mapply(function(i, o, c) {
-    value[o] <<- df[i, c]
+    value[o] <<- obj[i, c]
   }, ix$indices.in, ix$indices.out, ix$columns)
   value
 }
@@ -71,7 +68,6 @@ index.data.frame.core <- function(df, row, col){
     col <- row[,ncol(row)]
     row <- row[,1:ncol(row)-1]
   }
-
   row <- mkmatch(row, rownames(df))
   col <- mkmatch(col, colnames(df))
   indices.out <- tapply(1:length(col), col, identity)
@@ -81,32 +77,33 @@ index.data.frame.core <- function(df, row, col){
 }
 
 mkmatch <- function(index, names) {
- if (is.character(index) || is.factor(index)) {
-   matched <- pmatch(index, names, duplicates.ok = TRUE)
-   if (any(is.na(matched) & !is.na(index))) {
-     stop("Unknown indices")
-   }
- } else {
-   matched <- index
- }
-   matched
+  if (is.character(index) || is.factor(index)) {
+    matched <- pmatch(index, names, duplicates.ok = TRUE)
+    if (any(is.na(matched) & !is.na(index))) {
+      stop("Unknown indices")
+    }
+  } else {
+    matched <- index
+  }
+  matched
 }
 
 ##' @export
-`index<-.data.frame` <- function(df, row = 1:nrow(df), col=NULL, value=NULL) {
-  ix <- index.data.frame.core(df, row, col)
+##' @S3method index<- data.frame
+`index<-.data.frame` <- function(obj, row = 1:nrow(obj), col=NULL, value=NULL) {
+  ix <- index.data.frame.core(obj, row, col)
   mapply(function(i, o, c) {
-    df[i, c] <<- value[o]
+    obj[i, c] <<- value[o]
   }, ix$indices.in, ix$indices.out, ix$columns)
-  df
+  obj
 }
 
 ##' @export
-index <- function(obj, ...) {
+index <- function(obj, row, col, value) {
   UseMethod("index")
 }
 
 ##' @export
-`index<-` <- function(obj, ...) {
+`index<-` <- function(obj, row, col, value) {
   UseMethod("index<-")
 }

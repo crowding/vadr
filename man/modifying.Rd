@@ -73,7 +73,7 @@ In this situation, using \code{put}, one can write:
 code{put} and friends are particularly useful in
 conjunction with \code{\link{chain}}.
 
-\code{x %<~% alter(names[5], toupper)} is equivalent to:
+\code{x \%<~\% alter(names[5], toupper)} is equivalent to:
 
 \code{names(x)[5] <- toupper(names(x)[5])}
 

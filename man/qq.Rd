@@ -55,20 +55,21 @@ qq(
 # names are names, and defaults are values; that is
 function(x=1, y) x+y
 # is equivalent to
-function(...(alist(x=1, y=))) x+y
+function(.=...(alist(x=1, y=))) x+y
 # or
-function(...(list(x=1, y=missing_value()))) x+y
+function(.=...(list(x=1, y=missing_value()))) x+y
 
 # Building a function with an arbitrary list of arguments:
 argnames <- letters[1:4]
-qq(function(.=...(setNames(missing_value(length(argnames)), argnames))) {
+qq(function(.=...(put(missing_value(length(argnames)), names, argnames))) {
   list(...(lapply(argnames, as.name)))
 })
 #function(a, b, c, d) list(a, b, c, d)
 
-#' The poor .() function is overloaded. You can escape it thus:
+# The poor .() function is overloaded. Usually can escape it by adding
+# parens:
 dfname <- "baseball"
-qq(ddply(.(as.name(dfname)), .(quote(.(id, team))), identity))
+qq(ddply(.(as.name(dfname)), (.)(id, team), identity))
 #ddply(baseball, .(id.team), identity)
 }
 \author{

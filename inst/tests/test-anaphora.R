@@ -41,6 +41,14 @@ test_that("inject() sets a subset of a value to the chain of the value", {
   expect_equal(x, c(j=1, i=2, h=3, g=4, f=5, e=6, d=7, c=8, b=9, a=10))
 })
 
+test_that("Put function environment weirdness", {
+  # the symptom was that using put(f, environment, envir)
+  # to set the env of a function --
+  # where the env was a lazily evaluated parent.frame() argument whose env
+  # had fallen off the stack -- did wrong things. Not actually a problem in
+  # put(), but needs to go in the "why parent.frame() is evil" vignette
+})
+
 ## test_that("with_attrs is a list of a thing and its attributes", {
 ## })
 

@@ -5,7 +5,7 @@
 \usage{
 ammoc(...)
 
-... \%'\% NA
+x %'% y
 }
 \arguments{
   \item{...}{any number of arguments.}
@@ -14,11 +14,12 @@ ammoc(...)
 The first argument.
 }
 \description{
-Useful in macros where you want to clean up a temporary
-variable but return it; as in \code{ammoc(x, rm(x))}. It's
-the reverse of the C comma operator. There is an infix
-alias, \code{\%\'\%}, (i.e., inverted comma; use whichever
-you feel a worse pun.)
+Useful in where you want to clean up after a computation
+but but return the result of the computation, as in
+\code{ammoc(x, rm(x))}, or \code{ammoc(readLines(file),
+close(file))}. It's the reverse of the C comma operator.
+There is an infix alias, \code{\%\'\%}, (i.e., inverted
+comma; use whichever you feel a worse pun.)
 }
 \note{
 In most Lisps, this is called \code{prog1}.

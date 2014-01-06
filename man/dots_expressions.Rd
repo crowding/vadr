@@ -22,9 +22,9 @@ expressions(x) <- value
   \item{...}{Any arguments.}
 }
 \value{
-A named list of expressions. The mutator \{expressions<-}
-applies new expressions to the given promises (which must
-be unevaluated.)
+A named list of expressions. The mutator
+\code{expressions<-} applies new expressions to the given
+promises (which must be unevaluated.)
 }
 \description{
 From any set of arguments (typically passing \code{\dots},

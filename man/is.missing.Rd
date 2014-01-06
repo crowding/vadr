@@ -8,7 +8,7 @@ dots_missing(...)
 is.missing(x)
 }
 \arguments{
-  \item{...}{\For \code{\link{dots_missing}}, any number of
+  \item{...}{for \code{\link{dots_missing}}, any number of
   arguments, each being checked for missingness, without
   being evaluated.}
 

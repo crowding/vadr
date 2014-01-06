@@ -4,9 +4,12 @@
 #' second argument.
 #'
 #' @param a The first argument to evaluate.
-#' @param b The second argument to evaluate. Only evaluated if A evaluates to NULL.
+#' @param b The second argument to evaluate. Only evaluated if A evaluates to
+#' NULL.
 #' @return the value of \code{a} if not null, else \code{b}
 #' @author Peter Meilstrup
+#' @name shortcutting-or
+#' @aliases %||%
 #' @export "%||%"
 `%||%` <- function(a, b) if(is.null(a)) b else a
 

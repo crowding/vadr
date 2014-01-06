@@ -540,8 +540,8 @@ test_that("'expressions' unpacks expressions from a dotslist", {
 })
 
 test_that("dots [[<- and $<- inject evaluated promises into a dotslist", {
-  # it's impossible to inject unevaluated promises here, apparently; primitive
-  #`[[<-` forces its arguments. This way is consistent with [[ anyway.
+  #it's impossible to inject unevaluated promises this way; <-
+  #forces its RHS. This way is consistent with [[ anyway.
   with_setup(
       setup={
         x <- "x"; y <- 3

@@ -1,10 +1,3 @@
-## this is the name that gets represents the "default" of an ellipsis
-## in a formal arguments list. I don't know how else to get it;
-## as.character(empty.name) is "" but as.name("") and quote(``) both
-## complain of zero length variable names.  It is wrapped in its own
-## accessor function because otherwise roxygen chokes on it!
-empty.name <- function() formals(function(...)list())$...
-
 ##' A very compact way to define a function.
 ##'
 ##' \code{fun} captures its first argument unevaluated and turns it
@@ -39,38 +32,34 @@ empty.name <- function() formals(function(...)list())$...
 ##' \code{"fun(x+y, .all.names=TRUE)"} will have arguments named "+",
 ##' "x" and "y" in that order.
 ##'
-##' @param .envir The environment the function should be enclosed
-##' in. Defaults to the environment that called \code{fun}.
-##'
 ##' @return A newly constructed function.
+##'
+##' @note Since it doesn't know which symbols you intend to be
+##' arguments and which you intend to take from the enclosing
+##' environment, it captures all symbols in defaults; therefore it
+##' won't work as a closure that reflects changes in the enclosing
+##' environment.
 ##'
 ##' @author Peter Meilstrup
 ##'
-##' @seealso fsummarise fmutate dm_ply
-##'
 ##' @export
 fun <- function(expr, .all.names=FALSE, .envir=parent.frame()) {
-  require(codetools)
-  expr <- substitute(expr)
-  if (.all.names) {
-    varnames <- all.names(expr, unique=TRUE)
-  } else {
-    varnames <- all.names(expr, functions=FALSE, unique=TRUE)
-  }
-  args <- lapply(varnames,
-                 #should "env" be parent.env(environment())?
-                 function(x) substitute(eval(quote(x), env),
-                                        list(x=as.name(x), env=.envir)))
-  names(args) <- varnames
-  if("..." %in% varnames) {
-    args$... <- empty.name()
-  }
-  f <- eval(substitute(function() expr, list(expr=expr)))
-  attr(f, "srcref") <- NULL
-  formals(f) <- args
+  f <- do.call("funmacro", list(substitute(expr), as.logical(.all.names)))
   environment(f) <- .envir
   f
 }
+
+#this should be de-extracted and summarizer/mutator/etc ought to be
+#deleted in the next pass.
+funmacro <- macro(function(expr, .all.names) {
+  names <- all.names(expr, functions=.all.names, unique=TRUE)
+  funmacro <-
+      qq(function(
+        .=..( qqply(
+          `.(name)`=eval(quote(`.(name)`), parent.env(environment()))
+          )(name=names) )
+        ) .(expr) )
+})
 
 ##' Create a function of several arguments returning a data frame.
 ##'
@@ -107,7 +96,7 @@ summariser <- function(..., .envir=parent.frame()) {
   }
   missing_names <- varnames == ""
   if (any(missing_names)) {
-    names <- unname(unlist(lapply(match.call(expand = FALSE)$...,
+    names <- unname(unlist(lapply(match.call(expand.dots = FALSE)$...,
                                   deparse)))
     outnames[missing_names] <- names[missing_names]
     varnames[missing_names] <-
@@ -117,7 +106,7 @@ summariser <- function(..., .envir=parent.frame()) {
   #cook up a function
   bind_list <- lapply(varnames, as.name)
   names(bind_list) <- outnames
-  bind_cmd <- substitute(plyr:::quickdf(x),
+  bind_cmd <- substitute(plyr::quickdf(x),
                          list(x=as.call(c(as.name("list"), bind_list))))
   summary_command <- mapply(function(name, x)
                             substitute(name <- x, list(name=as.name(name), x=x)),

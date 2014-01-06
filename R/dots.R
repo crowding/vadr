@@ -62,7 +62,7 @@ unpack.... <- function (x) {
 #' \code{\link{dots}} objects extracts the dots argument.
 #'
 #' @param x A dots object (see \code{\link{dots}}
-#' @return A named list of expressions. The mutator \{expressions<-} applies new
+#' @return A named list of expressions. The mutator \code{expressions<-} applies new
 #' expressions to the given promises (which must be unevaluated.)
 #' @seealso dots_unpack dots_environments
 #' @rdname dots_expressions
@@ -184,7 +184,7 @@ dots_names <- function(...) .Call(`_dots_names`, get("..."))
 
 #' @export
 #' @rdname is.missing
-#' @param ... \For \code{\link{dots_missing}}, any number of
+#' @param ... for \code{\link{dots_missing}}, any number of
 #' arguments, each being checked for missingness, without being evaluated.
 dots_missing <- function(...) {
   result = logical(nargs())
@@ -256,7 +256,7 @@ dots <- function(...) structure(if (nargs() > 0) get("...") else NULL,
 #' @examples
 #' # These statements are equivalent:
 #' quote(function(x, y=1) x+y)
-#' call("function", as.pairlist(x=missing_value(), y=1), quote(x+y))
+#' call("function", pairlist(x=missing_value(), y=1), quote(x+y))
 #'
 #' # These statements are also equivalent:
 #' quote(df[,1])
@@ -264,8 +264,8 @@ dots <- function(...) structure(if (nargs() > 0) get("...") else NULL,
 #'
 #' # These statements are also equivalent:
 #' quote(function(a, b, c, d, e) print("hello"))
-#' call("function", as.pairlist(setNames(missing_value(5), letters[1:5])),
-#'                              quote(print("hello")))
+#' call("function", as.pairlist(put(missing_value(5), names, letters[1:5])),
+#'                  quote(print("hello")))
 #' @export
 missing_value <- function(n) {
   if (missing(n)) {
@@ -318,10 +318,10 @@ missing_value <- function(n) {
 #' @note "Curry" is a slight misnomer for partial function application.
 #' @author Peter Meilstrup
 #' @export "%()%"
-`%()%` <- function(f, arglist) UseMethod("%()%", arglist)
+`%()%` <- function(f, arglist, .envir=parent.frame()) UseMethod("%()%", arglist)
 
 #' @S3method "%()%" "..."
-`%()%....` <- function(f, arglist) {
+`%()%....` <- function(f, arglist, .envir=parent.frame()) {
   # this method elegant but doesn't work on some
   # nonstandard-eval functions (e.g. alist $()$ dots(...) just returns
   # quote(...))?
@@ -504,7 +504,7 @@ as.dots <- function(x, .envir=parent.frame()) UseMethod("as.dots")
 as.dots.... <- function(x, ...) x
 
 #' @S3method as.list "..."
-as.list.... <- function(x) list %()% x
+as.list.... <- function(x, ...) list %()% x
 
 #' @S3method as.dots default
 as.dots.default <- function(x, .envir=parent.frame())
@@ -513,8 +513,8 @@ as.dots.default <- function(x, .envir=parent.frame())
 #' @useDynLib vadr _as_dots_literal
 #' @export
 #' @rdname as.dots
-as.dots.literal <- function(x)
-  .Call(`_as_dots_literal`, as.list(x), do.call(dots, vector("list", length(x))))
+as.dots.literal <- function(x, .envir=NULL)
+    .Call(`_as_dots_literal`, as.list(x), do.call(dots, vector("list", length(x))))
 
 #' Check if list members are equal to the "missing value."
 #'
@@ -546,11 +546,11 @@ is.missing.... <- function(x) {
 }
 
 #' @S3method is.missing default
-is.missing.default <- function(f) {
-  if (is.list(f))
-    vapply(f, identical, FALSE, quote(expr=))
+is.missing.default <- function(x) {
+  if (is.list(x))
+    vapply(x, identical, FALSE, quote(expr=))
   else
-    rep(FALSE, length(f))
+    rep(FALSE, length(x))
 }
 
 #' @S3method "[" "..."

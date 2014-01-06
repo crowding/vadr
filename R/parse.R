@@ -93,7 +93,7 @@ interpolate_inner <- function(s, envir) {
 #' @usage interply(text, begin = ".(", end = ")", envir = parent.frame())(...)
 #' @export
 interply <- function(text, begin=".(", end=")", envir=parent.frame()) {
-  if(length(text) != 1) error("Must have scalar string")
+  if(length(text) != 1) stop("Must have scalar string")
   exprs <- find_subst_expressions(text, begin, end)[[1]]
   i <- seq(2, length.out=(length(exprs)-1)/2, by=2)
   exprs[i] <- parse(text=exprs[i])

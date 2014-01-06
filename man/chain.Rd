@@ -107,6 +107,7 @@ or the \code{|>} operator in Elixir.
 }
 \examples{
 # In help("match_df", package="plyr") there is this example:
+library(plyr)
 data(baseball)
 
 longterm <- subset(count(baseball, "id"), freq > 25)

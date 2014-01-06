@@ -5,10 +5,11 @@
 \alias{index<-}
 \title{index.data.frame}
 \usage{
-\method{index}{data.frame}(df, row = 1:nrow(df), col = NULL, value = c())
+\method{index}{data.frame}(obj, row = 1:nrow(obj), col = NULL,
+  value = c())
 }
 \arguments{
-  \item{df}{The data frame to subset}
+  \item{obj}{The data frame to subset}
 
   \item{row}{Rows to subset by. These may be numeric
   indices, character names, a logical mask, or a 2-d
@@ -24,21 +25,17 @@
 The specified subset of data.
 }
 \description{
-Improved subsetting and modification of data frames by
-rows, columns and arrays.
+Scatter and gather over data frames.
 }
 \details{
-In particular, this handles the case of assigning to
-several elements of a data frame in parallel.
-
 This handles a couple of cases that are not handled by core
-data frame operations In particular, this allows you to
+data frame operations. In particular, this allows you to
 extract a vector of values from two vectors of row and
 column indices (which may be numeric or character).
 
-Unlike using \code{`[.data.frame`} wiht an n-by-2 array,
+Unlike using \code{`[.data.frame`} with an n-by-2 array,
 this does not downcast the array to matrix, and tries to
-prezerve the type information.
+preserve the type information.
 }
 \examples{
 #Here is a data frame with row names and mixed data types.
@@ -49,11 +46,10 @@ df <- data.frame(  A = c(1,4,2,6,7,3,6)
                  , letter = I(letters[7:13])
                  , lletter = I(list("a",1,"b",3,NULL,5,"d"))
                  , row.names = c( "foo", "bar", "baz", "qux"
-                                 , "quux", "quuux", "quuuux")
-
+                                 , "quux", "quuux", "quuuux"))
 
 #select values from column A,B,C for every row
-index(df, col=c("A","B","A","C","B","B","C") # -> c(1, 7, 2, 2, 3, 5, 5)
+index(df, col=c("A","B","A","C","B","B","C")) # -> c(1, 7, 2, 2, 3, 5, 5)
 
 #indexing by a 1x2 array extracts a single element unboxed
 index(df, array(c(3,2), dim=c(1,2))) # -> 2

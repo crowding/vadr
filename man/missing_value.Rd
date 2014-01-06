@@ -23,7 +23,7 @@ to explicitly invoke the "missing" value.
 \examples{
 # These statements are equivalent:
 quote(function(x, y=1) x+y)
-call("function", as.pairlist(x=missing_value(), y=1), quote(x+y))
+call("function", pairlist(x=missing_value(), y=1), quote(x+y))
 
 # These statements are also equivalent:
 quote(df[,1])
@@ -31,8 +31,8 @@ substitute(df[row,col], list(row = missing_value(), col = 1))
 
 # These statements are also equivalent:
 quote(function(a, b, c, d, e) print("hello"))
-call("function", as.pairlist(setNames(missing_value(5), letters[1:5])),
-                             quote(print("hello")))
+call("function", as.pairlist(put(missing_value(5), names, letters[1:5])),
+                 quote(print("hello")))
 }
 \seealso{
 list_missing dots_missing
