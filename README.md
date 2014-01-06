@@ -8,24 +8,29 @@ vadr
 
 R is a curious language. At its core is a Lisp interpreter with
 first-class environments and lazy evaluation implemented in terms of
-underlying `fexpr`s. It's a language whose core was made flexible
+underlying [fexpr]s. It's a language whose core was made flexible
 enough to reimplement a weird old language like S-PLUS on top of.
+
+[fexpr]: http://axisofeval.blogspot.com/2012/03/why-fexprs-part-n-or-lambda-only.html
 
 Oddly, all the good bits of R seem to have been buried under
 an implementation of weird old S-PLUS.
 
-I like the core language trapped underleath there. It's kind of like
+I like the core language trapped underleath there. It's a bit like
 what John Shutt was talking about in his thesis on
 [Kernel][kernel]. I'd like to elevate the core above the S facade.
 
 [kernel]: http://web.cs.wpi.edu/~jshutt/kernel.html
 
-Look at your favorite language. Then at R. Then back to your
-favorite language. Then back to R, Sadly, R isn't your favorite
-language. But it could smell like your favorite language. Look
-down. Now back to R. Where are you? You're writing code in the
-language your language could smell like. Anything is possible.
-R's on a horse.
+Luckily, R is one of the most syntactically malleable languages out there,
+if you look at it right.
+
+>_Look at your favorite language. Then at R. Then back to your
+>favorite language. Then back to R, Sadly, R isn't your favorite
+>language. But it could smell like your favorite language. Look
+>down. Now back to R. Where are you? You're writing code in the
+>language your language could smell like. Anything is possible.
+>R's on a horse._
 
 This package implements workalikes for the author's (and perhaps your)
 favorite features from other languages, making R programs shorter and
@@ -133,6 +138,30 @@ Sine and cosine of that gives you coordinates. Take differences and apply
 Pythagoras, squaring, summing and rooting to get the length of each side.
 Add it all up and you have your perimiter."
 
+## Easy string substitution
+
+The "%#%" operator splices data into strings much like Python's "%" or Ruby's "#".
+
+```r
+".(x), .(y)!" %#% c(x="Hello", y="World!")
+```
+
+But this being R, we can do it on collections of strings too. Here's a "[99 bottles][bottles]" implementation:
+
+[bottles]: http://www.99-bottles-of-beer.net/
+
+```r
+bottles <- interply(
+  ".(ifelse(n%%100>0, n%%100, 'no more')) bottle.('s'[n%%100!=1]) of beer")
+initcap <- function(x) {substr(x, 1, 1) <- toupper(substr(x, 1, 1)); x}
+verse <- interply(
+  paste0(".(initcap(bottles(n=n))) on the wall, .(bottles(n=n)).\n",
+         ".(c('Go to the store and buy some more,',",
+         "    'Take one down and pass it around,')[(n%%100!=0)+1])",
+         " .(initcap(bottles(n=n-1))) on the wall."))
+cat(verse(n=99:0), sep="\n\n")
+```
+
 ## Partial application (currying)
 
 If you ever want to provide default arguments to a function before
@@ -147,7 +176,7 @@ printReport %()% c("message one", "message two", "message three")
 ```
 
 These partial application utilities are fully integrated with good
-handling for dot-dot-dot lists mentioned in the next section
+handling for dot-dot-dot lists mentioned in the next section.
 
 ## Dot-Dot-Dot lists and missing values
 
@@ -178,10 +207,10 @@ For a more pointed example, consider `switch`. Switch takes its first
 argument and uses it to decide which if its subsequent arguments to
 evaluate.
 
-Consider trying to implement an R function that has the behavrior of
+Consider trying to implement an R function that has the behavior of
 `switch` properly (not as a C function, and not inspecting the
 stack using `match.call()` or `parent.frame()` which are evil.) This
-is doable in pure R but wacky and slow:
+is doable in pure R but wacky and slow -- the only way I can see to selectively evaluate one named argument is to build a function that takes that argument:
 
 ```r
 switch2 <- function(expr, ...) {
@@ -203,7 +232,7 @@ switch2 <- function(expr, ...) {
 }
 ```
 
-With a direct interface to manipulate dotlists, `switch` is easy:
+But with a direct interface to manipulate dotlists, `switch` is easy:
 
 ```r
 switch3 <- function(expr, ...) {
@@ -243,7 +272,7 @@ c %()% d
 
 ## Quasiquotation
 
-`qq` implements quaqsiquotation, which is a way to build expressions and code out of data. `qq` is more capable than `substitute` or `bquote` and faster than the latter. See the `qq` vignette for more details.
+`qq` implements quaqsiquotation, which is a way to build expressions and code out of data. `qq` is more capable than `substitute` or `bquote` and faster than the latter.  Think 'string substitution' as above, but for syntactically correct code. See the `qq` vignette for more details.
 
 ## Macros
 
