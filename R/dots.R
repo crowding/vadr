@@ -398,49 +398,13 @@ missing_value <- function(n) {
 #' @export
 #' @rdname curr
 curr <- function(f, ...) {
-  if (missing(...)) {
-    f
-  } else {
-    stored_dots <- list(NULL, get("..."))
-    function(...) {
-      if (missing(...)) {
-        assign("...", stored_dots[[2]])
-        f(...)
-      } else {
-        stored_dots[1] <- list(get("..."))
-        del("...")
-        selector <- 0
-        makeActiveBinding("...",
-                          function() stored_dots[[selector <<- selector+1]],
-                          environment())
-        f(..., ...)
-      }
-    }
-  }
+  `%<<%....`(f, dots(...))
 }
 
 #' @export
 #' @rdname curr
 curl <- function(f, ...) {
-  if (missing(...)) {
-    f
-  } else {
-    stored_dots <- list(get("..."), NULL)
-    function(...) {
-      if (missing(...)) {
-        assign("...", stored_dots[[1]])
-        f(...)
-      } else {
-        stored_dots[2] <- list(get("..."))
-        del("...")
-        selector <- 0
-        makeActiveBinding("...",
-                          function() stored_dots[[selector <<- selector+1]],
-                          environment())
-        f(..., ...)
-      }
-    }
-  }
+  `%<<<%....`(f, dots(...))
 }
 
 #Curry methods for plain values.
