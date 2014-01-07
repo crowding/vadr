@@ -25,11 +25,6 @@ const char *paren_match (const char *, step_t);
 const char *quoted_match(const char *open, step_t);
 const char *comment_match(const char *open, step_t);
 
-#define MIN(x,y) ((x) < (y) ? (x) : (y))
-#define MAX(x,y) ((x) > (y) ? (x) : (y))
-#define MIN3(x, y, z) (MIN(x,(MIN(y,z))))
-#define MAX3(x, y, z) (MAX(x,(MAX(y,z))))
-
 /* Find substrings matching .(expr), where expr is a balanced expression
  * (following R rules for matching [], (), {}, '', "", ``, %%, \, and comments.)
  * Returns a _list_ of _character arrays_ one array per each input string.

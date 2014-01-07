@@ -1,0 +1,72 @@
+#' @export
+
+#' Fetch promises associated with named arguments.
+#'
+#' @usage arg_list(\dots)
+#' arg_list[envir](\dots)
+#' @param ... Variable names (unevaluated). Arguments may be named; these names
+#' determine the names on the dots list (and not the variable names)
+#' @return a \code{\link{dots}} object containing the promises that are bound to
+#' those variables in the calling environment.
+#' @author Peter Meilstrup
+#' @note The tags on the dots object are determined by argument names;
+#' variable names are discarded.
+#' @seealso dots
+#' @export
+#' @useDynLib vadr _getpromise_in
+arg_dots <- function(...) {
+  d <- unpack(dots(...))
+  structure(.Call(`_getpromises_in`, d$envir, d$expr), names=d$name)
+}
+class(arg_dots) <- "arg_dots"
+
+#' ...
+#'
+#' \code{arg_get} fetches arguments from a named list.
+#' @rdname arg_list
+#' @param names A character vector or list of names.
+get_dots <- function(names, envir=argenv(names)) {
+  force(envir)
+  names <- lapply(as.name, names)
+  .Call(`_getpromise_in`, envir, names)
+}
+
+#' ...
+#'
+#' arg_list may be told to look in a 
+#' @S3method [ arg_list
+#' @rdname arg_list
+#' @usage arg_list[envir](...)
+#' @param obj N/A.
+#' @param envir Where to look for the named arguments.
+#' @useDynLib vadr _getpromise_in
+`[.arg_list` <- function(arg_list, envir) {
+  function(...) {
+    names <- list_quote(...)
+    .Call(`_getpromise_in`, envir, names)
+  }
+}
+
+#' ...
+#'
+#' \code{arg_env} determines the lexical scope of an argument (which must be an
+#' un-evaluated promise).
+#' @rdname arg_list
+#' @param name A single argument name; not evaluated.
+#' @export
+arg_env <- function(name,
+                    envir=arg_env(name, environment())) {
+  expressions(.Call(`_getpromise_in`, list(substitute(name), envir)))[[1]]
+}
+
+#' ...
+#'
+#' \code{arg_expr} fetches the expression attached to an argument in the given
+#' environment. The effect is similar to \code{substitute(name)} but more
+#' specific.
+#' @rdname arg_list
+#' @export
+arg_expr <- function(name,
+                     envir=arg_env(name, environment())) {
+  environments(.Call(`_getpromise_in`, list(substitute(name), envir)))[[1]]
+}

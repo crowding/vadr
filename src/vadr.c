@@ -14,3 +14,18 @@ void assert_type3(SEXP x, SEXPTYPE type, const char *what) {
           type2char(type), what, type2char(TYPEOF(x)));
   }
 }
+
+int recycle_length(int i, int j) {
+  if (MIN(i,j) == 0) return 0;
+  int n = MAX(i,j);
+  if ((n%i != 0) || (n%j != 0)) {
+    warning("Longer vector length is not a multiple of shorter vector length");
+  }
+  return n;
+}
+
+/* int recycle(int n, int i, int j, void (*f)(int, int, void*), void* init) { */
+/*   for (int k=0; k < n; i++) { */
+/*     (*f)(k%i, k%j, init); */
+/*   } */
+/* } */
