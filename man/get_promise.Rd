@@ -3,7 +3,8 @@
 \alias{getpromise_in}
 \title{Fetch promises bound to variables.}
 \usage{
-  getpromise(\dots) getpromise_in(envir)(\dots)
+getpromise(\dots)
+getpromise_in(envir)(\dots)
 }
 \arguments{
   \item{...}{Variable names (unevaluated). Arguments may be
@@ -14,17 +15,17 @@
   in.}
 }
 \value{
-  a \code{\link{dots}} object containing the promises that
-  are bound to those variables in the calling environment.
+a \code{\link{dots}} object containing the promises that
+are bound to those variables in the calling environment.
 }
 \description{
-  Fetch promises bound to variables.
+Fetch promises bound to variables.
 }
 \note{
-  The tags on the dots object are determined by argument
-  names; variable names are discarded.
+The tags on the dots object are determined by argument
+names; variable names are discarded.
 }
 \author{
-  Peter Meilstrup
+Peter Meilstrup
 }
 
