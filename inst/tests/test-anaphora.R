@@ -25,6 +25,15 @@ test_that("put() changes a subset to a value", {
   expect_equal(x, 1:10)
 })
 
+test_that("two argument put()", {
+  x <- 1:10
+  z <- put(names(x), letters[1:10])
+  y <- put(x[1], 4)
+  expect_equal(z, structure(1:10, names=letters[1:10]))
+  expect_equal(y, c(4, 2:10))
+  expect_equal(x, 1:10)
+})
+
 test_that("alter() sets a sebset to the chain of the subset", {
   x <- structure(1:5, names=letters[1:5])
   y <- alter(x, names(it)[5], toupper)

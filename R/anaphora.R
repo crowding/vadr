@@ -89,12 +89,12 @@ NULL
 #' x #x is unchanged
 put <- macro(function(it, subset, value) {
   if (nargs()==2) {
-    # Some of my projects use this 2-argument syntax. Not officially supported.
     target <- assignment_target(it)
+    # Some of my projects use this 2-argument syntax. Not officially supported.
     qq( (function(`.(target)`) {
-      .(assignment) <- .(subset);
+      .(it) <- .(subset);
       .(target)
-    })( .(subset) ))
+    })( .(target) ))
   } else {
     qq( (function(it)
          {
@@ -113,7 +113,7 @@ put <- macro(function(it, subset, value) {
 #' \code{\link{chain}}, then replaces the subset with the result,
 #' returning the modified object.
 #'
-#' \code{x %<~% alter(names[5], toupper)} is equivalent to:
+#' \code{x \%<~\% alter(names[5], toupper)} is equivalent to:
 #'
 #' \code{names(x)[5] <- toupper(names(x)[5])}
 #' @rdname modifying
@@ -125,19 +125,6 @@ put <- macro(function(it, subset, value) {
 #' x <- alter(structure(1:10, names=letters[1:10]), names)
 #' y <- alter(x, names[5], toupper, str_dup(3))
 alter <- macro(function(it, subset, ...) {
-  ## if (nargs()==2) {
-  ## Er, possible to distinguish 2-arg form?
-  ##   target <- assignment_target(subset)
-  ##   template(
-  ##     (
-  ##       function(`.(target)`) {
-  ##         .(assignment) <-
-  ##             .(vadr:::chain_function(alist(`.`=))(list(...)))(.(assignment));
-  ##         .(target)
-  ##       }
-  ##       )(.(target))
-  ##     )
-  ## } else {
   addr <- address_expand(quote(it), subset)
   qq(
     (function(it) {
