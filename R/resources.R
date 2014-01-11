@@ -19,3 +19,38 @@ with_resources_call <- function() {
   stop("not written")
 }
 
+using <- function(...) {
+  stop("use with[arg=resource, ...](code ...)")
+}
+
+`[.using` <- function(with, ...) function() {
+  expressions <- dots_expressions(...)
+  x <- dots(...)
+  body <- using_body(...)
+}
+
+closable <- function()
+
+#a macro-writing macro, maybe? First to gen function template, second
+#to make fun?
+using_body <- macro(function(...){
+
+})
+
+using_body <- macro({
+
+})
+
+## with | o = options(data=data)
+##      | f = file(f)
+##      | ( test
+##        | test
+##        | test
+##        )
+
+## `[.macro` <- function(...) {
+##   args <- arg_quote(...)
+##   macro(function(...) {
+##     .(macro)(.(function(..(arg_quote(...)))))
+##   })
+## }

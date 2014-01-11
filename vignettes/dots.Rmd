@@ -1,0 +1,55 @@
+# So what does `...` mean anyway?
+
+The R documentation has precious little to say about the `...` construct. Here I'll try to show how what it does, how it works, and how the `vadr` package enhances your ability to do things with it.
+
+### What `...` means in a function definition
+
+Here is an example function definition:
+
+Whenever a function call is made, the R interpreter matches up the `...` list against the defined arguments of a function. If the definition of the function contains `...`, Any arguments that don't match the other arguments get assigned to `...`.
+
+There are equivalent mechanisms in other languages. For example in Python, our function might be specified as follows:
+
+Here `*args` and `**kwargs` aer playing the role that `...` plays in R. Any unnamed arguments that don't match get p
+
+So, if we were to call the
+
+### What `...`means in function code
+
+If `...` appears in the list of arguments to call a function, it is treated specially by the interpreter
+
+This behavior is a lot like "argument interpolation" in Python, where you 
+
+The corresponding behavior in Python is like this:
+
+### Where does `...` live?
+
+`...` is actually a variable that lives in the environment of the function.
+
+EXAMPLE
+
+However,
+
+### What actually is a `...`?
+
+The value stored in `...` is a special type of value, called `DOTSXP.` Which is effectively the same as a "pairlist," except that it is marked as a different type. Each element of the `DOTSXP` is a *promise*
+
+When R always expects a `DOTSXP` to be assigned to the `...` name. Any other type will cause an error. There is no user-level interface to create a DOTSXP (aside from  extension functions provided in `vadr`, but you can extract a DOTSXP using `get`, and even assign it to another environment.
+
+Stupid `...` trick:
+
+Here, arguments are passed to `f1`, extracted, returned and stored in `x`. Then the 
+
+A *promise* is what is created for each argument that is passed to a function, and supports R's lazy evaluation of function arguments. A promise consists of three parts: an expression, an environment to evaluate it in, and the value (after it has been evaluated)
+
+In this case, we see from 'substitute' that the original expressions are preserved through the 
+
+### Relation between `...` and lazy evaluation
+
+Every element in `...` is a promise (with its , and each argument to a function becomes a promise
+
+This has a very important consequence; it means that the environment of your argument might *not* be that of your caller, if your caller used `...` to hand down arguments. For this reason, the common pattern of using `parent.frame` or `match.call` in conjunction with `eval` to perform non-standard evaluation is simply incorrect; for the correct patterns see the vignette `XXX`.
+
+### How arguments get put into `...`
+
+M-/
