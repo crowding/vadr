@@ -422,6 +422,7 @@ curl <- function(f, ...) {
 `%__%` <- function(x, y) UseMethod("%__%", x)
 
 #' @S3method "%__%" "..."
+#' @export
 `%__%....` <- function(x, y) UseMethod("%__%....", y)
 
 #' @S3method "%__%...." "..."
