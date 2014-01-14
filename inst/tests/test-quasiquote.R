@@ -144,3 +144,17 @@ test_that("qqply computes names for its output", {
   x <- qqply(`.(x)` = .(y))(x=letters[1:3], y=1:3)
   x %is% list(a =1, b=2, c=3)
 })
+
+test_that("qqply and qeply scope of substitutor", {
+  x <- 1
+  f <- function(nm, vector) {
+    qqply(`.(nm)` <- `.(nm)` + .(x))(x=vector)
+  }
+  f("x", 1) %is% alist(x <- x + 1)
+  fe <- function(nm, vector) {
+    g <- 5
+    qeply(`.(nm)` <- `.(nm)` + .(x))(x=vector)
+    g
+  }
+  fe("g", 1:10) %is% 60
+})

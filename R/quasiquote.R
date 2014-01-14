@@ -123,20 +123,20 @@ qe <- macro(function(expr) {
 qqply <- macro(function(...) {
   collection <- as.call(c(list(c), list(...)))
   expand_expr <- qq_internal(collection)
-  expandfn <- qe(function(...) {
+  expandfn <- qq(function(...) {
     .(`[`)(.(as.list)(.(expand_expr)), -1)
   })
-  qq_applicator(expandfn)
+  qq(.(qq_applicator)(.(expandfn)))
 })
 
 #' @export
 qeply <- macro(function(...) {
   collection <- as.call(c(list(c), list(...)))
   expand_expr <- qq_internal(collection)
-  expandfn <- qe(function(...) {
+  expandfn <- qq(function(...) {
     .(eval)({.(expand_expr)}, .(parent.frame)(2))
   })
-  qq_applicator(expandfn)
+  qq(.(qq_applicator)(.(expandfn)))
 })
 
 qq_applicator <- function(expander) {
