@@ -103,3 +103,8 @@ test_that('chain infix form', {
   data <- c(13, 32, 54, 68, 12, 31, 14, 31,  5,  9)
   expect_equal(5, data %|>% (.>20) %|>% sum)
 })
+
+test_that('empty arguments ignored', {
+  data <- c(13, 32, 54, 68, 12, 31, 14, 31,  5,  9)
+  expect_equal(chain(data, .>20,,sum,,), sum(data > 20))
+})

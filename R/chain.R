@@ -1,20 +1,18 @@
 #' @include macro.R
 NULL
 
-#generate the function y both forms of chain
-chain_function <- function(args) {function(transforms) {
+#generate the function for both forms of chain
+chain_function <- function(args) function(transforms) {
   var <- as.name(names(args)[[1]])
-  names <- names(transforms) %||% ""
-  chainexpr <- qq(function(.=..(args)) {
-    ..(
-      Map(transforms, names, f=function(a,n)
-          if (n == "") template(.(var) <- .(chain.dwim(a, var)))
-          else template(.(as.name(n)) <- .(var) <- .(chain.dwim(a, var))))
-      )
-    .(var)
-  })
-  chainexpr
-}}
+  transforms <- transforms[!is.missing(transforms)]
+  names <- names(transforms) %||% rep("", length(transforms))
+  assignments <- qqply(.(var) <- .(chain.dwim(x, var))
+                       )(x=transforms, var=list(var))
+  named <- names != ""
+  assignments[named] <- qqply(`.(x)` <- .(y)
+                              )(x=names[named], y=assignments[named])
+  qq(function(.=..(args)) { ..(assignments) })
+}
 
 ## helper function that "guesses" the correct form of the arguments to
 ## chain if they do not contain dots.
@@ -23,7 +21,10 @@ chain.dwim <- function(expr, dot=quote(.)) {
     expr
   } else {
     switch(mode(expr),
-           name=call(as.character(expr),dot),
+           name={
+             if(identical(expr, missing_value())) expr
+             else call(as.character(expr),dot)
+           },
            call=as.call(c(expr[[1]], dot, as.list(expr[-1]))),
            `function`=as.call(list(expr, dot)),
            stop("don't know how to chain into a '", mode(expr), "'"))
