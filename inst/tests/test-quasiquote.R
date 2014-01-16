@@ -151,10 +151,11 @@ test_that("qqply and qeply scope of substitutor", {
     qqply(`.(nm)` <- `.(nm)` + .(x))(x=vector)
   }
   f("x", 1) %is% alist(x <- x + 1)
+  x <- 2
   fe <- function(nm, vector) {
     g <- 5
-    qeply(`.(nm)` <- `.(nm)` + .(x))(x=vector)
+    qeply(`.(nm)` <- `.(nm)` + x*.(x))(x=vector)
     g
   }
-  fe("g", 1:10) %is% 60
+  fe("g", 1:10) %is% (5 + sum(2*(1:10)))
 })
