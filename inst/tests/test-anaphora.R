@@ -37,10 +37,12 @@ test_that("two argument put()", {
 test_that("alter() sets a sebset to the chain of the subset", {
   x <- structure(1:5, names=letters[1:5])
   y <- alter(x, names(it)[5], toupper)
+  z <- alter(x, names, toupper)
   w <- alter(x, names[3], toupper)
   ww <- alter(x, names[2], toupper, str_dup(3))
   expect_equal(x, c(a=1, b=2, c=3, d=4, e=5))
   expect_equal(y, c(a=1, b=2, c=3, d=4, E=5))
+  expect_equal(z, c(A=1, B=2, C=3, D=4, E=5))
   expect_equal(w, c(a=1, b=2, C=3, d=4, e=5))
   expect_equal(ww, c(a=1, BBB=2, c=3, d=4, e=5))
 })
