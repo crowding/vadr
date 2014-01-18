@@ -11,7 +11,7 @@ chain_function <- function(args) function(transforms) {
   named <- names != ""
   assignments[named] <- qqply(`.(x)` <- .(y)
                               )(x=names[named], y=assignments[named])
-  qq(function(.=..(args)) { ..(assignments) })
+  qq(function(.=..(args)) { ..(assignments); .(var) })
 }
 
 ## helper function that "guesses" the correct form of the arguments to

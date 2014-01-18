@@ -108,3 +108,8 @@ test_that('empty arguments ignored', {
   data <- c(13, 32, 54, 68, 12, 31, 14, 31,  5,  9)
   expect_equal(chain(data, .>20,,sum,,), sum(data > 20))
 })
+
+test_that('chain output is visible', {
+  expect_equal(withVisible(chain(1, `+`, `-`)),
+               list(value=-1, visible=TRUE))
+})
