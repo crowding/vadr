@@ -79,9 +79,8 @@ make_unique_names <- function(new, context, sep=".") {
 #' Turn an expression-substituting function into a
 #' nonstandard-evaluating function.
 #'
-#' This just places a wrapper around the function so that you do not
-#' have to remember how to use substitute, and you are not tempted to
-#' mix nonstandard with standard evaluation(*).
+#' This just places a wrapper around the function that un-quotes all arguments
+#' and evaluates the result.
 #'
 #' @param fn A function which takes some arguments and returns a trane
 #' @param cache Whether to store already-compiled macros for faster
@@ -94,14 +93,14 @@ make_unique_names <- function(new, context, sep=".") {
 #' expressions, pass the expressions to the wrapped function, then
 #' evaluate the result it gets back.
 #'
-#' (*) The author believes that there is one way to properly do
-#' nonstandard evaluation in R, and that is to quote ALL of your
-#' arguments and perform purely lexical operations on them, evaluating
-#' the result in the caller. In other words, to behave as a
-#' macro. Functions which evaluate different arguments in different
-#' scopes (e.g. \code{\link{transform}} cause problems; consider
-#' writing these as functors, or using formula objects or
-#' \code{\link[plyr]{.}()} to capture environments explicitly.
+#' The advantage of macros versus usual nonstandard evaluation using
+#' \code{\link{substitute}}, \code{link{eval}} and friends
+#' is that it encourages separating "computing on
+#' the language" from "computing on the data." Because code is usually
+#' static while data is variable, the language transformations only need
+#' to happen once per each call site.
+#' Thus the expansions of macros can be cached, enabling complicated code
+#' transformations without performance penalties.
 #'
 #' @author Peter Meilstrup
 #' @seealso qq
@@ -233,6 +232,4 @@ quote_args <- function(...) {
 }
 
 .onLoad_macro <- function(libname, pkgname) {
-#  message("debugging expressions_and_pointers")
-#  debug(expressions_and_pointers)
 }

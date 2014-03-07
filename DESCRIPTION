@@ -27,6 +27,7 @@ Imports:
     compiler (>= 2.15.2)
 Collate:
     'ammoc.R'
+    'lru.R'
     'cache.R'
     'macro.R'
     'anaphora.R'

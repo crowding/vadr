@@ -23,20 +23,19 @@ list to the wrapped function. It will transform all
 arguments into expressions, pass the expressions to the
 wrapped function, then evaluate the result it gets back.
 
-(*) The author believes that there is one way to properly
-do nonstandard evaluation in R, and that is to quote ALL of
-your arguments and perform purely lexical operations on
-them, evaluating the result in the caller. In other words,
-to behave as a macro. Functions which evaluate different
-arguments in different scopes (e.g. \code{\link{transform}}
-cause problems; consider writing these as functors, or
-using formula objects or \code{\link[plyr]{.}()} to capture
-environments explicitly.
+The advantage of macros versus usual nonstandard evaluation
+using \code{\link{substitute}}, \code{link{eval}} and
+friends is that it encourages separating "computing on the
+language" from "computing on the data." Because code is
+usually static while data is variable, the language
+transformations only need to happen once per each call
+site. Thus the expansions of macros can be cached, enabling
+complicated code transformations without performance
+penalties.
 }
 \description{
-This just places a wrapper around the function so that you
-do not have to remember how to use substitute, and you are
-not tempted to mix nonstandard with standard evaluation(*).
+This just places a wrapper around the function that
+un-quotes all arguments and evaluates the result.
 }
 \author{
 Peter Meilstrup
