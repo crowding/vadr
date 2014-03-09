@@ -16,7 +16,7 @@
 #' @useDynLib vadr _getpromise_in
 arg_dots <- function(...) {
   d <- unpack(dots(...))
-  structure(.Call(`_getpromises_in`, d$envir, d$expr), names=d$name)
+  .Call(`_getpromise_in`, d$envir, d$expr, d$name)
 }
 class(arg_dots) <- "arg_dots"
 
@@ -25,10 +25,11 @@ class(arg_dots) <- "arg_dots"
 #' \code{arg_get} fetches arguments from a named list.
 #' @rdname arg_list
 #' @param names A character vector or list of names.
-get_dots <- function(names, envir=argenv(names)) {
+get_dots <- function(names, envir=arg_env(names, environment())) {
   force(envir)
-  names <- lapply(as.name, names)
-  .Call(`_getpromise_in`, envir, names)
+  tags <- names(names) %||% rep("", length(names))
+  names <- lapply(names, as.name)
+  .Call(`_getpromise_in`, rep(list(envir), length(names)), names, tags)
 }
 
 #' ...

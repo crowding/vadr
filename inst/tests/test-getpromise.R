@@ -26,7 +26,6 @@ test_that("can register arguments to actual environments", {
   }
   where <- "top"
   f1(one, two)
-
 })
 
 test_that("arg_env error on evaluated promise", {
@@ -45,15 +44,31 @@ test_that("empty arguments return missing value and empty environment", {
   expect_identical(f2(), missing_value())
 })
 
-test_that("get dotslists of args direct or by name", {
-  stop("not written")
+test_that("get dotslists of args direct", {
+  f1 <- function(x, y) arg_dots(x, b=y)
+  d <- f1(x=one.arg, two.arg)
+  names(d) %is% c("", "b")
+  expressions(d) %is% alist(one.arg, b=two.arg)
+  expect_identical(environments(d), list(environment(), b=environment()))
 })
 
-test_that("get dotslists handles missing arguments by making blank promises", {
-  stop("not written")
+test_that("get dotslist of args by name", {
+  f1 <- function(x, y) get_dots(c("x", b="y"))
+  d <- f1(x=one.arg, two.arg)
+  names(d) %is% c("", "b")
+  expressions(d) %is% alist(one.arg, b=two.arg)
+  expect_identical(environments(d), list(environment(), b=environment()))
 })
 
-test_that("get all arguments, named or no, of present env", {
-  stop("not written")
+test_that("get dotslists handles missing arguments", {
+  f1 <- function(x, y) arg_dots(x, b=y)
+  d <- f1(, two.arg)
+  is.missing(expressions(d)) %is% c(TRUE, b=FALSE)
+  expect_identical(environments(d), list(NULL, b=environment()))
 })
 
+## test_that("get all arguments, named or no, of present env", {
+##   #need a better designed alternative to match.call() and friends.
+##   #something something context stack?
+##   stop("not written")
+## })

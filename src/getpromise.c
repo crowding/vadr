@@ -1,27 +1,42 @@
 #include "vadr.h"
 
-SEXP _getpromise_in(SEXP envir, SEXP names) {
-  assert_type(envir, VECSXP);
+SEXP emptypromise();
+
+SEXP _getpromise_in(SEXP envirs, SEXP names, SEXP tags) {
+  assert_type(envirs, VECSXP);
   assert_type(names, VECSXP);
-  SEXP tags = getAttrib(names, R_NamesSymbol);
+  assert_type(tags, STRSXP);
   int len = length(names);
   
   SEXP output = PROTECT(allocList(len));
   SEXP output_iter = output;
-    for (int i = 0; i < len; i++, output_iter = CDR (output_iter)) {
+  for (int i = 0; i < len; i++, output_iter = CDR (output_iter)) {
     SET_TYPEOF(output_iter, DOTSXP);
     if ((tags != R_NilValue) && (STRING_ELT(tags, i) != R_BlankString)) {
       SET_TAG(output_iter, install(CHAR(STRING_ELT(tags, i))));
     }
     SEXP name = VECTOR_ELT(names, i);
     assert_type(name, SYMSXP);
-    SEXP promise = Rf_findVar(name, envir);
+    SEXP promise = Rf_findVar(name, VECTOR_ELT(envirs, i));
+    if (promise == R_MissingArg) promise = emptypromise();
     assert_type(promise, PROMSXP);
+    while (TYPEOF(PREXPR(promise)) == PROMSXP) {
+      promise = PREXPR(promise);
+    }
     SETCAR(output_iter, promise);
   }
   setAttrib(output, R_ClassSymbol, ScalarString(mkChar("...")));
   UNPROTECT(1);
   return(output);
+}
+
+SEXP emptypromise() {
+  SEXP out = PROTECT(allocSExp(PROMSXP));
+  SET_PRCODE(out, R_MissingArg);
+  SET_PRENV(out, R_NilValue);
+  SET_PRVALUE(out, R_MissingArg);
+  UNPROTECT(1);
+  return out;
 }
 
 SEXP _arg_env(SEXP envir, SEXP name) {

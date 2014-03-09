@@ -150,7 +150,8 @@ macro <- function(fn, cache=TRUE, JIT=cache) {
 #' @export
 expand_macros <- function(expr,
                           macros=NULL,
-                          where=arg_env(expr), recursive=FALSE) {
+                          where=arg_env(expr, environment()),
+                          recursive=FALSE) {
   force(where)
   if (is.null(macros)) {
     macros <- find_macros(all.names(expr), where)
@@ -176,7 +177,8 @@ expand_macros <- function(expr,
 #' @export
 expand_macros_q <- function(expr,
                             macros=find_macros(all.names(expr), where),
-                            where=arg_env(expr), recursive=FALSE) {
+                            where=arg_env(expr, environment()),
+                            recursive=FALSE) {
   force(where)
   expr <- substitute(expr)
   expand_macros(expr, macros, where, recursive)
@@ -194,7 +196,8 @@ expand_macros_q <- function(expr,
 #' @param what a list of names to try. If not specified, searches all
 #' attached namespaces.
 #' @param where A frame to search.
-find_macros <- function(what, where=arg_env(what)) {
+find_macros <- function(what, where=arg_env(what, environment())) {
+  force(where)
   if (is.null(what)) {
     what <- apropos(".*", where=FALSE, mode="function")
   }
