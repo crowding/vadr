@@ -111,8 +111,8 @@ dots_expressions <- list_quote
 #' \code{environments<-} constructs a new list of unevaluated promises
 #' with the same expressions but different environments.
 dots_environments <- function(...) {
-  y <- .Call(`_dots_unpack`, get("x"))
-  unclass(structure(y$expr, names=y$name))
+  y <- .Call(`_dots_unpack`, get("..."))
+  unclass(structure(y$env, names=y$name))
 }
 
 #' @export

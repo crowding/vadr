@@ -231,14 +231,18 @@ test_that("dots_environments and mutator", local({
     where <- "e2E"
     f(..., tolower(where))
   }
-  f <- function(...) {
-    dots(...)
+  f <- function(..., accessor=dots) {
+    accessor(...)
   }
 
-  test <- f1() 
+  test <- f1()
   environments(test)[[1]]$where %is% "e1E"
   environments(test)[[2]]$where %is% "e2E"
   as.list(test) %is% list("E1E", "e2e")
+
+  test <- f1(accessor=dots_environments)
+  test[[1]]$where %is% "e1E"
+  test[[2]]$where %is% "e2E"
 
   test <- f1()
   environments(test) <- rev(environments(test))
