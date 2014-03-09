@@ -42,7 +42,7 @@ z <- 100
 evalq(a+(b*a)*z, en) #a+(b*a)*100
 
 ##We can build a function that does something like substitute() like this:
-ersatz.substitute <- function(expr, envir=parent.frame()) {
+ersatz.substitute <- function(expr, envir=arg_env(expr)) {
   parent <- as.environment(envir)
   en <- quoting.env(setdiff(all.names(expr), ls(parent)), parent)
   eval(expr, en)

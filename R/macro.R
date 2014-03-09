@@ -33,7 +33,7 @@ NULL
 ##' evalq(a+(b*a)*z, en) #a+(b*a)*100
 ##'
 ##' ##We can build a function that does something like substitute() like this:
-##' ersatz.substitute <- function(expr, envir=parent.frame()) {
+##' ersatz.substitute <- function(expr, envir=arg_env(expr)) {
 ##'   parent <- as.environment(envir)
 ##'   en <- quoting.env(setdiff(all.names(expr), ls(parent)), parent)
 ##'   eval(expr, en)
@@ -111,14 +111,13 @@ macro <- function(fn, cache=TRUE, JIT=cache) {
   if(cache) {
     fn <- macro_cache(fn, JIT)
     f <- function(...) {
-      fr <- parent.frame()
-      expansion <- fn(...)
+      fr <- dots_environments(...)[[1]]
       eval(fn(...), fr)
     }
   } else {
     f <- function(...) {
-      fr <- parent.frame()
-      args <- eval(substitute(alist(...)))
+      fr <- dots_environments(...)[[1]]
+      args <- dots_expressions(...)
       expr <- do.call(fn, args, quote=TRUE)
       eval(expr, fr)
     }
@@ -151,7 +150,8 @@ macro <- function(fn, cache=TRUE, JIT=cache) {
 #' @export
 expand_macros <- function(expr,
                           macros=NULL,
-                          where=parent.frame(), recursive=FALSE) {
+                          where=arg_env(expr), recursive=FALSE) {
+  force(where)
   if (is.null(macros)) {
     macros <- find_macros(all.names(expr), where)
   }
@@ -176,7 +176,8 @@ expand_macros <- function(expr,
 #' @export
 expand_macros_q <- function(expr,
                             macros=find_macros(all.names(expr), where),
-                            where=parent.frame(), recursive=FALSE) {
+                            where=arg_env(expr), recursive=FALSE) {
+  force(where)
   expr <- substitute(expr)
   expand_macros(expr, macros, where, recursive)
 }
@@ -193,7 +194,7 @@ expand_macros_q <- function(expr,
 #' @param what a list of names to try. If not specified, searches all
 #' attached namespaces.
 #' @param where A frame to search.
-find_macros <- function(what, where=parent.frame()) {
+find_macros <- function(what, where=arg_env(what)) {
   if (is.null(what)) {
     what <- apropos(".*", where=FALSE, mode="function")
   }
