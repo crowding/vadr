@@ -36,6 +36,7 @@ Collate:
     'dots.R'
     'fun.R'
     'getPointer.R'
+    'getpromise.R'
     'indexing.R'
     'mply.R'
     'onLoad.R'

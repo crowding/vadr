@@ -33,7 +33,8 @@ get_dots <- function(names, envir=argenv(names)) {
 
 #' ...
 #'
-#' arg_list may be told to look in a 
+#' arg_list may be told to look in a particular environment by supplying
+#' the environment in brackets.
 #' @S3method [ arg_list
 #' @rdname arg_list
 #' @usage arg_list[envir](...)
@@ -53,10 +54,11 @@ get_dots <- function(names, envir=argenv(names)) {
 #' un-evaluated promise).
 #' @rdname arg_list
 #' @param name A single argument name; not evaluated.
+#' @useDynLib vadr _arg_env
 #' @export
 arg_env <- function(name,
-                    envir=arg_env(name, environment())) {
-  expressions(.Call(`_getpromise_in`, list(substitute(name), envir)))[[1]]
+                     envir=arg_env(name, environment())) {
+  .Call(`_arg_env`, envir, substitute(name))
 }
 
 #' ...
@@ -65,8 +67,9 @@ arg_env <- function(name,
 #' environment. The effect is similar to \code{substitute(name)} but more
 #' specific.
 #' @rdname arg_list
+#' @useDynLib vadr _arg_expr
 #' @export
 arg_expr <- function(name,
                      envir=arg_env(name, environment())) {
-  environments(.Call(`_getpromise_in`, list(substitute(name), envir)))[[1]]
+  .Call(`_arg_expr`, envir, substitute(name))
 }

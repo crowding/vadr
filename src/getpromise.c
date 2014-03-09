@@ -28,8 +28,12 @@ SEXP _arg_env(SEXP envir, SEXP name) {
   assert_type(envir, ENVSXP);
   assert_type(name, SYMSXP);
   SEXP promise = Rf_findVar(name, envir);
+  if (promise == R_MissingArg) return R_EmptyEnv;
   assert_type(promise, PROMSXP);
-  SEXP out = PRENV(out);
+  while (TYPEOF(PREXPR(promise)) == PROMSXP) {
+    promise = PREXPR(promise);
+  }
+  SEXP out = PRENV(promise);
   if (out == R_NilValue) {
     error("Promise has already been evaluated (no environment attached)");
   }
@@ -40,8 +44,12 @@ SEXP _arg_expr(SEXP envir, SEXP name) {
   assert_type(envir, ENVSXP);
   assert_type(name, SYMSXP);
   SEXP promise = Rf_findVar(name, envir);
+  if (promise == R_MissingArg) return R_MissingArg;
   assert_type(promise, PROMSXP);
-  SEXP out = PREXPR(out);
+  while (TYPEOF(PREXPR(promise)) == PROMSXP) {
+    promise = PREXPR(promise);
+  }
+  SEXP out = PREXPR(promise);
   return out;
 }
 
