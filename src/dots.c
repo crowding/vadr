@@ -1,6 +1,7 @@
 #include "vadr.h"
 
 int _dots_length(SEXP dots);
+SEXP emptypromise();
 
 SEXP _dots_unpack(SEXP dots) {
   int i;
@@ -28,6 +29,7 @@ SEXP _dots_unpack(SEXP dots) {
       error("Expected DOTSXP, got %s at index %d", type2char(TYPEOF(s)), i);
 
     SEXP item = CAR(s);
+    if (item == R_MissingArg) item = emptypromise();
 
     if (TYPEOF(item) != PROMSXP)
       error("Expected PROMSXP as CAR of DOTSXP, got %s", type2char(TYPEOF(item)));
@@ -144,7 +146,11 @@ SEXP _dotslist_to_list(SEXP x) {
       error("Expected a ..., got %s", type2char(TYPEOF(x)));
   }
   for (i = 0; i < len; x=CDR(x), i++) {
-    SET_VECTOR_ELT(output, i, CAR(x));
+    if (CAR(x) == R_MissingArg) {
+      SET_VECTOR_ELT(output, i, emptypromise());
+    } else {
+      SET_VECTOR_ELT(output, i, CAR(x));
+    }
     SET_STRING_ELT(names, i, isNull(TAG(x)) ? R_BlankString : asChar(TAG(x)));
   }
   if (len > 0) {

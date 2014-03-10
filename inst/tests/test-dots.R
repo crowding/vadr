@@ -465,6 +465,50 @@ test_that("dots() et al with empty inputs", {
   f %()% (d %__% a) %is% 4
 })
 
+check <- function(x,y,z) c(missing(x), missing(y), missing(z))
+check(one, , three)       #FALSE, TRUE, FALSE
+check1 <- function(...) check(...)
+check1(one, , three)      #FALSE, TRUE, FALSE
+check2 <- function(...) check1(...)
+check2(one, , three)      #FALSE, FALSE, FALSE
+
+test_that("dots() on empty arguments", {
+  x <- dots(, b=3)
+  expect_identical(expressions(x), list(missing_value(), b=3))
+  expect_equal(environments(x), list(emptyenv(), b=environment()))
+  y <- x[1]
+  names(y) <- "foo"
+  expect_identical(expressions(y), list(foo=missing_value()))
+
+  if (FALSE) {
+    #these are classified as R bugs for now.
+    #https://bugs.r-project.org/bugzilla3/show_bug.cgi?id=15707
+    m1 <- function(x,y,z) c(missing(x), missing(y), missing(z))
+    m2 <- function(...) dots_missing(...)
+
+    dots_other <- function(x, y, z) {
+      arg_dots(x, y, z) #makes promises set to R_MissingValue
+    }
+
+    d1 <- dots(x, , z) #currently, makes
+    d2 <- dots_other(x, , z)
+
+    m1(one, , three) #FALSE, TRUE, FALSE
+    m2(one, , three) #FALSE, FALSE, FALSE
+    (function(...) m1(...))(one, , three) #FALSE, TRUE, FALSE
+    (function(...) m2(...))(one, , three) #FALSE, FALSE, FALSE
+    (function(...) (function(...) m1(...))(...))(one, , three)
+    #FALSE, FALSE, FALSE but these last two are on R
+    m1 %()% d1 #FALSE, TRUE, FALSE
+    m1 %()% d2 #FALSE, FALSE, FALSE
+    m2 %()% d1 #FALSE, FALSE, FALSE
+    m2 %()% d2 #FALSE, FALSE, FALSE
+    do.call(m1, alist(one, , three)) #FALSE, TRUE, FALSE
+    do.call(m2, alist(one, , three)) #FALSE, TRUE, FALSE
+  }
+
+})
+
 test_that("dots methods on empty dots", {
   x <- dots()
   is.missing(x) %is% logical(0)

@@ -64,7 +64,7 @@ test_that("get dotslists handles missing arguments", {
   f1 <- function(x, y) arg_dots(x, b=y)
   d <- f1(, two.arg)
   is.missing(expressions(d)) %is% c(TRUE, b=FALSE)
-  expect_identical(environments(d), list(NULL, b=environment()))
+  expect_identical(environments(d), list(emptyenv(), b=environment()))
 })
 
 ## test_that("get all arguments, named or no, of present env", {

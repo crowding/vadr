@@ -33,8 +33,8 @@ SEXP _getpromise_in(SEXP envirs, SEXP names, SEXP tags) {
 SEXP emptypromise() {
   SEXP out = PROTECT(allocSExp(PROMSXP));
   SET_PRCODE(out, R_MissingArg);
-  SET_PRENV(out, R_NilValue);
-  SET_PRVALUE(out, R_MissingArg);
+  SET_PRENV(out, R_EmptyEnv);
+  SET_PRVALUE(out, R_UnboundValue);
   UNPROTECT(1);
   return out;
 }
@@ -50,7 +50,9 @@ SEXP _arg_env(SEXP envir, SEXP name) {
   }
   SEXP out = PRENV(promise);
   if (out == R_NilValue) {
-    error("Promise has already been evaluated (no environment attached)");
+    error("Promise bound to `%s` has already been evaluated"
+          " (no environment attached)", CHAR(PRINTNAME(name))
+          );
   }
   return out;
 }
