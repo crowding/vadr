@@ -2,7 +2,7 @@
 \alias{find_macros}
 \title{List all macros.}
 \usage{
-find_macros(what, where = arg_env(what))
+find_macros(what, where = arg_env(what, environment()))
 }
 \arguments{
   \item{what}{a list of names to try. If not specified,

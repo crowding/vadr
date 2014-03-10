@@ -1,9 +1,5 @@
-#' @export
-
 #' Fetch promises associated with named arguments.
 #'
-#' @usage arg_list(\dots)
-#' arg_list[envir](\dots)
 #' @param ... Variable names (unevaluated). Arguments may be named; these names
 #' determine the names on the dots list (and not the variable names)
 #' @return a \code{\link{dots}} object containing the promises that are bound to
@@ -11,14 +7,14 @@
 #' @author Peter Meilstrup
 #' @note The tags on the dots object are determined by argument names;
 #' variable names are discarded.
-#' @seealso dots
+#' @seealso dots get_dots
+#' @rdname arg_list
 #' @export
 #' @useDynLib vadr _getpromise_in
 arg_dots <- function(...) {
   d <- unpack(dots(...))
   .Call(`_getpromise_in`, d$envir, d$expr, d$name)
 }
-class(arg_dots) <- "arg_dots"
 
 #' ...
 #'
@@ -32,33 +28,16 @@ get_dots <- function(names, envir=arg_env(names, environment())) {
   .Call(`_getpromise_in`, rep(list(envir), length(names)), names, tags)
 }
 
-#' ...
-#'
-#' arg_list may be told to look in a particular environment by supplying
-#' the environment in brackets.
-#' @S3method [ arg_list
-#' @rdname arg_list
-#' @usage arg_list[envir](...)
-#' @param obj N/A.
-#' @param envir Where to look for the named arguments.
-#' @useDynLib vadr _getpromise_in
-`[.arg_list` <- function(arg_list, envir) {
-  function(...) {
-    names <- list_quote(...)
-    .Call(`_getpromise_in`, envir, names)
-  }
-}
-
-#' ...
+#' Get environment or expression from a named argument.
 #'
 #' \code{arg_env} determines the lexical scope of an argument (which must be an
 #' un-evaluated promise).
-#' @rdname arg_list
+#' @rdname arg_env
 #' @param name A single argument name; not evaluated.
 #' @useDynLib vadr _arg_env
 #' @export
 arg_env <- function(name,
-                     envir=arg_env(name, environment())) {
+                    envir=arg_env(name, environment())) {
   .Call(`_arg_env`, envir, substitute(name))
 }
 
@@ -67,7 +46,7 @@ arg_env <- function(name,
 #' \code{arg_expr} fetches the expression attached to an argument in the given
 #' environment. The effect is similar to \code{substitute(name)} but more
 #' specific.
-#' @rdname arg_list
+#' @rdname arg_env
 #' @useDynLib vadr _arg_expr
 #' @export
 arg_expr <- function(name,

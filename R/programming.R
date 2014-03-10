@@ -30,26 +30,28 @@ pad.missing.cells <- function(data, factors) {
 mutate.where <- function(x, subset, ...) {
   ##a combination of mutate and subset.
   ##mutate those rows where subset evaluates to true, returning the entire modified data frame.
-  e <- substitute(subset)
-  r <- eval(e, x, parent.frame())
+  r <- eval(arg_expr(subset), x, arg_env(subset))
   if (!is.logical(r))
     stop("'subset' must evaluate to logical")
   r <- r & !is.na(r)
-  cols <- as.list(substitute(list(...)))[-1]
+  cols <- dots(...)
   cols <- cols[names(cols) != ""]
   .data <- x[r,]
-  for (col in names(cols)) {
-    .data[[col]] <- eval(cols[[col]], .data, parent.frame())
-  }
+  assignments <- unpack(cols)
+  exprs <- expressions(cols)
+  mapply(function(expr, env, name) {
+    .data[[name]] <<- eval(cols[[name]], .data, env)
+  })
   for (col in names(cols)) {
     x[r,col] <- .data[,col]
   }
   x
 }
 
-keep.if <- function(x, expr, enclos=parent.frame()) {
+keep.if <- function(x, expr, enclos=arg_env(expr, environment())) {
   ##keep a subset if the expression evaluates to true. Use with ddply.
-  if (eval(substitute(expr),x, enclos))
+  force(enclos)
+  if (eval(substitute(expr), x, enclos))
     x
   else
     x[c(),, drop=FALSE]
@@ -71,7 +73,8 @@ run.command <- function(command) {
   eval.parent(substitute(target <- val))
 }
 
-prefixing.assign <- function(prefix='', l=list(), env=parent.frame()) {
+prefixing.assign <- function(prefix='', l=list(), env=arg_env(l, environment())) {
+  force(env)
   for (n in names(l)) {
     assign(paste(prefix,n,sep=""),eval(substitute(l$n,list(n=n))),envir=env)
   }
@@ -99,110 +102,15 @@ inverse.permutation <- function(perm) {
   return(perm)
 }
 
-#this doesn't really handle "dots" arguments...?
-curry <- function(..FUNCTION, ..., .currying.env=parent.frame()) {
-  force(.currying.env)
-  enclosing.env <- environment(..FUNCTION)
-  
-  defaults <- formals(..FUNCTION)
-  curried.args <- as.list(match.call(..FUNCTION, sys.call(sys.parent())[-1], expand.dots=FALSE))[-1]
-  
-  for (n in names(curried.args))
-    if(n == "...")
-      stop("don't know how to curry varargs")
-    else
-      defaults[[n]] <- NULL
-
-  out <- function(...) {
-    calling.env <- parent.frame()
-    eval.env <- new.env(parent=enclosing.env)
-    calling.args <- as.list(match.call(expand.dots=FALSE))[-1]
-
-    for (i in seq(len=length(defaults)))
-      eval(substitute(delayedAssign(names(defaults)[[i]], .,
-                    eval.env=eval.env,
-                    assign.env=eval.env), list(.=defaults[[i]])))
-    for (i in seq(len=length(curried.args)))
-      eval(substitute(delayedAssign(names(curried.args)[[i]], ,
-                    eval.env=.currying.env,
-                    assign.env=eval.env), list(.=curried.args[[i]])))
-    for (i in seq(len=length(calling.args)))
-      if(names(calling.args)[[i]] == "...")
-        stop("don't know how to curry varargs")
-      else
-        eval(substitute(delayedAssign(names(calling.args)[[i]], .,
-                      eval.env=calling.env,
-                      assign.env=eval.env), list(.=calling.args[[i]])))
-    eval(body(..FUNCTION), eval.env)
-  }
-  formals(out) <- defaults
-  out
-
-  ##write the source attribute to be more human-readable
-}
-
 ## As we can never remember how to use "substitute" on a non-quoted expression.
 ## I don't think this use of do.call is officially supported but it seems to work.
 substitute.nq <- function(expr,...) {
-  do.call(substitute, list(expr,...), envir=parent.frame())
+  envir <- arg_env(expr, environment())
+  do.call(substitute, list(expr,...), envir=envir)
 }
-
 
 load.as.list <- function(...) {
   a = environment()
   load(envir=a, ...)
   as.list(a)
-}
-
-
-## this comes from Gary Sabot and Thomas Lumley. via this post to s-news:
-## http://www.biostat.wustl.edu/archives/html/s-news/2002-10/msg00064.html
-gensym <- function(base=".v.",envir=parent.frame()){
-  repeat{
-    nm<-paste(base,paste(sample(letters,7,replace=TRUE),
-                         collapse=""),sep=".")
-    if (!exists(nm,where=envir))
-      break
-  }
-  as.name(nm)
-}
-
-defmacro <-function(...,expr,local=NULL){
-  expr<-substitute(expr)
-  a<-substitute(list(...))[-1]
-  nn<-names(a)
-  if (is.null(nn)) nn<-rep("",length(a))
-  for(i in seq(length=length(a))){
-    if (nn[i]=="") {
-      nn[i]<-paste(a[[i]])
-      msg<-paste(a[[i]],"not supplied")
-      a[[i]]<-substitute(stop(foo),list(foo=msg))
-    }
-  }
-  names(a)<-nn
-  a<-as.list(a)
-
-  if(is.null(local)) {
-     ff<-eval(substitute(function(){
-        tmp<-substitute(body)
-        eval(tmp,parent.frame())
-     },list(body=expr)))
-  } else {
-     ff<-eval(substitute(function(){
-        tmp<-substitute(body)
-        locals<-lapply(local,gensym,envir=parent.frame())
-        names(locals)<-local
-        tmp<-do.call("substitute",list(tmp,locals))
-        rval<-eval(tmp,parent.frame())
-        rm(list=as.character(locals),envir=parent.frame())
-        rval
-     },list(body=expr)))
-  }
-
-  formals(ff)<-a
-  mm<-match.call()
-  mm$expr<-NULL
-  mm[[1]]<-as.name("macro")
-  attr(ff,"source")<-c(deparse(mm),deparse(expr))
-  ff
 }

@@ -3,7 +3,7 @@
 \alias{expand_macros_q}
 \title{Expand any macros in the quoted expression.}
 \usage{
-expand_macros(expr, macros = NULL, where = arg_env(expr),
+expand_macros(expr, macros = NULL, where = arg_env(expr, environment()),
   recursive = FALSE)
 }
 \arguments{

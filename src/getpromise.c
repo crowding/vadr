@@ -64,7 +64,7 @@ SEXP _arg_expr(SEXP envir, SEXP name) {
   if (promise == R_MissingArg) return R_MissingArg;
   assert_type(promise, PROMSXP);
   while (TYPEOF(PREXPR(promise)) == PROMSXP) {
-    promise = PREXPR(promise);
+    promise = PREXPR(promise); 
   }
   SEXP out = PREXPR(promise);
   return out;

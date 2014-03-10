@@ -1,38 +1,36 @@
-\name{get_dots}
-\alias{[.arg_list}
-\alias{arg_env}
-\alias{arg_expr}
+\name{arg_dots}
+\alias{arg_dots}
 \alias{get_dots}
-\title{...}
+\title{Fetch promises associated with named arguments.}
 \usage{
-get_dots(names, envir = argenv(names))
+arg_dots(...)
 
-arg_list[envir](...)
-
-arg_env(name, envir = arg_env(name, environment()))
-
-arg_expr(name, envir = arg_env(name, environment()))
+get_dots(names, envir = arg_env(names, environment()))
 }
 \arguments{
+  \item{...}{Variable names (unevaluated). Arguments may be
+  named; these names determine the names on the dots list
+  (and not the variable names)}
+
   \item{names}{A character vector or list of names.}
-
-  \item{obj}{N/A.}
-
-  \item{envir}{Where to look for the named arguments.}
-
-  \item{name}{A single argument name; not evaluated.}
+}
+\value{
+a \code{\link{dots}} object containing the promises that
+are bound to those variables in the calling environment.
 }
 \description{
+Fetch promises associated with named arguments.
+
 \code{arg_get} fetches arguments from a named list.
-
-arg_list may be told to look in a particular environment by
-supplying the environment in brackets.
-
-\code{arg_env} determines the lexical scope of an argument
-(which must be an un-evaluated promise).
-
-\code{arg_expr} fetches the expression attached to an
-argument in the given environment. The effect is similar to
-\code{substitute(name)} but more specific.
+}
+\note{
+The tags on the dots object are determined by argument
+names; variable names are discarded.
+}
+\author{
+Peter Meilstrup
+}
+\seealso{
+dots get_dots
 }
 

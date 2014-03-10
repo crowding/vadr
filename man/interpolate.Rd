@@ -4,9 +4,10 @@
 \alias{interpolate}
 \title{Evaluate expressions within strings.}
 \usage{
-interpolate(text, begin = ".(", end = ")", envir = parent.frame())
+interpolate(text, begin = ".(", end = ")", envir = arg_env(text,
+  environment()))
 
-interply(text, begin = ".(", end = ")", envir = parent.frame())(...)
+interply(text, begin = ".(", end = ")", envir = arg_env(text, environment()))(...)
 
 text \%#\% args
 }

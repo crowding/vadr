@@ -11,8 +11,10 @@
 ##' > f(10,2)
 ##' [1] 5
 ##' > f
-##' function (x = evalq(x,parent.frame(), y = evalq(y,parent.frame())
-##' x/y}
+##' function (x = eval(quote(x),<environment>),
+##'           y = eval(quote(y),<environment>) {
+##'   x/y
+##' }
 ##'
 ##' "\code{fun}" is used with "\code{dm_ply}" the way that "\code{with}" is
 ##' used with  "\link[plyr]{d_ply}".
@@ -43,7 +45,7 @@
 ##' @author Peter Meilstrup
 ##'
 ##' @export
-fun <- function(expr, .all.names=FALSE, .envir=parent.frame()) {
+fun <- function(expr, .all.names=FALSE, .envir=arg_env(expr, environment())) {
   f <- do.call("funmacro", list(substitute(expr), as.logical(.all.names)))
   environment(f) <- .envir
   f

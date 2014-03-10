@@ -4,9 +4,9 @@
 \title{Convert a list of expressions into a \code{\dots} object (a list of
 promises.)}
 \usage{
-as.dots(x, .envir = parent.frame())
+as.dots(x, .envir = arg_env(x, environment()))
 
-\method{as.dots}{literal}(x, .envir = NULL)
+as.dots.literal(x)
 }
 \arguments{
   \item{x}{a vector or list.}

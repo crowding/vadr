@@ -38,7 +38,7 @@ dots_unpack <- function(...) {
 }
 
 # speed bumming 'rm'
-del <- function(x, envir=parent.frame()) {
+del <- function(x, envir) {
   .Internal(remove(x, envir, FALSE))
 }
 
@@ -318,10 +318,11 @@ missing_value <- function(n) {
 #' @note "Curry" is a slight misnomer for partial function application.
 #' @author Peter Meilstrup
 #' @export "%()%"
-`%()%` <- function(f, arglist, .envir=parent.frame()) UseMethod("%()%", arglist)
+`%()%` <- function(f, arglist)
+    UseMethod("%()%", arglist)
 
 #' @S3method "%()%" "..."
-`%()%....` <- function(f, arglist, .envir=parent.frame()) {
+`%()%....` <- function(f, arglist) {
   # this method elegant but doesn't work on some
   # nonstandard-eval functions (e.g. alist $()$ dots(...) just returns
   # quote(...))?
@@ -331,7 +332,7 @@ missing_value <- function(n) {
 }
 
 #' @S3method "%()%" default
-`%()%.default`  <- function(f, arglist, .envir=parent.frame()) {
+`%()%.default`  <- function(f, arglist) {
   if (length(arglist) == 0) return(f())
   assign("...", as.dots.literal(as.list(arglist)))
   f(...)
@@ -355,7 +356,7 @@ missing_value <- function(n) {
       f(...)
     } else {
       dotslist[1] <<- list(get("..."))
-      del("...")
+      del("...", environment())
       count <- 0
       makeActiveBinding("...", function(x) {
         count <<- count+1
@@ -381,7 +382,7 @@ missing_value <- function(n) {
       f(...)
     } else {
       dotslist[2] <<- list(get("..."))
-      del("...")
+      del("...", environment())
       count <- 0
       makeActiveBinding("...", function(x) {
         count <<- count+1
@@ -431,7 +432,7 @@ curl <- function(f, ...) {
   if (length(y) == 0) return(x)
   dotslists <- list(x, y)
   count <- 0
-  del("...")
+  del("...", environment())
   makeActiveBinding("...", function(x) {
     count <<- count+1
     dotslists[[count]]
@@ -463,22 +464,28 @@ curl <- function(f, ...) {
 #' @author Peter Meilstrup
 #' @aliases as.dots.literal
 #' @export
-as.dots <- function(x, .envir=parent.frame()) UseMethod("as.dots")
+as.dots <- function(x, .envir=arg_env(x, environment())) {
+  force(.envir)
+  as_dots(x, .envir) #need to resolve env before dispatch...
+}
 
-#' @S3method as.dots "..."
-as.dots.... <- function(x, ...) x
+as_dots <- function(x, .envir) UseMethod("as.dots")
 
-#' @S3method as.list "..."
-as.list.... <- function(x, ...) list %()% x
+#' @S3method as_dots "..."
+as.dots.... <- function(x, .envir) x
 
-#' @S3method as.dots default
-as.dots.default <- function(x, .envir=parent.frame())
+#' @S3method as_list "..."
+as.list.... <- function(x, .envir) list %()% x
+
+#' @S3method as_dots default
+as.dots.default <- function(x, .envir) {
   do.call(dots, as.list(x), FALSE, .envir)
+}
 
 #' @useDynLib vadr _as_dots_literal
 #' @export
 #' @rdname as.dots
-as.dots.literal <- function(x, .envir=NULL)
+as.dots.literal <- function(x)
     .Call(`_as_dots_literal`, as.list(x), do.call(dots, vector("list", length(x))))
 
 #' Check if list members are equal to the "missing value."

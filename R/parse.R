@@ -74,7 +74,9 @@ find_subst_expressions <- function(str, begin=".(", end=")") {
 #'          "    'Take one down and pass it around,')[(n%%100!=0)+1])",
 #'          " .(initcap(bottles(n=n-1))) on the wall."))
 #' cat(verse(n=99:0), sep="\n\n")
-interpolate <- function(text, begin=".(", end=")", envir=parent.frame()) {
+interpolate <- function(text, begin=".(", end=")",
+                        envir=arg_env(text, environment())) {
+  force(envir)
   exprs <- find_subst_expressions(text, begin, end)
   chars <- lapply(exprs, interpolate_inner, envir)
   vapply(chars, paste0, "", collapse="")
@@ -90,9 +92,11 @@ interpolate_inner <- function(s, envir) {
 }
 
 #' @rdname interpolate
-#' @usage interply(text, begin = ".(", end = ")", envir = parent.frame())(...)
+#' @usage interply(text, begin = ".(", end = ")", envir = arg_env(text, environment()))(...)
 #' @export
-interply <- function(text, begin=".(", end=")", envir=parent.frame()) {
+interply <- function(text, begin=".(", end=")",
+                     envir=arg_env(text, environment())) {
+  force(envir)
   if(length(text) != 1) stop("Must have scalar string")
   exprs <- find_subst_expressions(text, begin, end)[[1]]
   i <- seq(2, length.out=(length(exprs)-1)/2, by=2)
@@ -107,5 +111,6 @@ interply <- function(text, begin=".(", end=")", envir=parent.frame()) {
 #' @usage text \%#\% args
 #' @export
 `%#%` <- function(text, args) {
-  interply(text, envir=parent.frame()) %()% args
+  envir <- arg_env(text, environment())
+  interply(text, envir=envir) %()% args
 }

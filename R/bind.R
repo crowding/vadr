@@ -64,7 +64,7 @@
 #' @author Peter Meilstrup
 #' @S3method "[<-" bind
 `[<-.bind` <- function(`*temp*`, ..., value) {
-  `*envir*` = parent.frame()
+  envirs = environments(dots(...))
   #why square brackets?
   #1. I want there to be a <- everywhere there is a change to the workspace.
   #2. we can't simply have
@@ -88,7 +88,7 @@
         if (is.null(vOut[[i]])) {
           expr[[3]][2] <- vOut[i]
         } else expr[[3]][[2]] <- vOut[[i]]
-        eval(expr, `*envir*`)
+        eval(expr, envirs[[i]])
       }
   }
 

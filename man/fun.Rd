@@ -2,7 +2,7 @@
 \alias{fun}
 \title{A very compact way to define a function.}
 \usage{
-fun(expr, .all.names = FALSE, .envir = parent.frame())
+fun(expr, .all.names = FALSE, .envir = arg_env(expr, environment()))
 }
 \arguments{
   \item{expr}{The expression to use as the function's
@@ -32,7 +32,8 @@ pulls from the enclosing scope. For example:
 }
 \details{
 \code{ > f <- fun(x/y) > f(10,2) [1] 5 > f function (x =
-evalq(x,parent.frame(), y = evalq(y,parent.frame()) x/y}
+eval(quote(x),<environment>), y =
+eval(quote(y),<environment>) { x/y }
 
 "\code{fun}" is used with "\code{dm_ply}" the way that
 "\code{with}" is used with "\link[plyr]{d_ply}".
