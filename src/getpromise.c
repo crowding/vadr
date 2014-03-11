@@ -1,6 +1,56 @@
 #include "vadr.h"
 
-SEXP emptypromise();
+SEXP emptypromise() {
+  SEXP out = PROTECT(allocSExp(PROMSXP));
+  SET_PRCODE(out, R_MissingArg);
+  SET_PRENV(out, R_EmptyEnv);
+  SET_PRVALUE(out, R_UnboundValue);
+  UNPROTECT(1);
+  return out;
+}
+
+
+SEXP do_ddfindVar(SEXP symbol, SEXP envir) {
+  int i;
+  SEXP vl;
+
+  vl = findVar(R_DotsSymbol, envir);
+  i = DDVAL(symbol);
+  if (vl != R_UnboundValue) {
+    if (length(vl) >= i) {
+      vl = nthcdr(vl, i - 1);
+      return(CAR(vl));
+    }
+    else
+      error("the ... list does not contain %d elements", i);
+  }
+  else error("..%d used in an incorrect context, no ... to look in", i);
+
+  return R_NilValue;
+}
+
+SEXP do_findPromise(SEXP name, SEXP envir) {
+  assert_type(name, SYMSXP);
+  assert_type(envir, ENVSXP);
+  SEXP promise;
+  if (DDVAL(name)) {
+    promise = do_ddfindVar(name, envir);
+  } else {
+    promise = Rf_findVar(name, envir);
+  }
+  if (promise == R_UnboundValue) {
+    error("Variable `%s` was not found.",
+          CHAR(PRINTNAME(name)));
+  }
+  if (promise == R_MissingArg) {
+    promise = emptypromise();
+  }
+  if (TYPEOF(promise) != PROMSXP) {
+    error("Variable `%s` was not bound to a promise",
+          CHAR(PRINTNAME(name)));
+  }
+  return promise;
+}
 
 SEXP _getpromise_in(SEXP envirs, SEXP names, SEXP tags) {
   assert_type(envirs, VECSXP);
@@ -15,11 +65,9 @@ SEXP _getpromise_in(SEXP envirs, SEXP names, SEXP tags) {
     if ((tags != R_NilValue) && (STRING_ELT(tags, i) != R_BlankString)) {
       SET_TAG(output_iter, install(CHAR(STRING_ELT(tags, i))));
     }
-    SEXP name = VECTOR_ELT(names, i);
-    assert_type(name, SYMSXP);
-    SEXP promise = Rf_findVar(name, VECTOR_ELT(envirs, i));
-    if (promise == R_MissingArg) promise = emptypromise();
-    assert_type(promise, PROMSXP);
+    SEXP promise = do_findPromise(VECTOR_ELT(names, i),
+                                  VECTOR_ELT(envirs, i));
+
     while (TYPEOF(PREXPR(promise)) == PROMSXP) {
       promise = PREXPR(promise);
     }
@@ -30,21 +78,10 @@ SEXP _getpromise_in(SEXP envirs, SEXP names, SEXP tags) {
   return(output);
 }
 
-SEXP emptypromise() {
-  SEXP out = PROTECT(allocSExp(PROMSXP));
-  SET_PRCODE(out, R_MissingArg);
-  SET_PRENV(out, R_EmptyEnv);
-  SET_PRVALUE(out, R_UnboundValue);
-  UNPROTECT(1);
-  return out;
-}
-
 SEXP _arg_env(SEXP envir, SEXP name) {
   assert_type(envir, ENVSXP);
   assert_type(name, SYMSXP);
-  SEXP promise = Rf_findVar(name, envir);
-  if (promise == R_MissingArg) return R_EmptyEnv;
-  assert_type(promise, PROMSXP);
+  SEXP promise = do_findPromise(name, envir);
   while (TYPEOF(PREXPR(promise)) == PROMSXP) {
     promise = PREXPR(promise);
   }
@@ -60,9 +97,7 @@ SEXP _arg_env(SEXP envir, SEXP name) {
 SEXP _arg_expr(SEXP envir, SEXP name) {
   assert_type(envir, ENVSXP);
   assert_type(name, SYMSXP);
-  SEXP promise = Rf_findVar(name, envir);
-  if (promise == R_MissingArg) return R_MissingArg;
-  assert_type(promise, PROMSXP);
+  SEXP promise = do_findPromise(name, envir);
   while (TYPEOF(PREXPR(promise)) == PROMSXP) {
     promise = PREXPR(promise); 
   }

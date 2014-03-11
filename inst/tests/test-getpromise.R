@@ -67,6 +67,27 @@ test_that("get dotslists handles missing arguments", {
   expect_identical(environments(d), list(emptyenv(), b=environment()))
 })
 
+test_that("error on missing thing", {
+  f <- function(x) arg_env(y)
+  expect_error(f(), "not found")
+  f <- function(x) arg_expr(y)
+  expect_error(f(), "not found")
+  f <- function(x) arg_dots(y)
+  expect_error(f(), "not found")
+})
+
+test_that("getting promises handles DDVAL (..1 etc)", {
+  brace <- function(...) {
+    e <- arg_env(..1)
+    f <- arg_expr(..2)
+    do.call(`{`, list(...), envir=e)
+  }
+
+  x <- 1
+  y <- quote(x+3)
+  brace(x, y) %is% 4
+})
+
 ## test_that("get all arguments, named or no, of present env", {
 ##   #need a better designed alternative to match.call() and friends.
 ##   #something something context stack?

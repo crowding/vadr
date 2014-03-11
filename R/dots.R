@@ -471,13 +471,13 @@ as.dots <- function(x, .envir=arg_env(x, environment())) {
 
 as_dots <- function(x, .envir) UseMethod("as.dots")
 
-#' @S3method as_dots "..."
-as.dots.... <- function(x, .envir) x
+#' @S3method as.dots "..."
+as.dots.... <- function(x, .envir=arg_env(x, environment())) x
 
-#' @S3method as_list "..."
-as.list.... <- function(x, .envir) list %()% x
+#' @S3method as.list "..."
+as.list.... <- function(x, .envir=arg_env(x, environment())) list %()% x
 
-#' @S3method as_dots default
+#' @S3method as.dots default
 as.dots.default <- function(x, .envir) {
   do.call(dots, as.list(x), FALSE, .envir)
 }

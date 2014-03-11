@@ -100,7 +100,7 @@ make_unique_names <- function(new, context, sep=".") {
 #' static while data is variable, the language transformations only need
 #' to happen once per each call site.
 #' Thus the expansions of macros can be cached, enabling complicated code
-#' transformations without performance penalties.
+#' transformations with smaller performance penalties.
 #'
 #' @author Peter Meilstrup
 #' @seealso qq
@@ -111,12 +111,12 @@ macro <- function(fn, cache=TRUE, JIT=cache) {
   if(cache) {
     fn <- macro_cache(fn, JIT)
     f <- function(...) {
-      fr <- dots_environments(...)[[1]]
+      fr <- arg_env(..1, environment())
       eval(fn(...), fr)
     }
   } else {
     f <- function(...) {
-      fr <- dots_environments(...)[[1]]
+      fr <- arg_env(..1, environment())
       args <- dots_expressions(...)
       expr <- do.call(fn, args, quote=TRUE)
       eval(expr, fr)
