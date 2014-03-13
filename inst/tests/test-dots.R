@@ -182,33 +182,34 @@ test_that("dots_expressions", {
 })
 
 test_that("expression mutator", local({
+
   f <- function(...) {
     x <- dots(...)
     y <- x
-#    browser()
-    expressions(x) <- qqply( `.(paste0("temp",x))` <- .(e)
-                            )(e=expressions(x), x=seq_along(x))
+    expressions(x) <- qqply(
+      `.(paste0("temp",x))` <- .(e)
+      )(e=expressions(x), x=seq_along(x))
     list %()% x
     unpack(x)
   }
   e1 <- NULL
   e2 <- NULL
   f1 <- function(...) {
-    where<-"f1"
+    where <- "f1"
     temp1 <- 40
     temp2 <- 30
     e1 <<- environment()
     f(20, ...)
   }
   f2 <- function(...) {
-    where<-"f2"
+    where <- "f2"
     temp1 <- 2
     temp2 <- 3
     e2 <<- environment()
     x <- f1(5, ...)
   }
-
   test <- f2()
+
   e2$temp2 %is% 5
   e1$temp1 %is% 20
 
@@ -220,6 +221,7 @@ test_that("expression mutator", local({
   expect_error(expressions(x) <- alist(r+1))
   expressions(y) <- alist(r+1)
   y[[1]] %is% 4
+
 }))
 
 test_that("dots_environments and mutator", local({
@@ -266,8 +268,8 @@ test_that("list_quote", {
 ## DOTS OBJECT, CALLING AND CURRYING -------------------------------------
 
 test_that("%()% is like do.call(quote=TRUE) but doesn't overquote", {
-  x = 2
-  y = 5
+  x <- 2
+  y <- 5
 
   ff <- function(x, y) list(substitute(x), substitute(y))
 
@@ -464,13 +466,6 @@ test_that("dots() et al with empty inputs", {
   f %()% (a %__% d) %is% 4
   f %()% (d %__% a) %is% 4
 })
-
-check <- function(x,y,z) c(missing(x), missing(y), missing(z))
-check(one, , three)       #FALSE, TRUE, FALSE
-check1 <- function(...) check(...)
-check1(one, , three)      #FALSE, TRUE, FALSE
-check2 <- function(...) check1(...)
-check2(one, , three)      #FALSE, FALSE, FALSE
 
 test_that("dots() on empty arguments", {
   x <- dots(, b=3)

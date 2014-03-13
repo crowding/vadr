@@ -6,18 +6,19 @@ SEXP allocate_dots(int length) {
   SEXP dots = PROTECT(allocList(length));
   SEXP promises = PROTECT(allocList(length));
   SEXP d = dots; SEXP p = promises; SEXP next = CDR(p);
-  for (int i = 0; i < length;
-       d = CDR(d), p = next, next=CDR(next)) {
+  for (int i = 0;
+       i < length;
+       d = CDR(d), p = next, next = CDR(next), i++) {
     SET_TYPEOF(d, DOTSXP);
     SET_TYPEOF(p, PROMSXP);
-    SET_PRENV(p, R_NilValue);
+    SET_PRENV(p, R_EmptyEnv);
     SET_PRVALUE(p, R_UnboundValue);
-    SET_PRCODE(p, R_NilValue);
+    SET_PRCODE(p, R_MissingArg);
     SET_PRSEEN(p, 0);
     SETCAR(d, p);
   }
   UNPROTECT(2);
-  return d;
+  return dots;
 }
 
 SEXP _mutate_expressions(SEXP dots, SEXP new_exprs) {
@@ -29,32 +30,29 @@ SEXP _mutate_expressions(SEXP dots, SEXP new_exprs) {
     error("Length mismatch");
   }
     
-  /* Hackish. These get turned into dots and promises respectively... */
-  SEXP out = PROTECT(allocList(length(dots)));
-  SEXP promises = PROTECT(allocList(length(dots)));
+  SEXP out = PROTECT(allocate_dots(n));
 
-  SEXP next_prom, p, o; int i;
-  next_prom = promises;
-  for(i = 0, p = dots, o = out;
+  SEXP o, d; int i;
+  for(i = 0, d = dots, o = out;
       i < n;
-      i++, p = CDR(p), o = CDR(o)) {
-    SEXP newprom = next_prom;
-    SEXP oldprom = CAR(p);
-    while (TYPEOF(PRCODE(oldprom)) == PROMSXP) {
-      oldprom = PRCODE(oldprom);
+      i++, o = CDR(o), d = CDR(d)) {
+    SEXP newprom = CAR(o);
+    SEXP oldprom = CAR(d);
+    SET_TAG(o, TAG(d));
+
+    if (oldprom == R_MissingArg) {
+      // nothing
+    } else {
+      while (TYPEOF(PRCODE(oldprom)) == PROMSXP) {
+        oldprom = PRCODE(oldprom);
+      }
+      if (PRENV(oldprom) == R_NilValue) {
+        error("Can't put new expression on already-evaluated promise");
+      }
+      SET_PRVALUE(newprom, PRVALUE(oldprom));
+      SET_PRENV(newprom, PRENV(oldprom));
     }
-    if (PRENV(oldprom) == R_NilValue) {
-      error("Can't put new expression on already-evaluated promise");
-    }
-    next_prom = CDR(next_prom);
-    
-    SET_TYPEOF(o, DOTSXP);
-    SET_TAG(o, TAG(p));
-    SET_TYPEOF(newprom, PROMSXP);
     SET_PRCODE(newprom, VECTOR_ELT(new_exprs, i));
-    SET_PRVALUE(newprom, PRVALUE(oldprom));
-    SET_PRENV(newprom, PRENV(oldprom));
-    SETCAR(o, newprom);
   }
   DUPLICATE_ATTRIB(out, dots);
   UNPROTECT(2);
@@ -70,32 +68,26 @@ SEXP _mutate_environments(SEXP dots, SEXP new_envs) {
     error("Length mismatch");
   }
     
-  /* Hackish. These get turned into dots and promises respectively... */
-  SEXP out = PROTECT(allocList(LENGTH(new_envs)));
-  SEXP promises = PROTECT(allocList(LENGTH(new_envs)));
+  SEXP out = PROTECT(allocate_dots(n));
 
-  SEXP next_prom, p, o; int i;
-  next_prom = promises;
-  for(i = 0, p = dots, o = out;
+  SEXP o, d; int i;
+  for(i = 0, d = dots, o = out;
       i < n;
-      i++, p = CDR(p), o = CDR(o)) {
-    SEXP newprom = next_prom;
-    SEXP oldprom = CAR(p);
-    next_prom = CDR(next_prom);
+      i++, o = CDR(o), d = CDR(d)) {
+    SEXP newprom = CAR(o);
+    SEXP oldprom = CAR(d);
+    SET_TAG(o, TAG(d));
 
-    while (TYPEOF(PRCODE(oldprom)) == PROMSXP) {
-      oldprom = PRCODE(oldprom);
+    if (oldprom == R_MissingArg) {
+      // nothing
+    } else {
+      while (TYPEOF(PRCODE(oldprom)) == PROMSXP) {
+        oldprom = PRCODE(oldprom);
+      }
+      SET_PRVALUE(newprom, R_UnboundValue);
+      SET_PRCODE(newprom, PRCODE(oldprom));
     }
-    
-    SET_TYPEOF(o, DOTSXP);
-    SET_TAG(o, TAG(p));
-    SET_TYPEOF(newprom, PROMSXP);
-    assert_type(VECTOR_ELT(new_envs, i), ENVSXP);
     SET_PRENV(newprom, VECTOR_ELT(new_envs, i));
-    SET_PRVALUE(newprom, R_UnboundValue);
-    SET_PRCODE(newprom, PRCODE(oldprom));
-    SET_PRSEEN(newprom, 0);
-    SETCAR(o, newprom);
   }
   DUPLICATE_ATTRIB(out, dots);
   UNPROTECT(2);

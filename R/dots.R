@@ -486,7 +486,7 @@ as.dots.default <- function(x, .envir) {
 #' @export
 #' @rdname as.dots
 as.dots.literal <- function(x)
-    .Call(`_as_dots_literal`, as.list(x), do.call(dots, vector("list", length(x))))
+    .Call(`_as_dots_literal`, as.list(x))
 
 #' Check if list members are equal to the "missing value."
 #'

@@ -53,7 +53,6 @@ SEXP _dots_unpack(SEXP dots) {
       SET_VECTOR_ELT(values, i, R_NilValue);
     }
   }
-
   PROTECT(dataFrame = allocVector(VECSXP, 4));
   SET_VECTOR_ELT(dataFrame, 0, names);
   SET_VECTOR_ELT(dataFrame, 1, environments);
@@ -101,27 +100,27 @@ SEXP _dots_names(SEXP dots) {
   return(made ? names : R_NilValue);
 }
 
-SEXP _as_dots_literal(SEXP list, SEXP dotlist) {
-  if (length(dotlist) == 0) {
+SEXP _as_dots_literal(SEXP list) {
+  assert_type(list, VECSXP);
+  int len = LENGTH(list);
+  SEXP dotlist;
+  
+  if (len == 0) {
     dotlist = PROTECT(allocVector(VECSXP, 0));
     setAttrib(dotlist, R_ClassSymbol, ScalarString(mkChar("...")));
     UNPROTECT(1);
     return dotlist;
+  } else {
+    dotlist = PROTECT(allocate_dots(len));
   }
-  if (TYPEOF(list) != VECSXP)
-    error("Expected list, got %s", type2char(TYPEOF(list)));
-  if (TYPEOF(dotlist) != DOTSXP)
-    error("Expected ..., got %s", type2char(TYPEOF(dotlist)));
-  int len = length(list);
   SEXP names = getAttrib(list, R_NamesSymbol);
   int i;
   SEXP iter;
-  /* destructively jam the values into the dotlist */
+  
   for (i = 0, iter = dotlist;
        iter != R_NilValue && i < len;
        i++, iter = CDR(iter)) {
-    if (TYPEOF(CAR(iter)) != PROMSXP)
-      error("Expected promise, got %s", type2char(TYPEOF(CAR(iter))));
+    assert_type(CAR(iter), PROMSXP);
     SET_PRVALUE(CAR(iter), VECTOR_ELT(list, i));
     SET_PRCODE(CAR(iter), VECTOR_ELT(list, i));
     SET_PRENV(CAR(iter), R_NilValue);
@@ -130,6 +129,7 @@ SEXP _as_dots_literal(SEXP list, SEXP dotlist) {
     }
   }
   setAttrib(dotlist, R_ClassSymbol, ScalarString(mkChar("...")));
+  UNPROTECT(1);
   return dotlist;
 }
 
