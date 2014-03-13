@@ -30,7 +30,7 @@ language" from "computing on the data." Because code is
 usually static while data is variable, the language
 transformations only need to happen once per each call
 site. Thus the expansions of macros can be cached, enabling
-complicated code transformations without performance
+complicated code transformations with smaller performance
 penalties.
 }
 \description{
