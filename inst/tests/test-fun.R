@@ -52,16 +52,3 @@ test_that("fun works with ...", {
   f <- fun(list(...))
   expect_equal(f(1,2,y=4), list(1,2,y=4))
 })
-
-test_that("summarizer", {
-  f <- summarizer(z=x/y,zz=2*z)
-  expect_equal(f(x=10,y=2), data.frame(z=5,zz=10))
-})
-
-test_that("summarizer with missing names", {
-   f <- summarizer(x/y, 2*z)
-   expect_equal(f(10, 2, 3), plyr:::quickdf(list(`x/y`=5, `2 * z`=6)))
-})
-
-test_that("fun equivalent of mutate", {
-})

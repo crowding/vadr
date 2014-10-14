@@ -45,82 +45,14 @@
 ##' @author Peter Meilstrup
 ##'
 ##' @export
-fun <- function(expr, .all.names=FALSE, .envir=arg_env(expr, environment())) {
-  f <- do.call("funmacro", list(substitute(expr), as.logical(.all.names)))
-  environment(f) <- .envir
-  f
-}
-
-#this should be de-extracted and summarizer/mutator/etc ought to be
-#deleted in the next pass.
-funmacro <- macro(function(expr, .all.names) {
-  names <- all.names(expr, functions=.all.names, unique=TRUE)
-  funmacro <-
-      qq(function(
-        .=..( qqply(
-          `.(name)`=eval(quote(`.(name)`), parent.env(environment()))
-          )(name=names) )
-        ) .(expr) )
+fun <- macro(function(body, .all.names=FALSE) {
+  names <- all.names(body, functions=.all.names, unique=TRUE)
+  arglist <- qqply(`.(name)`=eval(quote(`.(name)`), ..fun_envir))(name=names)
+  qq(
+    (function(..fun_envir) {
+      function(.=..(arglist)) .(body)
+    })(
+      .(environment)()
+    )
+  )
 })
-
-##' Create a function of several arguments returning a data frame.
-##'
-##' For example, mutate(a=b/c, b=a+mean(c)) returns a function taking
-##' arguments 'a', 'b', 'c', and ellipsis, and returns a data frame
-##' with columns "a", "b", "c" and any others provided in ...
-##'
-##' The contents of the arguemnts determine the new function's
-##' arguments in the same way that \link{fun} does. The arguments are
-##' evaluated in order. Any symbols not provided in the environment
-##' will be taken from the data frame.
-##'
-##' \code{fsummarise} is intended to be used with \link{dm_ply} in a
-##' similar way that \code{summarize} is used with \link[plyr]{d_ply}
-##'
-##' @param ... A series of named arguments.
-##' @param .envir The environment to create the function in; defaults
-##' to the caller.
-##' @return The newly created function.
-##' @seealso mutator fun dm_ply
-##' @aliases summarizer
-##' @export
-##' @author Peter Meilstrup
-summariser <- function(..., .envir=parent.frame()) {
-  summary_exprs <- eval(substitute(alist(...)));
-  varnames <- names(summary_exprs)
-  outnames <- varnames
-
-  #prefix variables used for missing names with '_missing_ to avoid
-  #collisions (?)
-  if (is.null(varnames)) {
-    varnames <- rep("", length(summary_exprs))
-    outnames <- varnames
-  }
-  missing_names <- varnames == ""
-  if (any(missing_names)) {
-    names <- unname(unlist(lapply(match.call(expand.dots = FALSE)$...,
-                                  deparse)))
-    outnames[missing_names] <- names[missing_names]
-    varnames[missing_names] <-
-      paste('_missing_', outnames[missing_names], sep="")
-  }
-
-  #cook up a function
-  bind_list <- lapply(varnames, as.name)
-  names(bind_list) <- outnames
-  bind_cmd <- substitute(plyr::quickdf(x),
-                         list(x=as.call(c(as.name("list"), bind_list))))
-  summary_command <- mapply(function(name, x)
-                            substitute(name <- x, list(name=as.name(name), x=x)),
-                            varnames, summary_exprs)
-  body <- as.call(c(list(quote(`{`)), summary_command, list(bind_cmd)))
-  #use the same variable-capturing semantics as "fun"
-  f <- do.call("fun", list(body, .envir=.envir))
-  #but strip all the "_missing_s". We might want to strip the vars
-  #that only appear as lvalues too?
-  formals(f)[varnames[missing_names]] <- NULL
-  f
-}
-
-##' @export
-summarizer <- summariser
