@@ -175,3 +175,4 @@ chain <- function(...) NULL
   chain <<- chain
   `%|>%` <<- chain
 }
+

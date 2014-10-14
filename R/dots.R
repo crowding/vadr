@@ -466,7 +466,7 @@ curl <- function(f, ...) {
 #' @export
 as.dots <- function(x, .envir=arg_env(x, environment())) {
   force(.envir)
-  as_dots(x, .envir) #need to resolve env before dispatch...
+  as_dots(x, .envir)  # need to resolve env before dispatch...
 }
 
 as_dots <- function(x, .envir) UseMethod("as.dots")
@@ -475,7 +475,7 @@ as_dots <- function(x, .envir) UseMethod("as.dots")
 as.dots.... <- function(x, .envir=arg_env(x, environment())) x
 
 #' @S3method as.list "..."
-as.list.... <- function(x, .envir=arg_env(x, environment())) list %()% x
+as.list.... <- function(x, .envir=arg_env(x, environment()), ...) list %()% x
 
 #' @S3method as.dots default
 as.dots.default <- function(x, .envir) {
