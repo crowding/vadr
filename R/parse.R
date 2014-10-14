@@ -103,7 +103,7 @@ interply <- function(text, begin=".(", end=")",
   exprs[i] <- parse(text=exprs[i])
   expander <- qe(function(...) .(eval)(.(quote)(.(paste0)(..(exprs)))))
   environment(expander) <- envir
-  interply_loop <- qq_applicator(expander)
+  interply_loop <- qq_applicator(expander, set_envir=FALSE)
   function(...) as.character(interply_loop(...))
 }
 

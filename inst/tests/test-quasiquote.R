@@ -134,7 +134,7 @@ test_that("qqply(expr)(args) substitutes args into expr", {
 
 test_that("qeply() like qqply but evaluates each one", {
   local({
-    xxx <- qeply(`.(x)`<-.(y))(x=letters, y=1:26)
+    xxx <- qeply(`.(x)` <- .(y))(x=letters, y=1:26)
     e %is% 5
     xxx[[6]] %is% 6
   })

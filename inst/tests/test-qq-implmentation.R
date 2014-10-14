@@ -29,6 +29,7 @@ expect_registers <- function(argument, expect, register=list()) {
 }
 
 expect_uq <- function(unquotable, expected) {
+  envir = arg_env(unquotable)
   r <- new_registry()
   evalable <- uq(unquotable, r)
   args <- r(op="expressions")
@@ -40,7 +41,7 @@ expect_uq <- function(unquotable, expected) {
 
   expect_label <- testthat:::find_expr("expected")
   expect_that(
-      do.call(fn, args, envir=parent.frame())[[1]],
+      do.call(fn, args, envir=envir)[[1]],
       label=unquote_call_label,
       equals(expected,
              label=expect_label)
@@ -54,12 +55,13 @@ with_registered <- function(argument) {
 }
 
 uq_makes <- function(unquotable) {
+  envir <- arg_env(unquotable)
   r <- new_registry()
   evalable <- uq(unquotable, r)
   args <- r(op="expressions")
   fn <- eval(call("function", as.pairlist(alist(...=)), evalable))
   #print(fn)
-  do.call(fn, args, envir=parent.frame())[[1]]
+  do.call(fn, args, envir=unquotable)[[1]]
 }
 
 test_that("registry", {

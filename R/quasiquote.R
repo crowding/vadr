@@ -134,13 +134,14 @@ qeply <- macro(function(...) {
   collection <- as.call(c(list(c), list(...)))
   expand_expr <- qq_internal(collection)
   expandfn <- qq(function(...) {
-    .(eval)({.(expand_expr)}, .(parent.frame)(2))
+    .(eval)({.(expand_expr)}, .(parent.env)(.(environment)()))
   })
   qq(.(qq_applicator)(.(expandfn)))
 })
 
-qq_applicator <- function(expander) {
+qq_applicator <- function(expander, set_envir=TRUE) {
   function(...) {
+    if (set_envir) environment(expander) <- arg_env(..1)
     dots <- list(...)
     argnames <- names(dots)[names(dots) != ""]
     formals(expander) <-
@@ -153,4 +154,3 @@ qq_applicator <- function(expander) {
     unlist(x, recursive=FALSE)
   }
 }
-
