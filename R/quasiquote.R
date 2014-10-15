@@ -2,7 +2,7 @@
 NULL
 
 #shut up CRAN
-`.<-` <- function(x, value, ...) {stop("this shouldn't actually be called")}
+`.<-` <- function(x, ..., value) {stop("this shouldn't actually be called")}
 `..` <- function(...) {stop("this shouldn't actually be called")}
 `.` <- function(...) {stop("this shouldn't actually be called")}
 

@@ -160,7 +160,7 @@ uq.call <- function(expr, register) {
 `uq.while` <- uq.call
 `uq.for` <- uq.call
 `uq.if` <- uq.call
-`uq.<-` <- uq.call
+`uq.<-` <- function(left, value) uq.call(left, value)  #quiet CRAN
 `uq.=` <- uq.call
 
 #Takes list of quoteds

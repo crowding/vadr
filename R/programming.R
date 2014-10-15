@@ -65,14 +65,6 @@ run.command <- function(command) {
   source(blargs[[1]])
 }
 
-#`subset<-(test,symbol=`.`)
-##A shortcut for various assignments of the form:
-##complicated.subset[with.long,names=TRUE] <- some.function.of(complicated.subset[with.long,names=TRUE],with.other.options=TRUE)
-`%<-%` <- function(target, val) {
-  val <- eval(substitute(substitute(val, list(.=quote(target)))))
-  eval.parent(substitute(target <- val))
-}
-
 prefixing.assign <- function(prefix='', l=list(), env=arg_env(l, environment())) {
   force(env)
   for (n in names(l)) {
@@ -110,7 +102,7 @@ substitute.nq <- function(expr,...) {
 }
 
 load.as.list <- function(...) {
-  a = environment()
+  a <- environment()
   load(envir=a, ...)
   as.list(a)
 }

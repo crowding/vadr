@@ -1,7 +1,7 @@
 \name{dots_unpack}
 \alias{dots_unpack}
 \alias{unpack}
-\title{Show information about a dot-dot-dot object.}
+\title{Show information about a \dots object.}
 \usage{
 dots_unpack(...)
 
@@ -29,15 +29,15 @@ cause too much strangeness to return missing values from a
 function.}}
 }
 \description{
-This unpacks the contents of a dot-dot-dot (or
-\code{<...>}) object, returning the results in a data
-frame. A \code{<...>} object is a pairlist of promises,
-usually bound to the special name \code{"..."} and, when
-bound to that name, given special dispensation by the R
-interpreter when appearing in the argument list of a call.
-Dots objects are normally opaque to R code, and usually
-don't explicitly appear in user code, but you can obtain a
-\code{\dots} inside of R by using \code{get("...")}.
+This unpacks the contents of a \dots object, returning the
+results in a data frame. In teh R implementation, a \dots
+object is a pairlist of promises, usually bound to the
+special name \code{"..."} and, when bound to that name,
+given special dispensation by the R interpreter when
+appearing in the argument list of a call. Dots objects are
+normally opaque to R code, and usually don't explicitly
+appear in user code, but you can obtain a \code{\dots}
+inside of R by using \code{get("...")}.
 }
 \note{
 There are some problems with R printing data frames

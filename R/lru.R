@@ -1,5 +1,3 @@
-library(microbenchmark)
-
 lru_cache <- function(cache.size = 1000) {
   lru <- new.env(hash=TRUE, parent=emptyenv(), size=cache.size)
   pred <- new.env(hash=TRUE, parent=emptyenv(), size=cache.size)
@@ -35,10 +33,10 @@ lru_cache <- function(cache.size = 1000) {
         last <- pred$TAIL
         succ[[pred[[last]]]] <<- "TAIL"
         pred$TAIL <<- pred[[last]]
-        del(last, lru)
-        del(last, pred)
-        del(last, succ)
-        expired <- expired
+        rm(list=last, envir=lru)
+        rm(list=last, envir=pred)
+        rm(list=last, envir=succ)
+        expired <- expired + 1
       } else {
         entries <<- entries + 1
       }

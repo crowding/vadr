@@ -1,8 +1,8 @@
-#' Show information about a dot-dot-dot object.
+#' Show information about a \dots object.
 #'
-#' This unpacks the contents of a dot-dot-dot (or \code{<...>})
-#' object, returning the results in a data frame. A \code{<...>}
-#' object is a pairlist of promises, usually bound to the special name
+#' This unpacks the contents of a \dots object, returning the results
+#' in a data frame. In teh R implementation, a \dots object is a
+#' pairlist of promises, usually bound to the special name
 #' \code{"..."} and, when bound to that name, given special
 #' dispensation by the R interpreter when appearing in the argument
 #' list of a call. Dots objects are normally opaque to R code, and
@@ -37,11 +37,6 @@ dots_unpack <- function(...) {
   data.frame(du, row.names=make.names(du$name, unique=TRUE), check.names=TRUE)
 }
 
-# speed bumming 'rm'
-del <- function(x, envir) {
-  .Internal(remove(x, envir, FALSE))
-}
-
 #' @export
 #' @rdname dots_unpack
 #' @param x A \code{\link{dots}} object.
@@ -62,8 +57,8 @@ unpack.... <- function (x) {
 #' \code{\link{dots}} objects extracts the dots argument.
 #'
 #' @param x A dots object (see \code{\link{dots}}
-#' @return A named list of expressions. The mutator \code{expressions<-} applies new
-#' expressions to the given promises (which must be unevaluated.)
+#' @return A named list of expressions. The mutator \code{expressions<-} applies
+#' new expressions to the given promises (which must be unevaluated.)
 #' @seealso dots_unpack dots_environments
 #' @rdname dots_expressions
 #' @export
@@ -356,7 +351,7 @@ missing_value <- function(n) {
       f(...)
     } else {
       dotslist[1] <<- list(get("..."))
-      del("...", environment())
+      rm(list="...", envir=environment())
       count <- 0
       makeActiveBinding("...", function(x) {
         count <<- count+1
@@ -382,7 +377,7 @@ missing_value <- function(n) {
       f(...)
     } else {
       dotslist[2] <<- list(get("..."))
-      del("...", environment())
+      rm(list="...", envir=environment())
       count <- 0
       makeActiveBinding("...", function(x) {
         count <<- count+1
@@ -432,7 +427,7 @@ curl <- function(f, ...) {
   if (length(y) == 0) return(x)
   dotslists <- list(x, y)
   count <- 0
-  del("...", environment())
+  rm(list="...", envir=environment())
   makeActiveBinding("...", function(x) {
     count <<- count+1
     dotslists[[count]]
@@ -541,11 +536,11 @@ is.missing.default <- function(x) {
 }
 
 #' @S3method "[<-" "..."
-`[<-....` <- function(x, ix, value, ...) UseMethod("[<-....", value)
+`[<-....` <- function(x, ix, value) UseMethod("[<-....", value)
 
 #' @S3method "[<-...." "..."
 #' @useDynLib vadr _dotslist_to_list _list_to_dotslist
-`[<-........` <- function(x, ix, value, ...) {
+`[<-........` <- function(x, ix, ..., value) {
   into <- .Call(`_dotslist_to_list`, x)
   from <- .Call(`_dotslist_to_list`, value)
   into[ix, ...] <- from
@@ -555,7 +550,7 @@ is.missing.default <- function(x) {
 #' @S3method "[<-...." "default"
 #' @useDynLib vadr _list_to_dotslist
 #' @useDynLib vadr _dotslist_to_list
-`[<-.....default` <- function(x, ix, value, ...) {
+`[<-.....default` <- function(x, ix, ..., value) {
   into <- .Call(`_dotslist_to_list`, x)
   from <- .Call(`_dotslist_to_list`, as.dots.literal(value))
   into[ix, ...] <- from
@@ -565,13 +560,9 @@ is.missing.default <- function(x) {
 #' @S3method "[[<-" "..."
 #' @useDynLib vadr _list_to_dotslist
 #' @useDynLib vadr _dotslist_to_list
-`[[<-....` <- function(x, ...) {
+`[[<-....` <- function(x, ..., value) {
   into <- .Call(`_dotslist_to_list`, x)
-  from <- .Call(`_dotslist_to_list`, dots(...))
-  #value comes last in an array assignment
-  aargs <- c(.Call(`_dotslist_to_list`, dots(into)), from)
-  aargs[length(aargs)] <- .Call(`_dotslist_to_list`, dots(from[[length(from)]]))
-  into <- `[[<-` %()% .Call(`_list_to_dotslist`, aargs)
+  into[[...]] <- as.dots.literal(value)[[1]]
   .Call(`_list_to_dotslist`, into)
 }
 
@@ -586,9 +577,9 @@ is.missing.default <- function(x) {
 #' @S3method "$<-" "..."
 #' @useDynLib vadr _dotslist_to_list
 #' @useDynLib vadr _list_to_dotslist
-`$<-....` <- function(x, name, ...) {
+`$<-....` <- function(x, name, value) {
   into <- .Call(`_dotslist_to_list`, x)
-  from <- .Call(`_dotslist_to_list`, dots(...))
+  from <- .Call(`_dotslist_to_list`, arg_dots(value))
   eval(call("$<-", quote(into), name, quote(from[[length(from)]])))
    .Call(`_list_to_dotslist`, into)
 }

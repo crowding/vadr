@@ -38,6 +38,6 @@ macro_cache <- function(fn, JIT=FALSE) {
 #' @author Peter Meilstrup
 #' @export
 macro_cache_report <- function() {
-  mget(c("hits", "misses", "expired", "entries"), environment(cache))
+  hitdata <- mget(c("hits", "misses", "expired", "entries"), environment(cache))
   as.list(hitdata)
 }
