@@ -92,7 +92,8 @@ interpolate_inner <- function(s, envir) {
 }
 
 #' @rdname interpolate
-#' @usage interply(text, begin = ".(", end = ")", envir = arg_env(text, environment()))(...)
+#' @usage interply(text, begin = ".(", end = ")",
+#                  envir = arg_env(text, environment()))(...)
 #' @export
 interply <- function(text, begin=".(", end=")",
                      envir=arg_env(text, environment())) {
@@ -103,7 +104,7 @@ interply <- function(text, begin=".(", end=")",
   exprs[i] <- parse(text=exprs[i])
   expander <- qe(function(...) .(eval)(.(quote)(.(paste0)(..(exprs)))))
   environment(expander) <- envir
-  interply_loop <- qq_applicator(expander, set_envir=FALSE)
+  interply_loop <- qq_applicator(expander)
   function(...) as.character(interply_loop(...))
 }
 
@@ -112,5 +113,6 @@ interply <- function(text, begin=".(", end=")",
 #' @export
 `%#%` <- function(text, args) {
   envir <- arg_env(text, environment())
+  thing <- interply(text, envir=envir)
   interply(text, envir=envir) %()% args
 }

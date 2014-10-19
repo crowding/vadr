@@ -20,6 +20,7 @@ with_setup <- macro(JIT=FALSE, function(setup=NULL, ..., teardown=NULL) {
 ## DOTSXP UNPACKING --------------------------------------------------
 
 test_that("dots_unpack() method extracts dots information into a data frame", {
+  expect_equal(nrow(dots_unpack()), 0)
   f <- function(...) {
     list(dots_unpack(...), environment())
   }
@@ -93,6 +94,7 @@ test_that("dots_unpack(...) descends through promise chains if necessary", {
 
 ## these should also be in reference to dots objects
 test_that("dots_missing", {
+  expect_equivalent(logical(0), dots_missing())
   with_setup(
     setup={
       if (exists("a")) rm(a)
@@ -130,6 +132,7 @@ test_that("dots_names", {
   #and dots_names does not eval dots
   expect_equal(c("", "a"),
                dots_names(stop("no"), a=stop("no")))
+  expect_equivalent(NULL, dots_names())
 })
 
 test_that("is.missing on non-dotlists", {
@@ -225,6 +228,7 @@ test_that("expression mutator", local({
 }))
 
 test_that("dots_environments and mutator", local({
+  expect_equivalent(dots_environments(), list())
   f1 <- function(...) {
     where <- "e1E"
     f2(..., toupper(where))

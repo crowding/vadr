@@ -104,7 +104,7 @@ qe <- macro(function(expr) {
 #' to expand. These may have names, which will also be expanded.
 #' @param ... (in the second argument list) Sequences. The expressions will
 #' be expanded in a context that has these names bound to one value at a time
-#' from each sequences (inheriting from the calling frame).
+#' from each sequence (inheriting from the calling frame).
 #' @return For \code{qqply}, a list of expressions. For \code{qeply}, the
 #' expressions will be evaluated in the calling frame.
 #' @aliases qeply
@@ -121,36 +121,63 @@ qe <- macro(function(expr) {
 #' })
 #' @export
 qqply <- macro(function(...) {
-  collection <- as.call(c(list(c), list(...)))
+  collection <- as.call(list(c, ...))
   expand_expr <- qq_internal(collection)
-  expandfn <- qq(function(...) {
+  expand_fn_expr <- qq(function() {
     .(`[`)(.(as.list)(.(expand_expr)), -1)
   })
-  qq(.(qq_applicator)(.(expandfn)))
+  qq(.(qq_applicator)(.(expand_fn_expr)))
 })
 
 #' @export
 qeply <- macro(function(...) {
   collection <- as.call(c(list(c), list(...)))
   expand_expr <- qq_internal(collection)
-  expandfn <- qq(function(...) {
+  expand_fn_expr <- qq(function(...) {
     .(eval)({.(expand_expr)}, .(parent.env)(.(environment)()))
   })
-  qq(.(qq_applicator)(.(expandfn)))
+  qq(.(qq_applicator)(.(expand_fn_expr)))
 })
 
-qq_applicator <- function(expander, set_envir=TRUE) {
+qq_applicator <- function(expander) {
   function(...) {
-    if (set_envir) environment(expander) <- arg_env(..1)
-    dots <- list(...)
-    argnames <- names(dots)[names(dots) != ""]
+    argnames <- dots_names(...)
+    argnames <- argnames[argnames != ""]
     formals(expander) <-
         as.pairlist(c(list(...=quote(expr=)),
-                      structure(missing_value(length(argnames)), names=argnames)))
-
-    #this is fragile (actually requires "dots" in the environment)
-    #todo: replace with my own curry-mapply
-    x <- .Internal(mapply(expander, dots, NULL))
-    unlist(x, recursive=FALSE)
+                      structure(missing_value(length(argnames)),
+                                names=argnames)))
+    #can't use "mply" because "mply" uses "qqply"
+    unlist(loop_gather(expander)(...), recursive=FALSE)
   }
 }
+
+loop_gather <- function(fn) function(...) {
+  loop <- do.call(main_loop, dots_expressions(...)) #i.e. in this environment
+  args <- list(...)
+  lengths <- vapply(args, length, 0)
+  L <- if (length(lengths) > 0) max(lengths) else 0
+  if (L != 0 && (any(lengths==0) || any(L %% lengths != 0))) {
+    warning("Longer object length is not a multiple of shorter object length")
+  }
+  output <- vector("list", L)
+  args <- list(...)
+  loop(...)
+  output
+}
+
+main_loop <- macro(
+  function(...) {
+    args <- list(...)
+    N <- names(args)
+    syms <- lapply(paste0("..", seq_along(args)), as.symbol)
+    names(syms) <- N
+    expansion <- qq(function(...)
+      for(i in seq_len(L))
+        output[[i]] <<-
+          fn(..(
+            mapply(function(sym, j) substitute(sym[[(i-1) %% lengths[[j]] + 1]],
+                                               list(sym=sym, j=j)),
+                   syms, seq_along(syms)))))
+    expansion
+  })

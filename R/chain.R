@@ -7,7 +7,7 @@ chain_function <- function(args) function(transforms) {
   transforms <- transforms[!is.missing(transforms)]
   names <- names(transforms) %||% rep("", length(transforms))
   assignments <- qqply(.(var) <- .(chain.dwim(x, var))
-                       )(x=transforms, var=list(var))
+                       )(x=transforms, var=rep(list(var), length(transforms)))
   named <- names != ""
   assignments[named] <- qqply(`.(x)` <- .(y)
                               )(x=names[named], y=assignments[named])

@@ -134,7 +134,7 @@ test_that("unquote name", {
 #an expresion.
 
 # A single dot
-# quasiquote foem       list(a, b, .(1:3), d)
+# quasiquote form       list(a, b, .(1:3), d)
 # intermediate form  -> as.call(c( {{alist(list, a, b)}}, list(..1), {{alist(d)}}))
 # captured arguments -> ..1=1:3
 # evaluated form     -> list(a, b, c, {{1:3}}, d)

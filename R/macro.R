@@ -111,7 +111,7 @@ macro <- function(fn, cache=TRUE, JIT=cache) {
   if(cache) {
     fn <- macro_cache(fn, JIT)
     f <- function(...) {
-      fr <- arg_env(..1, environment())
+      fr <- if (nargs() > 0) arg_env(..1, environment()) else parent.frame()
       eval(fn(...), fr)
     }
   } else {

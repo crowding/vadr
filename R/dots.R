@@ -33,8 +33,7 @@
 #' @useDynLib vadr _dots_unpack
 #' @export
 dots_unpack <- function(...) {
-  du <- .Call(`_dots_unpack`, get("..."))
-  data.frame(du, row.names=make.names(du$name, unique=TRUE), check.names=TRUE)
+  unpack(dots(...))
 }
 
 #' @export
@@ -106,8 +105,7 @@ dots_expressions <- list_quote
 #' \code{environments<-} constructs a new list of unevaluated promises
 #' with the same expressions but different environments.
 dots_environments <- function(...) {
-  y <- .Call(`_dots_unpack`, get("..."))
-  unclass(structure(y$env, names=y$name))
+  environments(dots(...))
 }
 
 #' @export
@@ -175,7 +173,7 @@ format.deparse <- function(x, ...) {
 #' @name dots_methods
 #' @rdname dots_methods
 #' @export
-dots_names <- function(...) .Call(`_dots_names`, get("..."))
+dots_names <- function(...) names(dots(...))
 
 #' @export
 #' @rdname is.missing
