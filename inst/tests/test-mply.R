@@ -13,9 +13,21 @@ test_that("mply", {
 
    mply(c)(c()) %is% list()
 
-   expect_error(mply(c)())
+   # mply returns a list whose length is the max* of the lengths of its
+   # arguments. Since "length" is always non-negative, the max* of an empty
+   # list is zero.  Therefore mply with no arguments should return a
+   # length-0 list.
+   #
+   # (The other possibility would be to throw an error on encountering
+   # no args. I think that vector recycling is more consistent with the
+   # first option.)
+   mply(c)() %is% list()
 
-   expect_error(mply(c) %()% NULL)
+   (mply(c) %()% NULL) %is% list()
+
+   # mply should recycle arguments.
+   (mply(prod)(1:2, 1:10, 1:5) %is%
+    list(1, 8, 9, 32, 25, 12, 14, 48, 36, 100))
 
    (mply(function(y, z) list(z, substitute(y)), y=x+1)(z=list(1, 2))
     %is% list(alist(1, x+1), alist(2, x+1)))

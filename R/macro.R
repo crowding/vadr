@@ -236,4 +236,8 @@ quote_args <- function(...) {
 }
 
 .onLoad_macro <- function(libname, pkgname) {
+  if (getCompilerOption("optimize") > 1) {
+    warning("vadr does not support JIT optimization level 2. Resetting to 1")
+    setCompilerOptions(optimize=1)
+  }
 }

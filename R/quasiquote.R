@@ -148,36 +148,6 @@ qq_applicator <- function(expander) {
                       structure(missing_value(length(argnames)),
                                 names=argnames)))
     #can't use "mply" because "mply" uses "qqply"
-    unlist(loop_gather(expander)(...), recursive=FALSE)
+    unlist(mply(expander)(...), recursive=FALSE)
   }
 }
-
-loop_gather <- function(fn) function(...) {
-  loop <- do.call(main_loop, dots_expressions(...)) #i.e. in this environment
-  args <- list(...)
-  lengths <- vapply(args, length, 0)
-  L <- if (length(lengths) > 0) max(lengths) else 0
-  if (L != 0 && (any(lengths==0) || any(L %% lengths != 0))) {
-    warning("Longer object length is not a multiple of shorter object length")
-  }
-  output <- vector("list", L)
-  args <- list(...)
-  loop(...)
-  output
-}
-
-main_loop <- macro(
-  function(...) {
-    args <- list(...)
-    N <- names(args)
-    syms <- lapply(paste0("..", seq_along(args)), as.symbol)
-    names(syms) <- N
-    expansion <- qq(function(...)
-      for(i in seq_len(L))
-        output[[i]] <<-
-          fn(..(
-            mapply(function(sym, j) substitute(sym[[(i-1) %% lengths[[j]] + 1]],
-                                               list(sym=sym, j=j)),
-                   syms, seq_along(syms)))))
-    expansion
-  })
