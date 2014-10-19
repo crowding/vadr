@@ -7,7 +7,7 @@
 interpolate(text, begin = ".(", end = ")", envir = arg_env(text,
   environment()))
 
-interply(text, begin = ".(", end = ")", envir = arg_env(text, environment()))(...)
+interply(text, begin = ".(", end = ")",
 
 text \%#\% args
 }

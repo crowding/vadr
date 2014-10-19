@@ -12,7 +12,7 @@ qqply(...)(...)
 
   \item{...}{(in the second argument list) Sequences. The
   expressions will be expanded in a context that has these
-  names bound to one value at a time from each sequences
+  names bound to one value at a time from each sequence
   (inheriting from the calling frame).}
 }
 \value{

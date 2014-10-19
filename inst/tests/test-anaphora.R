@@ -8,12 +8,12 @@ test_that("Modification assignment", {
   x <- 'a'
   x %<~% toupper
   x %is% 'A'
-  x %<~% str_dup(3)
-  x %is% 'AAA'
+  x %<~% paste0('BB')
+  x %is% 'ABB'
   x %<~% rep(3)
-  x %is% c('AAA', 'AAA', 'AAA')
+  x %is% c('ABB', 'ABB', 'ABB')
   x %<~% .[2:3]
-  x %is% c('AAA', 'AAA')
+  x %is% c('ABB', 'ABB')
 })
 
 test_that("put() changes a subset to a value", {
@@ -39,12 +39,12 @@ test_that("alter() sets a sebset to the chain of the subset", {
   y <- alter(x, names(it)[5], toupper)
   z <- alter(x, names, toupper)
   w <- alter(x, names[3], toupper)
-  ww <- alter(x, names[2], toupper, str_dup(3))
+  ww <- alter(x, names[2], toupper, paste0("XX"))
   expect_equal(x, c(a=1, b=2, c=3, d=4, e=5))
   expect_equal(y, c(a=1, b=2, c=3, d=4, E=5))
   expect_equal(z, c(A=1, B=2, C=3, D=4, E=5))
   expect_equal(w, c(a=1, b=2, C=3, d=4, e=5))
-  expect_equal(ww, c(a=1, BBB=2, c=3, d=4, e=5))
+  expect_equal(ww, c(a=1, BXX=2, c=3, d=4, e=5))
 })
 
 test_that("inject() sets a subset of a value to the chain of the value", {

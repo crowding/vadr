@@ -22,8 +22,6 @@ Suggests:
     roxygen2 (>= 2.2.2),
     knitr (>= 1.2)
 Imports:
-    plyr (>= 1.8.0),
-    stringr (>= 0.6.1),
     compiler (>= 2.15.2)
 Collate:
     'ammoc.R'
