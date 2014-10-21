@@ -2,17 +2,17 @@
 NULL
 
 #generate the function for both forms of chain
-chain_function <- function(args) function(transforms) {
+chain_function <- (function(x, var) function(args) function(transforms) {
   var <- as.name(names(args)[[1]])
   transforms <- transforms[!is.missing(transforms)]
   names <- names(transforms) %||% rep("", length(transforms))
   assignments <- qqply(.(var) <- .(chain.dwim(x, var))
                        )(x=transforms, var=rep(list(var), length(transforms)))
   named <- names != ""
-  assignments[named] <- qqply(`.(x)` <- .(y)
-                              )(x=names[named], y=assignments[named])
+  assignments[named] <- qqply(`.(var)` <- .(x)
+                              )(var=names[named], x=assignments[named])
   qq(function(.=..(args)) { ..(assignments); .(var) })
-}
+})(x="shut up", var="cran")
 
 ## helper function that "guesses" the correct form of the arguments to
 ## chain if they do not contain dots.

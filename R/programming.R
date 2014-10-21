@@ -13,20 +13,6 @@
 #' @export "%||%"
 `%||%` <- function(a, b) if(is.null(a)) b else a
 
-pad.missing.cells <- function(data, factors) {
-  ##add a row containing NA for each combination of factors that is not represented.
-  ##This is a workaround for a bug in current reshape / ggplot.
-  chain( factors
-       , combinations <- llply(., function(x)unique(data[,x,drop=FALSE]))
-       , llply(nrow)
-       , llply(seq)
-       , do.call(expand.grid, .)
-       , mapply(function(x, y) x[y,,drop=FALSE], combinations, .)
-       , do.call(cbind,.)
-       , merge(data, all.x=TRUE)
-       )
-}
-
 mutate.where <- function(x, subset, ...) {
   ##a combination of mutate and subset.
   ##mutate those rows where subset evaluates to true, returning the entire modified data frame.

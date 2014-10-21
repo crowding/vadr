@@ -28,7 +28,8 @@
 ##' @export
 run_as_command <- function(  func=parent.frame()$main
                 , arguments=commandArgs(trailingOnly=TRUE)
-                , require.toplevel=TRUE) {
+                , require.toplevel=TRUE
+                , require.noninteractive=TRUE) {
   if (     (length(sys.frames()) == 1 || !require.toplevel )
         && (!interactive() || !require.noninteractive) ) {
     do.call(func, as.list(arguments))

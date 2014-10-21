@@ -3,7 +3,7 @@
 #' This package implements workalikes for the author's (and perhaps
 #' your) favorite features from other languages, making R programs
 #' shorter and more expressive. The centerpiece is an efficient
-#' facility for macro-like functions. Built on that are a nice
+#' facility for Common Lisp-style macros. Built on that are a nice
 #' destructuring-bind for parallel assignment of variables, a pipline
 #' macro similar to the "->" macro of Clojure, and other utilities.
 #'
@@ -37,6 +37,6 @@
 #'
 #' @name vadr
 #' @docType package
-#' @import plyr stringr compiler
+#' @import compiler
 #' @author Peter Meilstrup
 NULL

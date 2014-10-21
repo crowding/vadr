@@ -1,6 +1,6 @@
 Package: vadr
 Type: Package
-Title: Macros, control of evaluation, and pleasant programming idioms.
+Title: Macros, metaprogramming, and pleasant programming idioms.
 Version: 0.01
 Date: 2012-09-21
 Author: Peter Meilstrup <peter.meilstrup@gmail.com>

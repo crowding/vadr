@@ -11,7 +11,8 @@ mply(fn, ...)(...)
   to be given to each call.}
 
   \item{...}{(in the second set of parens) Arguments to
-  apply; they are expected to be all of the same length.}
+  apply. Arguments will be recycled up to the length of the
+  longest argument.}
 }
 \value{
 A list.

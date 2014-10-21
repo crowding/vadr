@@ -17,7 +17,7 @@ dots_expressions(...)
 expressions(x) <- value
 }
 \arguments{
-  \item{x}{A dots object (see \code{\link{dots}}}
+  \item{x}{A dots object (see \code{\link{dots}}).}
 
   \item{...}{Any arguments.}
 }
@@ -25,6 +25,9 @@ expressions(x) <- value
 A named list of expressions. The mutator
 \code{expressions<-} applies new expressions to the given
 promises (which must be unevaluated.)
+
+For \code{list_quote}, a list containing the unevaluated
+expressions of each argument.
 }
 \description{
 From any set of arguments (typically passing \code{\dots},

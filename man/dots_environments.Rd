@@ -1,7 +1,6 @@
 \name{dots_environments}
 \alias{dots_environments}
 \alias{environments}
-\alias{environments....}
 \alias{environments<-}
 \alias{environments<-....}
 \title{Extract or manipulate environments contained in dots lists.}
@@ -10,16 +9,12 @@ dots_environments(...)
 
 environments(x)
 
-\method{environments}{...}(x)
-
 environments(x) <- value
 
 \method{environments}{...}(x) <- value
 }
 \arguments{
   \item{...}{Any arguments.}
-
-  \item{value}{A list of environments to apply.}
 
   \item{x}{a \{code{\link{dots}} object.}
 
@@ -34,6 +29,6 @@ environments.
 \description{
 \code{environments} works on a dots list created by
 \{code{\link{dots}} w, while \code{dots_environments} works
-on arguments you pass in.#'
+on arguments you pass in.
 }
 

@@ -30,7 +30,7 @@ function.}}
 }
 \description{
 This unpacks the contents of a \dots object, returning the
-results in a data frame. In teh R implementation, a \dots
+results in a data frame. In the R implementation, a \dots
 object is a pairlist of promises, usually bound to the
 special name \code{"..."} and, when bound to that name,
 given special dispensation by the R interpreter when
@@ -43,7 +43,7 @@ inside of R by using \code{get("...")}.
 There are some problems with R printing data frames
 containing lists of language objects (and more problems
 when working with "missing value" objects.) Therefore this
-sets the class on the columns to one with a special
+sets the class on the columns to one that has a special
 as.character method.
 }
 \author{

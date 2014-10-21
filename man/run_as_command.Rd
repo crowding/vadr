@@ -4,7 +4,8 @@
 function with them.}
 \usage{
 run_as_command(func = parent.frame()$main,
-  arguments = commandArgs(trailingOnly = TRUE), require.toplevel = TRUE)
+  arguments = commandArgs(trailingOnly = TRUE), require.toplevel = TRUE,
+  require.noninteractive = TRUE)
 }
 \arguments{
   \item{func}{Which function to invoke. Defaults to
