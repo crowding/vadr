@@ -1,15 +1,14 @@
-#' Alternative to mapply with a cleaner calling convention.
+#' Alternative to \code{\link{mapply}} with a cleaner calling convention.
 #'
-#' @usage mply(fn, ...)(...)
-#' @param fn A function to apply.
-#' @param ... (in the first set of parens) Extra arguments to be given to
-#' each call.
-#' @param ... (in the second set of parens) Arguments to apply. Arguments will
-#' be recycled up to the length of the longest argument.
+#' \code{mply} applies a function to corresponding elements from any number
+#' of vector arguments.
+#'
+#' @usage mply(...)(...)
+#' @param ... In the first set of parens, a function to apply, and extra
+#' arguments to be applied to each call. In the second set of parens, arguments
+#' to iterate over. Multiple arguments will be recycled up to the length of the
+#' longest argument.
 #' @return A list.
-#'
-#' @note After more than a hundred or so elements, this
-#' has less overhead per loop than \code{\link{mapply}}.
 #' @author Peter Meilstrup
 #' @export
 mply <- function(...) {

@@ -84,6 +84,7 @@ list_quote <- function(...) as.list(substitute(alist(...))[-1])
 dots_expressions <- list_quote
 
 #' @export
+#' @param value A list of expressions.
 #' @rdname dots_expressions
 `expressions<-` <- function(x, value) {
   UseMethod("expressions<-")

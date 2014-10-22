@@ -1,4 +1,5 @@
 \name{chain}
+\alias{[}
 \alias{[.chain}
 \alias{[.mkchain}
 \alias{\%|>\%}
@@ -17,14 +18,12 @@ chain(., ...)
 . \%|>\% func
 }
 \arguments{
-  \item{...}{Parameters in square brackets give the
-  placeholder name and default arguments.}
-
   \item{.}{For \code{chain} the first parameter in
   parentheses is the data to run through the chain.}
 
-  \item{...}{Subsequent parameters in parentheses are
-  function names or calls.}
+  \item{...}{Parameters in square brackets give the
+  placeholder name and default arguments. Parameters in
+  parentheses are function names or partial calls.}
 
   \item{func}{\code{\%|>\%} is a shortcut for a chain of
   one step.}

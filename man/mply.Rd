@@ -1,28 +1,22 @@
 \name{mply}
 \alias{mply}
-\title{Alternative to mapply with a cleaner calling convention.}
+\title{Alternative to \code{\link{mapply}} with a cleaner calling convention.}
 \usage{
-mply(fn, ...)(...)
+mply(...)(...)
 }
 \arguments{
-  \item{fn}{A function to apply.}
-
-  \item{...}{(in the first set of parens) Extra arguments
-  to be given to each call.}
-
-  \item{...}{(in the second set of parens) Arguments to
-  apply. Arguments will be recycled up to the length of the
-  longest argument.}
+  \item{...}{In the first set of parens, a function to
+  apply, and extra arguments to be applied to each call. In
+  the second set of parens, arguments to iterate over.
+  Multiple arguments will be recycled up to the length of
+  the longest argument.}
 }
 \value{
 A list.
 }
 \description{
-Alternative to mapply with a cleaner calling convention.
-}
-\note{
-After more than a hundred or so elements, this has less
-overhead per loop than \code{\link{mapply}}.
+\code{mply} applies a function to corresponding elements
+from any number of vector arguments.
 }
 \author{
 Peter Meilstrup

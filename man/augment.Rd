@@ -1,11 +1,11 @@
 \name{\%<~\%}
 \alias{\%<~\%}
-\title{Augmented assignment.}
+\title{Modify a variable.}
 \usage{
 x %<~% y
 }
 \arguments{
-  \item{x}{A variable to assign to,}
+  \item{x}{A variable to assign to.}
 
   \item{y}{An expression, interpreted in the manner of
   \code{\link{chain}}.}

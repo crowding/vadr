@@ -9,6 +9,10 @@ arg_expr(name, envir = arg_env(name, environment()))
 }
 \arguments{
   \item{name}{A single argument name; not evaluated.}
+
+  \item{envir}{The environment to look for the argument
+  name in. By default looks in the lexical environment of
+  the \code{name} argument.}
 }
 \description{
 \code{arg_env} determines the lexical scope of an argument

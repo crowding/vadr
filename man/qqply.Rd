@@ -6,11 +6,10 @@
 qqply(...)(...)
 }
 \arguments{
-  \item{...}{(in the first argument list) One or more
+  \item{...}{In the first argument list, One or more
   expressions or expressions to expand. These may have
-  names, which will also be expanded.}
-
-  \item{...}{(in the second argument list) Sequences. The
+  names, which will also be expanded. In the second
+  argument list, vectors with optional names. The
   expressions will be expanded in a context that has these
   names bound to one value at a time from each sequence
   (inheriting from the calling frame).}

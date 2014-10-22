@@ -3,7 +3,7 @@
 \title{Modify some character strings unique with respect with an
 existing set of (unmodified) character strings.}
 \usage{
-make_unique_names(new, context, sep = ".")
+make_unique_names(new, context)
 }
 \arguments{
   \item{new}{Initial values for the new names}

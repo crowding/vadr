@@ -21,6 +21,8 @@ arg_dots <- function(...) {
 #' \code{arg_get} fetches arguments from a named list.
 #' @rdname arg_list
 #' @param names A character vector or list of names.
+#' @param envir The environment to look for the argument names in. By default
+#' looks in the lexical environment of the \code{name} argument.
 get_dots <- function(names, envir=arg_env(names, environment())) {
   force(envir)
   tags <- names(names) %||% rep("", length(names))
@@ -34,6 +36,8 @@ get_dots <- function(names, envir=arg_env(names, environment())) {
 #' un-evaluated promise).
 #' @rdname arg_env
 #' @param name A single argument name; not evaluated.
+#' @param envir The environment to look for the argument name in. By default
+#' looks in the lexical environment of the \code{name} argument.
 #' @useDynLib vadr _arg_env
 #' @export
 arg_env <- function(name,

@@ -42,10 +42,11 @@ find_subst_expressions <- function(str, begin=".(", end=")") {
 #' populated only with "allowed" functions and data.
 #'
 #' @title Evaluate expressions within strings.
-#' @param str A string. For \code{interply}, must have length 1.
+#' @param str A template string. For \code{interply}, must have length 1.
 #' @param begin The beginning delimiter.
 #' @param end The ending delimiter.
-#' @param envir The environment evaluation takes place in.
+#' @param envir The environment evaluation takes place in. Defaults to the
+#' lexical environment of the template.
 #' @return A character vector.
 #' @seealso qq qqply mply
 #' @aliases interply %#%
@@ -74,10 +75,10 @@ find_subst_expressions <- function(str, begin=".(", end=")") {
 #'          "    'Take one down and pass it around,')[(n%%100!=0)+1])",
 #'          " .(initcap(bottles(n=n-1))) on the wall."))
 #' cat(verse(n=99:0), sep="\n\n")
-interpolate <- function(text, begin=".(", end=")",
-                        envir=arg_env(text, environment())) {
+interpolate <- function(str, begin=".(", end=")",
+                        envir=arg_env(str, environment())) {
   force(envir)
-  exprs <- find_subst_expressions(text, begin, end)
+  exprs <- find_subst_expressions(str, begin, end)
   chars <- lapply(exprs, interpolate_inner, envir)
   vapply(chars, paste0, "", collapse="")
 }
@@ -92,14 +93,12 @@ interpolate_inner <- function(s, envir) {
 }
 
 #' @rdname interpolate
-#' @usage interply(text, begin = ".(", end = ")",
-#                  envir = arg_env(text, environment()))(...)
 #' @export
-interply <- function(text, begin=".(", end=")",
-                     envir=arg_env(text, environment())) {
+interply <- function(str, begin=".(", end=")",
+                     envir=arg_env(str, environment())) {
   force(envir)
-  if(length(text) != 1) stop("Must have scalar string")
-  exprs <- find_subst_expressions(text, begin, end)[[1]]
+  if(length(str) != 1) stop("interpolate: need scalar character as template")
+  exprs <- find_subst_expressions(str, begin, end)[[1]]
   i <- seq(2, length.out=(length(exprs)-1)/2, by=2)
   exprs[i] <- parse(text=exprs[i])
   expander <- qe(function(...) .(eval)(.(quote)(.(paste0)(..(exprs)))))
@@ -109,10 +108,11 @@ interply <- function(text, begin=".(", end=")",
 }
 
 #' @rdname interpolate
-#' @usage text \%#\% args
+#' @usage str \%#\% args
+#' @param args A list or named vector; interpolation happens in an environment
+#' with these values bound.
 #' @export
-`%#%` <- function(text, args) {
-  envir <- arg_env(text, environment())
-  thing <- interply(text, envir=envir)
-  interply(text, envir=envir) %()% args
+`%#%` <- function(str, args) {
+  envir <- arg_env(str, environment())
+  interply(str, envir=envir) %()% args
 }

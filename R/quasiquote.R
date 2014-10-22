@@ -31,7 +31,7 @@ qq_internal <- function(expr) {
 #' Invocations of qq() can be nested within the \code{.()}
 #' sections and they should work as promised.
 #'
-#' @param expr A language object.
+#' @param expr An expression, left unevaluated.
 #' @return For \code{qq}, A language object; for \code{qe}, evaluates
 #'         the expression in the calling environment.
 #' @author Peter Meilstrup
@@ -100,11 +100,11 @@ qe <- macro(function(expr) {
 #'
 #' @usage qqply(...)(...)
 #' @usage qeply(...)(...)
-#' @param ... (in the first argument list) One or more expressions or expressions
+#' @param ... In the first argument list, One or more expressions or expressions
 #' to expand. These may have names, which will also be expanded.
-#' @param ... (in the second argument list) Sequences. The expressions will
-#' be expanded in a context that has these names bound to one value at a time
-#' from each sequence (inheriting from the calling frame).
+#' In the second argument list, vectors with optional names. The expressions
+#' will be expanded in a context that has these names bound to one value at a
+#' time from each sequence (inheriting from the calling frame).
 #' @return For \code{qqply}, a list of expressions. For \code{qeply}, the
 #' expressions will be evaluated in the calling frame.
 #' @aliases qeply

@@ -14,9 +14,6 @@ bind[key=varName, ...] <- list(key=value, ...)
   creates a variable named \code{x}, not \code{a}. It is
   somewhat counterintuitive but this is the only way that
   matches R's argument binding syntax.}
-
-  \item{*envir*}{The environment to bind in (defaults to
-  the caller).}
 }
 \value{
 a "bind" object, since it is invoked via a subset on

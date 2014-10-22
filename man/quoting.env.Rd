@@ -26,7 +26,7 @@ and returns the inner.
 }
 \details{
 This somewhat esoteric function mostly intended to be used
-by \code{\link{expand_macro}}
+by \code{\link{expand_macros}}
 }
 \note{
 This will cause errors when the expression has missing

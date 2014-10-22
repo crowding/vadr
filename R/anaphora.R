@@ -1,14 +1,11 @@
 #' @include macro.R
 NULL
 
-# 
-
-
-#' Augmented assignment.
+#' Modify a variable.
 #'
 #' Assigns to a variable the result of a transformation applied to that
 #' variable.
-#' @param x A variable to assign to,
+#' @param x A variable to assign to.
 #' @param y An expression, interpreted in the manner of \code{\link{chain}}.
 #' @return The rvalue of the assignment.
 #' @rdname augment
@@ -38,7 +35,7 @@ NULL
 #'
 #' The macro \code{put} provides syntax for modifying part of an
 #' object in a functional context (i.e. creating a modified value
-#' without necessarily modifying without binding the result to a
+#' without necessarily binding the result to a
 #' name.) Unlike \code{\link{<-}}, the value of the expression is the
 #' modified object, not the value that was injected. This is
 #' particularly useful in combination with 'chain.'

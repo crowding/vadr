@@ -13,6 +13,10 @@ get_dots(names, envir = arg_env(names, environment()))
   (and not the variable names)}
 
   \item{names}{A character vector or list of names.}
+
+  \item{envir}{The environment to look for the argument
+  names in. By default looks in the lexical environment of
+  the \code{name} argument.}
 }
 \value{
 a \code{\link{dots}} object containing the promises that

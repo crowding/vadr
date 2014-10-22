@@ -20,6 +20,8 @@ expressions(x) <- value
   \item{x}{A dots object (see \code{\link{dots}}).}
 
   \item{...}{Any arguments.}
+
+  \item{value}{A list of expressions.}
 }
 \value{
 A named list of expressions. The mutator

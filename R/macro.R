@@ -10,7 +10,7 @@ NULL
 ##' the inner.
 ##'
 ##' This somewhat esoteric function mostly intended to be used by
-##' \code{\link{expand_macro}}
+##' \code{\link{expand_macros}}
 ##'
 ##' @note This will cause errors when the expression has missing
 ##' arguments. The expression might be preprocessed (somewhow?) to take missing
@@ -71,7 +71,7 @@ quoting.env <- function(names, parent=emptyenv(), call.names=names) {
 ##' @param context Existing names to avoid collisions with.
 ##' @return the values of \code{new} in order modified to avoid collisions.
 ##' @author Peter Meilstrup
-make_unique_names <- function(new, context, sep=".") {
+make_unique_names <- function(new, context) {
   uniq <- make.unique(c(context, make.names(new)))
   uniq[(length(context)+1):(length(context)+length(new))]
 }
@@ -141,6 +141,10 @@ macro <- function(fn, cache=TRUE, JIT=cache) {
 #' @param expr An expression. For \code{expand_macros_q}, this
 #' argument is quoted. For \code{expand_macros}, itis a language object.
 #' @param macros a named list of macros. By default searches for all macros.
+#' @param where The environment in which to look for macro definitions. Default
+#' is the lexical environment of \code{expr}.
+#' @param recursive Whether the results of expanding macros should themselves
+#' be expanded.
 #' @return The expansion of the given expression.
 #' @author Peter Meilstrup
 #'

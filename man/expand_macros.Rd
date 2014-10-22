@@ -13,6 +13,13 @@ expand_macros(expr, macros = NULL, where = arg_env(expr, environment()),
 
   \item{macros}{a named list of macros. By default searches
   for all macros.}
+
+  \item{where}{The environment in which to look for macro
+  definitions. Default is the lexical environment of
+  \code{expr}.}
+
+  \item{recursive}{Whether the results of expanding macros
+  should themselves be expanded.}
 }
 \value{
 The expansion of the given expression.

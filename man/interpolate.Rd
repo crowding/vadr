@@ -4,22 +4,27 @@
 \alias{interpolate}
 \title{Evaluate expressions within strings.}
 \usage{
-interpolate(text, begin = ".(", end = ")", envir = arg_env(text,
+interpolate(str, begin = ".(", end = ")", envir = arg_env(str,
   environment()))
 
-interply(text, begin = ".(", end = ")",
+interply(str, begin = ".(", end = ")", envir = arg_env(str,
+  environment()))
 
-text \%#\% args
+str \%#\% args
 }
 \arguments{
-  \item{str}{A string. For \code{interply}, must have
-  length 1.}
+  \item{str}{A template string. For \code{interply}, must
+  have length 1.}
 
   \item{begin}{The beginning delimiter.}
 
   \item{end}{The ending delimiter.}
 
-  \item{envir}{The environment evaluation takes place in.}
+  \item{envir}{The environment evaluation takes place in.
+  Defaults to the lexical environment of the template.}
+
+  \item{args}{A list or named vector; interpolation happens
+  in an environment with these values bound.}
 }
 \value{
 A character vector.

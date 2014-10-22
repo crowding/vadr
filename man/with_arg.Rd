@@ -11,9 +11,6 @@ with_arg(...)
 
   \item{.collect}{Which function to use to collect the
   results of all the subcalls. Default is `list'.}
-
-  \item{.envir}{The environment to evaluate in. Defaults to
-  the environment that called with_arg.}
 }
 \value{
 The results of the evaluated calls, collected using

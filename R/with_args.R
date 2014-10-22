@@ -18,8 +18,6 @@ NULL
 ##' inject. Unnamed arguments are interpreted as calls to evaluate.
 ##' @param .collect Which function to use to collect the results of
 ##' all the subcalls. Default is `list'.
-##' @param .envir The environment to evaluate in. Defaults to the
-##' environment that called with_arg.
 ##' @return The results of the evaluated calls, collected using \code{.collect}.
 ##' @author Peter Meilstrup
 ##' @export

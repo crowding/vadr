@@ -35,8 +35,6 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #' @S3method "[" mkchain
 #' @rdname chain
 #' @usage mkchain[...](...)
-#' @param ... Parameters in square brackets give the placeholder name
-#' and default arguments.
 `[.mkchain` <-
   macro(function(...) {
     args <- do.call(quote_args, list(...)[-1])
@@ -122,15 +120,16 @@ chain.dwim <- function(expr, dot=quote(.)) {
 #'
 #' @param . For \code{chain} the first parameter in parentheses is the
 #' data to run through the chain.
-#' @param ... Subsequent parameters in parentheses are
-#' function names or calls.
+#' @param ... Parameters in square brackets give the placeholder name
+#' and default arguments. Parameters in parentheses are
+#' function names or partial calls.
 #' @return For \code{mkchain} return the constructed function. For
 #' \code{chain}, apply the chain to the dataset given in the first
 #' argument and return the result.
 #' @seealso put
 #' @note \code{chain} is a bit like the \code{->} macro of Clojure,
 #' or the \code{|>} operator in Elixir.
-#' @aliases chain mkchain [.chain [.mkchain %|>%
+#' @aliases chain mkchain [.chain [.mkchain %|>% [
 #' @author Peter Meilstrup
 #' @rdname chain
 #' @export

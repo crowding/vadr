@@ -7,7 +7,7 @@
 qq(...)
 }
 \arguments{
-  \item{expr}{A language object.}
+  \item{expr}{An expression, left unevaluated.}
 }
 \value{
 For \code{qq}, A language object; for \code{qe}, evaluates

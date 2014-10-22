@@ -57,7 +57,6 @@
 #' right. That is, \code{bind[a=x] <- c(a=1)} creates a variable named
 #' \code{x}, not \code{a}. It is somewhat counterintuitive but this is
 #' the only way that matches R's argument binding syntax.
-#' @param *envir* The environment to bind in (defaults to the caller).
 #' @aliases bind bind<- [<-.bind <-.bind
 #' @method "[<-" bind
 #' @return a "bind" object, since it is invoked via a subset on "bind".
