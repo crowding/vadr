@@ -20,13 +20,13 @@ arguments and applying them to functions.
 \examples{
 reverse.list <- function(...) {
  d <- dots(...)
- list \\\%()\\\% rev(d)
+ list \%()\% rev(d)
 }
 reverse.list("a", b="bee", c="see")
 
 named.list <- function(...) {
  d <- dots(...)
- list \\\%()\\\% d[names(d) != ""]
+ list \%()\% d[names(d) != ""]
  }
 named.list(a=1, b=2*2, stop("this is not evaluated"))
 }
@@ -34,6 +34,6 @@ named.list(a=1, b=2*2, stop("this is not evaluated"))
 Peter Meilstrup
 }
 \seealso{
-"%<<%" "%<<<%" "%()%" "[...." "[[....", "names...."
+\%<<\% \%<<<\% \%()\% [.... [[.... names....
 }
 

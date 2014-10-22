@@ -238,17 +238,17 @@ list_missing <- function(...) {
 #' @return A dots object. This is currently just the raw DOTSXP with
 #' the object bit set and the class set to "..." so that method dispatch works.
 #' @author Peter Meilstrup
-#' @seealso "%<<%" "%<<<%" "%()%" "[...." "[[....", "names...."
+#' @seealso \%<<\% \%<<<\% \%()\% [.... [[.... names....
 #' @examples
 #' reverse.list <- function(...) {
 #'  d <- dots(...)
-#'  list \%()\% rev(d)
+#'  list %()% rev(d)
 #' }
 #' reverse.list("a", b="bee", c="see")
 #'
 #' named.list <- function(...) {
 #'  d <- dots(...)
-#'  list \%()\% d[names(d) != ""]
+#'  list %()% d[names(d) != ""]
 #'  }
 #' named.list(a=1, b=2*2, stop("this is not evaluated"))
 #' @export
@@ -257,7 +257,8 @@ dots <- function(...) structure(if (nargs() > 0) get("...") else NULL,
 
 #' Return an empty symbol.
 #'
-#' The empty symbol is used to represent missing values in the R
+#' The empty symbol (that is, the symbol whose string representation is
+#' \code{""} is used to represent missing values in the R
 #' language; for instance in the value of formal function arguments
 #' when there is no default; in the expression slot of a promise when
 #' a missing argument is given; and bound to the value of a variable
@@ -308,10 +309,12 @@ missing_value <- function(n) {
 #' @param x a vector, optionally with names, or an object of class
 #' \code{...} as produced by \code{\link{dots}}.
 #' @param f a function, to be called, or to to have arguments attached to.
+#' @param arglist A \dots object (see \code{\link{dots}}.)
 #' @aliases %()% %<<% %<<<% %__% curr curl
 #' @rdname curr
-#' @name curr
-#' @return \itemize{ \item For \code{\%()\%}, the result of calling
+#' @return \itemize{
+#'
+#' \item For \code{\%()\%}, the result of calling
 #' the function with the arguments provided. When \code{x} is a
 #' \code{\dots} object, its contents are passed inithout
 #' evaluating. When \code{x} is another type of sequence its elements
@@ -319,18 +322,24 @@ missing_value <- function(n) {
 #' slightly different behavior from \code{\link{do.call}(f,
 #' as.list(x), quote=TRUE)}, which passes unevaluated promises with
 #' expressions wrapped in \code{link{quote}}. This makes a difference
-#' if \code{f} performs nonstandard evaluation.  \item For
-#' \code{\%<<\%} and \code{\%<<<\%}, a new function with the arguments
-#' partially applied. For \code{f \%<<<\% arglist}, the arguments will
-#' be placed in the argument list before any further arguments; for
-#' \code{f \%<<\% arglist} the arguments will be placed afterwards.
+#' if \code{f} performs nonstandard evaluation.
+#'
+#' \item For \code{\%<<\%} and \code{\%<<<\%}, a new function with the
+#' arguments partially applied. For \code{f \%<<<\% arglist}, the
+#' arguments will be placed in the argument list before any further
+#' arguments; for \code{f \%<<\% arglist} the arguments will be placed
+#' afterwards.
+#'
 #' \item \code{curr} and \code{curl} are standalone functions that
 #' partially apply arguments to functions; \code{curr(f, a=1, b=2)} is
 #' equivalent to \code{f \%<<\% dots(a=1, b=2)}, and \code{curl} is
-#' the "left curry" corresponding to \code{\%>>\%}. \item For
+#' the "left curry" corresponding to \code{\%>>\%}.
+#'
+#' \item For
 #' \code{\%__\%}, the two operands concatenated together. The result will be
 #' a list, or a \code{dots} object if any of the operands are
 #' \code{dots} objects.  }
+#'
 #' @note "Curry" is a slight misnomer for partial function application.
 #' @author Peter Meilstrup
 #' @export "%()%"
@@ -414,6 +423,7 @@ missing_value <- function(n) {
 
 #' @export
 #' @rdname curr
+#' @param ... Other arguments. to be captured without evaluating.
 curr <- function(f, ...) {
   `%<<%....`(f, dots(...))
 }
@@ -436,6 +446,7 @@ curl <- function(f, ...) {
 
 #' @export
 #' @rdname curr
+#' @param y a \dots object as constructed by \code{\link{dots}}.
 `%__%` <- function(x, y) UseMethod("%__%", x)
 
 #' @S3method "%__%" "..."

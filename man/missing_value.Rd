@@ -12,13 +12,15 @@ missing_value(n)
 A symbol with empty name, or a list of such.
 }
 \description{
-The empty symbol is used to represent missing values in the
-R language; for instance in the value of formal function
-arguments when there is no default; in the expression slot
-of a promise when a missing argument is given; and bound to
-the value of a variable when it is called with a missing
-value. When computing on the language, then, you may need
-to explicitly invoke the "missing" value.
+The empty symbol (that is, the symbol whose string
+representation is \code{""} is used to represent missing
+values in the R language; for instance in the value of
+formal function arguments when there is no default; in the
+expression slot of a promise when a missing argument is
+given; and bound to the value of a variable when it is
+called with a missing value. When computing on the
+language, then, you may need to explicitly invoke the
+"missing" value.
 }
 \examples{
 # These statements are equivalent:

@@ -1,0 +1,41 @@
+\name{dots_names}
+\alias{dots_names}
+\alias{names}
+\alias{names....}
+\alias{names<-}
+\alias{names<-....}
+\title{Extract or change the argument names of \code{\dots} arguments.}
+\usage{
+dots_names(...)
+
+names(x)
+
+names(x) <- value
+}
+\arguments{
+  \item{...}{Any arguments. Usually you will pass
+  \code{\dots} from the body of a function.}
+
+  \item{x}{a \code{\dots} object, as constructed by
+  \code{\link{dots}}}
+
+  \item{value}{A character vector containing new names to
+  be applied.}
+}
+\value{
+\itemize{ \item For \code{\link{dots_names}}, the names of
+all arguments. Names are also attached to results from the
+other functions listed here. }
+}
+\description{
+Extract or change the argument names of \code{\dots}
+arguments.
+}
+\author{
+Peter Meilstrup
+}
+\seealso{
+dots dots_environments dots_expressions dots_missing curr
+alist
+}
+
