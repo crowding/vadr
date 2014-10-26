@@ -91,3 +91,8 @@ test_that("with_arg", {
   (with_arg(.collect=c, a=1, b=2, c(1, 2), c(1))
    %is% c(1, 2, a=1, b=2,1, a=1, b=2))
 })
+
+test_that("Formals", {
+  addmacro <- macro(function(x, y) qq(.(x) + .(y)))
+  expect_equal(formals(addmacro), quote_args(x, y))
+})

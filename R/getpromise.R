@@ -57,3 +57,12 @@ arg_expr <- function(name,
                      envir=arg_env(name, environment())) {
   .Call(`_arg_expr`, envir, substitute(name))
 }
+
+
+
+# extract all items of an environment to a dots list, without
+# forcing any promises.
+#' @useDynLib vadr _env_to_dots
+env2dots <- function(envir) {
+  .Call(`_env_to_dots`, envir, ls(envir=envir, all.names=TRUE))
+}

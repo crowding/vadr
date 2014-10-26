@@ -88,8 +88,25 @@ test_that("getting promises handles DDVAL (..1 etc)", {
   brace(x, y) %is% 4
 })
 
-## test_that("get all arguments, named or no, of present env", {
-##   #need a better designed alternative to match.call() and friends.
-##   #something something context stack?
-##   stop("not written")
-## })
+all.identical <- function(list) {
+  falsefalse <- environment() #unique for this invocation
+  ident <- function(x, y) if (identical(x, y)) x else falsefalse
+  answer <- Reduce(ident, list)
+  !identical(answer, falsefalse)
+}
+
+test_that("get a dotlist from an environment", {
+  capture <- function(a=plan, ..., z=thingy) {
+    environment()
+  }
+
+  captured <- capture(one + two, f=four, five)
+  d <- env2dots(captured)
+
+  sort(names(d)) %is% c("", "a", "f", "z")
+  names(d)[[order(names(d))[[1]]]] <- "anewname"
+  (expressions(d)[sort(names(d))]
+   %is% alist(a=one + two, anewname=five, f=four, z=thingy))
+  expect_true(all.identical(environments(d)[c("anewname", "a", "f")]))
+  expect_false(identical(environments(d)[["z"]], environments(d)[["a"]]))
+})

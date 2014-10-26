@@ -23,9 +23,3 @@ int recycle_length(int i, int j) {
   }
   return n;
 }
-
-/* int recycle(int n, int i, int j, void (*f)(int, int, void*), void* init) { */
-/*   for (int k=0; k < n; i++) { */
-/*     (*f)(k%i, k%j, init); */
-/*   } */
-/* } */

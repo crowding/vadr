@@ -9,7 +9,7 @@ SEXP emptypromise() {
   return out;
 }
 
-
+/* because this is not exposed in Rinternals.h for some reason */
 SEXP do_ddfindVar(SEXP symbol, SEXP envir) {
   int i;
   SEXP vl;
@@ -52,6 +52,94 @@ SEXP do_findPromise(SEXP name, SEXP envir) {
   return promise;
 }
 
+/* If not a promise, wrap in a promise. */
+SEXP make_into_promise(SEXP in) {
+  if (TYPEOF(in) == PROMSXP) {
+    while (TYPEOF(PREXPR(in)) == PROMSXP) {
+      in = PREXPR(in);
+    }
+    return in;
+  } else {
+    /* wrap in a promise */
+    SEXP out = PROTECT(allocSExp(PROMSXP));
+    SET_PRENV(out, R_EmptyEnv);
+    SET_PRVALUE(out, in);
+    SET_PRCODE(out, in);
+    UNPROTECT(1);
+    return out;
+  }
+}
+
+/* Extract named variables from an environment into a dotslist */
+SEXP _env_to_dots(SEXP envir, SEXP names) {
+  assert_type(envir, ENVSXP);
+  assert_type(names, STRSXP);
+  int length = LENGTH(names);
+  SEXP out;
+  if (length >= 1) {
+    SEXP tail;
+    for (int i = 0; i < length; i++) {
+      if (i == 0) {
+        out = PROTECT(allocSExp(DOTSXP));
+        tail = out;
+      } else {
+        SEXP new = allocSExp(DOTSXP);
+        SETCDR(tail, new);
+        tail = new;
+      }
+      SEXP sym = install(CHAR(STRING_ELT(names, i)));
+      SEXP found = Rf_findVar(sym, envir);
+      Rprintf("got %s\n", CHAR(PRINTNAME(sym)));
+      if (found == R_UnboundValue) {
+        error("Variable `%s` was not found.",
+              CHAR(PRINTNAME(sym)));
+      }
+      if (sym == R_DotsSymbol) {
+        assert_type(found, DOTSXP);
+        /* copy all the dotslist */
+        while (1) {
+          SEXP tag = TAG(found);
+          if (tag != R_NilValue) {
+            Rprintf("got ..( %s )\n", CHAR(PRINTNAME(tag)));
+          } else {
+            Rprintf("got ..(unnamed argument)\n");
+          }
+          SET_TAG(tail, tag);
+          SETCAR(tail, CAR(found));
+          Rprintf("setting a dots %s\n", type2char(TYPEOF(CAR(tail))));
+          found = CDR(found);
+          if (found != R_NilValue) {
+            SEXP new = allocSExp(DOTSXP);
+            SETCDR(tail, new);
+            tail = new;
+          } else {
+            break;
+          }
+        }
+      } else {
+        SET_TAG(tail, sym);
+        SEXP made = make_into_promise(found);
+        SETCAR(tail, made);
+        Rprintf("setting a %s\n", type2char(TYPEOF(CAR(tail))));
+      }
+    }
+  } else {
+    out = PROTECT(allocVector(VECSXP, 0));
+  }
+  setAttrib(out, R_ClassSymbol, ScalarString(mkChar("...")));
+  {
+    SEXP what = out;
+    int where = 0;
+    for (;
+         what != R_NilValue;
+         what = CDR(what), where += 1) {
+      Rprintf("element %d is a %s\n", where, type2char(TYPEOF(CAR(what))));
+    }
+  }
+  UNPROTECT(1);
+  return out;
+}
+
 SEXP _getpromise_in(SEXP envirs, SEXP names, SEXP tags) {
   assert_type(envirs, VECSXP);
   assert_type(names, VECSXP);
@@ -67,7 +155,7 @@ SEXP _getpromise_in(SEXP envirs, SEXP names, SEXP tags) {
     }
     SEXP promise = do_findPromise(VECTOR_ELT(names, i),
                                   VECTOR_ELT(envirs, i));
-
+    
     while (TYPEOF(PREXPR(promise)) == PROMSXP) {
       promise = PREXPR(promise);
     }

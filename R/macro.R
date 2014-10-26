@@ -116,7 +116,7 @@ macro <- function(fn, cache=TRUE, JIT=cache) {
     }
   } else {
     f <- function(...) {
-      fr <- arg_env(..1, environment())
+      fr <- if (nargs() > 0) arg_env(..1, environment()) else parent.frame()
       args <- dots_expressions(...)
       expr <- do.call(fn, args, quote=TRUE)
       eval(expr, fr)
