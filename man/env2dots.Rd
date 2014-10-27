@@ -2,10 +2,13 @@
 \alias{env2dots}
 \title{Convert an environment into a ... object, without forcing promises.}
 \usage{
-env2dots(envir)
+env2dots(envir, include_missing = FALSE)
 }
 \arguments{
   \item{envir}{An environment.}
+
+  \item{include_missing}{Whether to include "missing"
+  bindings in the dotslist.}
 }
 \value{
 A \link{dots} object.

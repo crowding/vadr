@@ -134,3 +134,26 @@ test_that("dotlist to environment", {
   substitute(list(a, b, c, d), e2) %is% quote(list(one, two, five, six))
   substitute(list(...), e2) %is% quote(list(three, four, seven, eight))
 })
+
+test_that("formals replication", {
+  test <- function(a, b, ...) {
+    list(nargs(), missing(a), missing(b), missing(...))
+  }
+
+  wrapped <- wrap_formals(function(...) test(...), test)
+
+  test() %is% list(0, TRUE, TRUE, TRUE)
+  wrapped() %is% list(0, TRUE, TRUE, TRUE)
+
+  test(1) %is% list(1, FALSE, TRUE, TRUE)
+  wrapped(1) %is% list(1, FALSE, TRUE, TRUE)
+
+  test(1, 2) %is% list(2, FALSE, FALSE, TRUE)
+  wrapped(1, 2) %is% list(2, FALSE, FALSE, TRUE)
+
+  test(1, 2, 3) %is% list(3, FALSE, FALSE, FALSE)
+  wrapped(1, 2, 3) %is% list(3, FALSE, FALSE, FALSE)
+
+  test(z=3) %is% list(1, TRUE, TRUE, FALSE)
+  wrapped(z=3) %is% list(1, TRUE, TRUE, FALSE)
+})

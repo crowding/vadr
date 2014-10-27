@@ -87,7 +87,7 @@ make_unique_names <- function(new, context) {
 #' evaluation. Defaults to TRUE. This requires that the macro function
 #' be a pure function not referring to any outside state.
 #' @param JIT Whether to compile expressions (using the "compiler"
-#' package) before executing. Defaults to TRUE.
+#' package) before executing. Defaults to TRUE if "cache" is true.
 #' @return the wrapper function. It will have an identical argument
 #' list to the wrapped function. It will transform all arguments into
 #' expressions, pass the expressions to the wrapped function, then
@@ -107,36 +107,53 @@ make_unique_names <- function(new, context) {
 #' @import compiler
 #' @export
 macro <- function(fn, cache=TRUE, JIT=cache) {
-  orig <- fn
   if(cache) {
-    fn <- macro_cache(fn, JIT)
-    f <- function(...) {
-      fr <- if (nargs() > 0) arg_env(..1, environment()) else parent.frame()
-      eval(fn(...), fr)
+    cached <- macro_cache(fn, JIT)
+    g <- function(...) {
+      # parent.frame(2) because wrap
+      fr <- if (nargs() > 0) arg_env(..1, environment()) else parent.frame(1)
+      eval(cached(...), fr)
     }
+    f <- g
+    # f <- wrap_formals(g, fn)
   } else {
-    f <- function(...) {
-      fr <- if (nargs() > 0) arg_env(..1, environment()) else parent.frame()
+    g <- function(...) {
+      # parent.frame(2) because of wrapping
+      fr <- if (nargs() > 0) arg_env(..1, environment()) else parent.frame(1)
       args <- dots_expressions(...)
       expr <- do.call(fn, args, quote=TRUE)
       eval(expr, fr)
     }
+    f <- g
+    # f <- wrap_formals(g, fn)
   }
 
   class(f) <- c("macro", class(fn))
-  attr(f, "orig") <- orig
+  attr(f, "orig") <- fn
   # set the source to look reasonable?
   #  attr(f, "srcref") <-
   #    paste("macro(", paste(attr(fn, "srcref") %||% deparse(fn), collapse="\n"), ")")
   f
 }
 
-wrap <- function(m, like_this) {
-  doit <- function(envir, ...) {
-    assign("...", env2dots(envir))
-    f(...)
+#take a function `m` with only ... formals, wrap in a new function with
+#formals like those of `like_this`
+wrap_formals <- function(m, like_this) {
+  doit <- function(envir) {
+    d <- env2dots(envir, include_missing=FALSE)
+    if (length(d) >= 1) {
+      assign("...", d)
+      m(...)
+    } else {
+      m()
+    }
   }
-  f <- qe( function() .(doit)(.(environment)()) )
+  # f <- qe( function() .(doit)(.(environment)()) )
+  # except can't use qe at this stage
+  f <- do.call("function",
+               list(pairlist(),
+                    as.call(list(doit,
+                                 as.call(list(environment))))))
   formals(f) <- formals(like_this)
   environment(f) <- environment(like_this)
   f

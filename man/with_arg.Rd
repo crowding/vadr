@@ -2,7 +2,7 @@
 \alias{with_arg}
 \title{Inject named arguments into several calls and evaluate those calls.}
 \usage{
-with_arg(...)
+with_arg(..., .collect = quote(list))
 }
 \arguments{
   \item{...}{Named arguments are interpreted as arguments

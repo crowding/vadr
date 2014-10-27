@@ -15,7 +15,8 @@ macro(fn, cache = TRUE, JIT = cache)
   any outside state.}
 
   \item{JIT}{Whether to compile expressions (using the
-  "compiler" package) before executing. Defaults to TRUE.}
+  "compiler" package) before executing. Defaults to TRUE if
+  "cache" is true.}
 }
 \value{
 the wrapper function. It will have an identical argument

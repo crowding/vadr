@@ -4,7 +4,7 @@
 \alias{template}
 \title{Quasiquotation. Perform template substitutions on a quoted R expressions.}
 \usage{
-qq(...)
+qq(expr)
 }
 \arguments{
   \item{expr}{An expression, left unevaluated.}

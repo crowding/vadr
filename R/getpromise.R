@@ -70,11 +70,12 @@ arg_expr <- function(name,
 #' output will not be in any particular order.
 #'
 #' @param envir An environment.
+#' @param include_missing Whether to include "missing" bindings in the dotslist.
 #' @return A \link{dots} object.
 #' @useDynLib vadr _env_to_dots
 #' @export
-env2dots <- function(envir) {
-  .Call(`_env_to_dots`, envir, ls(envir=envir, all.names=TRUE))
+env2dots <- function(envir, include_missing=FALSE) {
+  .Call(`_env_to_dots`, envir, ls(envir=envir, all.names=TRUE), include_missing)
 }
 
 #' Convert an a ... object into an environment, without forcing promises.
@@ -93,8 +94,10 @@ env2dots <- function(envir) {
 #' @return An environment object.
 #' @useDynLib vadr _dots_to_env
 #' @export
-dots2env <- function(dots, envir=NULL, parent = arg_env(dots, environment()),
-                     hash = (length(dots) > 100), size = max(29L, length(dots))) {
+dots2env <- function(dots, envir = NULL,
+                     parent = arg_env(dots, environment()),
+                     hash = (length(dots) > 100),
+                     size = max(29L, length(dots))) {
   force(parent)
   if (is.null(envir))
     envir <- new.env(hash = hash, parent = parent, size = size)

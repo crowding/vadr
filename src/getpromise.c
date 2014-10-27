@@ -71,58 +71,68 @@ SEXP make_into_promise(SEXP in) {
 }
 
 /* Extract named variables from an environment into a dotslist */
-SEXP _env_to_dots(SEXP envir, SEXP names) {
+SEXP _env_to_dots(SEXP envir, SEXP names, SEXP missing) {
   assert_type(envir, ENVSXP);
   assert_type(names, STRSXP);
+  assert_type(missing, LGLSXP);
+  if (LENGTH(missing) != 1) {
+    error("expected scalar logical");
+  }
+  int use_missing = LOGICAL(missing)[0];
   int length = LENGTH(names);
-  SEXP out;
-  if (length >= 1) {
-    SEXP tail;
-    for (int i = 0; i < length; i++) {
-      if (i == 0) {
-        out = PROTECT(allocSExp(DOTSXP));
-        tail = out;
-      } else {
-        SEXP new = allocSExp(DOTSXP);
-        SETCDR(tail, new);
-        tail = new;
-      }
-      SEXP sym = install(CHAR(STRING_ELT(names, i)));
-      SEXP found = findVar(sym, envir);
-      if (found == R_UnboundValue) {
-        error("Variable `%s` was not found.",
-              CHAR(PRINTNAME(sym)));
-      }
-      if (sym == R_DotsSymbol) {
-        assert_type(found, DOTSXP);
-        /* copy all the dotslist */
-        while (1) {
-          SEXP tag = TAG(found);
-          SET_TAG(tail, tag);
-          SETCAR(tail, CAR(found));
-          found = CDR(found);
-          if (found != R_NilValue) {
-            SEXP new = allocSExp(DOTSXP);
-            SETCDR(tail, new);
-            tail = new;
-          } else {
-            break;
-          }
-        }
-      } else {
-        SET_TAG(tail, sym);
-        SEXP made = make_into_promise(found);
-        SETCAR(tail, made);
+  SEXP out = R_NilValue;
+  SEXP tail = R_NilValue;
+  for (int i = 0; i < length; i++) {
+    SEXP sym = install(CHAR(STRING_ELT(names, i)));
+    SEXP found = findVar(sym, envir);
+    if (found == R_UnboundValue) {
+      error("Variable `%s` was not found.",
+            CHAR(PRINTNAME(sym)));
+    }
+    /* check for missing variables */
+    if (!use_missing) {
+      SEXP unwrapped = found;
+      while (TYPEOF(unwrapped) == PROMSXP)
+        unwrapped = PRCODE(unwrapped);
+      if (unwrapped == R_MissingArg) {
+        continue;
       }
     }
-  } else {
+    /* append new dotsxp */
+    if (out == R_NilValue) {
+      out = PROTECT(allocSExp(DOTSXP));
+      tail = out;
+    } else {
+      SEXP new = allocSExp(DOTSXP);
+      SETCDR(tail, new);
+      tail = new;
+    }
+    /* descend into ... if that's what we have */
+    if (sym == R_DotsSymbol && found != R_MissingArg) {
+      assert_type(found, DOTSXP);
+      while (1) {
+        SEXP tag = TAG(found);
+        SET_TAG(tail, tag);
+        SETCAR(tail, CAR(found));
+        found = CDR(found);
+        if (found != R_NilValue) {
+          SEXP new = allocSExp(DOTSXP);
+          SETCDR(tail, new);
+          tail = new;
+        } else {
+          break;
+        }
+      }
+    } else {
+      SET_TAG(tail, sym);
+      SEXP made = make_into_promise(found);
+      SETCAR(tail, made);
+    }
+  }
+  if (out == R_NilValue) {
     out = PROTECT(allocVector(VECSXP, 0));
-  }
+  };
   setAttrib(out, R_ClassSymbol, ScalarString(mkChar("...")));
-  {
-    SEXP what = out;
-    int where = 0;
-  }
   UNPROTECT(1);
   return out;
 }
