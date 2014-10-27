@@ -23,11 +23,11 @@ macro_cache <- function(fn, JIT=FALSE) {
     cache(
       key,
       if(JIT) {
-        do.call(fn, list_quote(...), quote=TRUE)
-      } else  {
         compile(do.call(fn, list_quote(...), quote=TRUE),
                 cacheenv,
                 options=list(suppressUndefined=TRUE))
+      } else  {
+        do.call(fn, list_quote(...), quote=TRUE)
       })
   }
 }
