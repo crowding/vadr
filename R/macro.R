@@ -131,6 +131,17 @@ macro <- function(fn, cache=TRUE, JIT=cache) {
   f
 }
 
+wrap <- function(m, like_this) {
+  doit <- function(envir, ...) {
+    assign("...", env2dots(envir))
+    f(...)
+  }
+  f <- qe( function() .(doit)(.(environment)()) )
+  formals(f) <- formals(like_this)
+  environment(f) <- environment(like_this)
+  f
+}
+
 #' Expand any macros in the quoted expression.
 #'
 #' This searches for macro functions referred to in the quoted

@@ -88,8 +88,7 @@ SEXP _env_to_dots(SEXP envir, SEXP names) {
         tail = new;
       }
       SEXP sym = install(CHAR(STRING_ELT(names, i)));
-      SEXP found = Rf_findVar(sym, envir);
-      Rprintf("got %s\n", CHAR(PRINTNAME(sym)));
+      SEXP found = findVar(sym, envir);
       if (found == R_UnboundValue) {
         error("Variable `%s` was not found.",
               CHAR(PRINTNAME(sym)));
@@ -99,14 +98,8 @@ SEXP _env_to_dots(SEXP envir, SEXP names) {
         /* copy all the dotslist */
         while (1) {
           SEXP tag = TAG(found);
-          if (tag != R_NilValue) {
-            Rprintf("got ..( %s )\n", CHAR(PRINTNAME(tag)));
-          } else {
-            Rprintf("got ..(unnamed argument)\n");
-          }
           SET_TAG(tail, tag);
           SETCAR(tail, CAR(found));
-          Rprintf("setting a dots %s\n", type2char(TYPEOF(CAR(tail))));
           found = CDR(found);
           if (found != R_NilValue) {
             SEXP new = allocSExp(DOTSXP);
@@ -120,7 +113,6 @@ SEXP _env_to_dots(SEXP envir, SEXP names) {
         SET_TAG(tail, sym);
         SEXP made = make_into_promise(found);
         SETCAR(tail, made);
-        Rprintf("setting a %s\n", type2char(TYPEOF(CAR(tail))));
       }
     }
   } else {
@@ -130,14 +122,65 @@ SEXP _env_to_dots(SEXP envir, SEXP names) {
   {
     SEXP what = out;
     int where = 0;
-    for (;
-         what != R_NilValue;
-         what = CDR(what), where += 1) {
-      Rprintf("element %d is a %s\n", where, type2char(TYPEOF(CAR(what))));
-    }
   }
   UNPROTECT(1);
   return out;
+}
+
+/* Add the entries in dots to the given environment;
+ * if untagged, append to ... */
+SEXP _dots_to_env(SEXP dots, SEXP envir) {
+  assert_type(dots, DOTSXP);
+  assert_type(envir, ENVSXP);
+  SEXP newdots = R_NilValue;
+  SEXP newdots_tail = newdots;
+  for(SEXP iter = dots; iter != R_NilValue; iter = CDR(iter)) {
+    if (TAG(iter) == R_NilValue) {
+      /* no tag, so we store the value in "newdots" to be later assigned to ... */
+      if (newdots == R_NilValue) {
+        SEXP olddots = findVar(R_DotsSymbol, envir);
+        if (olddots != R_UnboundValue) {
+          /* there is already a binding for ..., so copy it to 'newdots'.*/
+          assert_type(dots, DOTSXP);
+          for (SEXP iter = olddots; iter != R_NilValue; iter = CDR(iter)) {
+            SEXP copied = PROTECT(allocSExp(DOTSXP)); 
+            SETCAR(copied, CAR(iter));
+            SET_TAG(copied, TAG (iter));
+            SETCDR(copied, R_NilValue);
+            if (newdots == R_NilValue) {
+              newdots = copied;
+              newdots_tail = copied;
+            } else {
+              SETCDR(newdots_tail, copied);
+              UNPROTECT(1);
+              newdots_tail = copied;
+            }
+          }
+        }
+      }
+      /* append new ... entry */
+      SEXP new = PROTECT(allocSExp(DOTSXP));
+      SETCAR(new, CAR(iter));
+      SETCDR(new, R_NilValue);
+      SET_TAG(new, R_NilValue);
+      if (newdots == R_NilValue) {
+        newdots = new;
+        newdots_tail = new;
+      } else {
+        SETCDR(newdots_tail, new);
+        UNPROTECT(1);
+        newdots_tail = new;
+      }
+    } else {
+      /* dots entry with tag, assigns to variable */
+      defineVar(TAG(iter), CAR(iter), envir);
+    }
+  }
+  if (newdots != R_NilValue) {
+    defineVar(R_DotsSymbol, newdots, envir);
+    UNPROTECT(1);
+  }
+  return envir;
 }
 
 SEXP _getpromise_in(SEXP envirs, SEXP names, SEXP tags) {

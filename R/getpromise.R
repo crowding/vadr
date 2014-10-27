@@ -60,9 +60,44 @@ arg_expr <- function(name,
 
 
 
-# extract all items of an environment to a dots list, without
-# forcing any promises.
+#' Convert an environment into a ... object, without forcing promises.
+#'
+#' All bindings in the environment will be copied into a new
+#' \code{\dots} list. Bindings that are promises will be added to the
+#' \dots list without forcing, while other bindings will be wrapped in
+#' an already-evaluated promise.  If `...` exists in the environment,
+#' all bindings it contains will be added to the \dots list. The
+#' output will not be in any particular order.
+#'
+#' @param envir An environment.
+#' @return A \link{dots} object.
 #' @useDynLib vadr _env_to_dots
+#' @export
 env2dots <- function(envir) {
   .Call(`_env_to_dots`, envir, ls(envir=envir, all.names=TRUE))
+}
+
+#' Convert an a ... object into an environment, without forcing promises.
+#'
+#' All named entries in the dots object will be bound to
+#' variables in the given environment. Unnamed entries
+#' will be appended to any existing value of `...` in the order
+#' in which they appear. Promises will not be forced.
+#'
+#' @param dots The dots object to convert.
+#' @param envir if not NULL, an environment to populate. If NULL, a new
+#' environment will be created.
+#' @param parent If creating a new environment, the parent to use.
+#' @param size The size of the new environment.
+#' @param hash Whether the new environment should use a hashtable.
+#' @return An environment object.
+#' @useDynLib vadr _dots_to_env
+#' @export
+dots2env <- function(dots, envir=NULL, parent = arg_env(dots, environment()),
+                     hash = (length(dots) > 100), size = max(29L, length(dots))) {
+  force(parent)
+  if (is.null(envir))
+    envir <- new.env(hash = hash, parent = parent, size = size)
+
+  .Call(`_dots_to_env`, dots, envir)
 }

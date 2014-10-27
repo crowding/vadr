@@ -95,7 +95,7 @@ all.identical <- function(list) {
   !identical(answer, falsefalse)
 }
 
-test_that("get a dotlist from an environment", {
+test_that("environment to dots", {
   capture <- function(a=plan, ..., z=thingy) {
     environment()
   }
@@ -109,4 +109,28 @@ test_that("get a dotlist from an environment", {
    %is% alist(a=one + two, anewname=five, f=four, z=thingy))
   expect_true(all.identical(environments(d)[c("anewname", "a", "f")]))
   expect_false(identical(environments(d)[["z"]], environments(d)[["a"]]))
+})
+
+test_that("dotlist to environment", {
+  got <- FALSE
+  id <- function(x) {
+    got <<- TRUE;
+    x
+  }
+  a <- dots(a=one, b=two, c=three, four, five, d=id(4))
+  e <- dots2env(a)
+  sort(ls(e)) %is% c("a", "b", "c", "d")
+  got %is% FALSE
+  e$d %is% 4
+  got %is% TRUE
+  substitute(b+c, e) %is% quote(two + three)
+  substitute(list(...), e) %is% quote(list(four, five))
+
+  # use existing, env, appending to ...
+  test <- function(a, b, ...) {
+    dots2env(dots(c=five, d=six, seven, eight), environment())
+  }
+  e2 <- test(one, two, three, four)
+  substitute(list(a, b, c, d), e2) %is% quote(list(one, two, five, six))
+  substitute(list(...), e2) %is% quote(list(three, four, seven, eight))
 })
