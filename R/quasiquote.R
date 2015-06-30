@@ -100,7 +100,7 @@ qe <- macro(function(expr) {
 #'
 #' @usage qqply(...)(...)
 #' @usage qeply(...)(...)
-#' @param ... In the first argument list, One or more expressions or expressions
+#' @param ... In the first argument list, one or more expressions or expressions
 #' to expand. These may have names, which will also be expanded.
 #' In the second argument list, vectors with optional names. The expressions
 #' will be expanded in a context that has these names bound to one value at a
@@ -142,12 +142,11 @@ qeply <- macro(function(...) {
 qq_applicator <- function(expander) {
   function(...) {
     argnames <- dots_names(...)
-    argnames <- argnames[argnames != ""]
+    argnames <- argnames[argnames != NA]
     formals(expander) <-
         as.pairlist(c(list(...=quote(expr=)),
                       structure(missing_value(length(argnames)),
                                 names=argnames)))
-    #can't use "mply" because "mply" uses "qqply"
     unlist(mply(expander)(...), recursive=FALSE)
   }
 }
