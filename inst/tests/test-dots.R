@@ -187,11 +187,12 @@ test_that("dots_expressions", {
 test_that("expression mutator", local({
 
   f <- function(...) {
+    ##this will be called as f(20, 5)
+    ##where the 5 comes from f2() and the 20 comes from f1()
+    ##we change the expressions before they are evaluated, into
+    ## temp1 <- 66 and temp2 <- 666
     x <- dots(...)
-    y <- x
-    expressions(x) <- qqply(
-      `.(paste0("temp",x))` <- .(e)
-      )(e=expressions(x), x=seq_along(x))
+    expressions(x) <- list_quote(temp1 <- 6, temp2 <- 66)
     list %()% x
     unpack(x)
   }
@@ -213,10 +214,11 @@ test_that("expression mutator", local({
   }
   test <- f2()
 
-  e2$temp2 %is% 5
-  e1$temp1 %is% 20
+  browser()
+  e2$temp1 %is% 6
+  e1$temp2 %is% 66
 
-  #error to set expressions for fulfilled promises
+  #it is an error to set expressions for fulfilled promises
   forced <- function(...) {list(...); dots(...)}
   r <- 3
   x <- forced(r+2)

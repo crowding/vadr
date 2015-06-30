@@ -92,7 +92,8 @@ test_that("with_arg", {
    %is% c(1, 2, a=1, b=2,1, a=1, b=2))
 })
 
-test_that("Formals", {
-  addmacro <- macro(function(x, y) qq(.(x) + .(y)))
-  expect_equal(formals(addmacro), quote_args(x, y))
-})
+## This would be a nice-to-have
+## test_that("Formals", {
+##   addmacro <- macro(function(x, y) qq(.(x) + .(y)))
+##   expect_equal(formals(addmacro), quote_args(x, y))
+## })
