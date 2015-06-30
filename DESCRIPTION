@@ -22,7 +22,8 @@ Suggests:
     roxygen2 (>= 2.2.2),
     knitr (>= 1.2)
 Imports:
-    compiler (>= 2.15.2)
+    compiler (>= 2.15.2),
+    memo (>= 0.1)
 Collate:
     'ammoc.R'
     'lru.R'

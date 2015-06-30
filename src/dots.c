@@ -26,7 +26,7 @@ SEXP _dots_unpack(SEXP dots) {
 
   for (s = dots, i = 0; i < length; s = CDR(s), i++) {
     if (TYPEOF(s) != DOTSXP && TYPEOF(s) != LISTSXP)
-      error("Expected DOTSXP, got %s at index %d", type2char(TYPEOF(s)), i);
+      error("Expected dotlist or pairlist, got %s at index %d", type2char(TYPEOF(s)), i);
 
     SEXP item = CAR(s);
     if (item == R_MissingArg) item = emptypromise();
@@ -43,7 +43,7 @@ SEXP _dots_unpack(SEXP dots) {
       error("Expected ENVSXP or NULL in environment slot of DOTSXP, got %s",
             type2char(TYPEOF(item)));
 
-    SET_STRING_ELT(names, i, isNull(TAG(s)) ? mkChar("") : asChar(TAG(s)));
+    SET_STRING_ELT(names, i, isNull(TAG(s)) ? mkChar("") : PRINTNAME(TAG(s)));
     SET_VECTOR_ELT(environments, i, PRENV(item));
     SET_VECTOR_ELT(expressions, i, PREXPR(item));
 
@@ -81,6 +81,11 @@ SEXP _dots_names(SEXP dots) {
   SEXP names, s;
   int i, length;
 
+  if ((TYPEOF(dots) == VECSXP) && (LENGTH(dots) == 0))
+    return R_NilValue;
+  else if ((TYPEOF(dots) != DOTSXP) && (TYPEOF(dots) != LISTSXP))
+    error("Expected dotlist or pairlist, got %d", TYPEOF(dots));
+  
   length = _dots_length(dots);
 
   int made = 0;
@@ -89,10 +94,10 @@ SEXP _dots_names(SEXP dots) {
 
   for (s = dots, i = 0; i < length; s = CDR(s), i++) {
     if (isNull(TAG(s))) {
-      SET_STRING_ELT(names, i, mkChar(""));
+      SET_STRING_ELT(names, i, R_BlankString);
     } else {
       made = 1;
-      SET_STRING_ELT(names, i, asChar(TAG(s)));
+      SET_STRING_ELT(names, i, PRINTNAME(TAG(s)));
     }
   }
   UNPROTECT(1);
@@ -151,7 +156,7 @@ SEXP _dotslist_to_list(SEXP x) {
     } else {
       SET_VECTOR_ELT(output, i, CAR(x));
     }
-    SET_STRING_ELT(names, i, isNull(TAG(x)) ? R_BlankString : asChar(TAG(x)));
+    SET_STRING_ELT(names, i, isNull(TAG(x)) ? R_BlankString : PRINTNAME(TAG(x)));
   }
   if (len > 0) {
   setAttrib(output, R_NamesSymbol, names);
