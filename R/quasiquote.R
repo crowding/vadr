@@ -140,13 +140,16 @@ qeply <- macro(function(...) {
 })
 
 qq_applicator <- function(expander) {
+  ## This should be called from the env that called qqply.
+  ## Furthermore, expander is a function defined in that env.
+  force(expander)
   function(...) {
     argnames <- dots_names(...)
-    argnames <- argnames[argnames != NA]
+    argnames <- argnames[argnames != ""]
     formals(expander) <-
-        as.pairlist(c(list(...=quote(expr=)),
-                      structure(missing_value(length(argnames)),
-                                names=argnames)))
+      as.pairlist(c(list(...=quote(expr=)),
+                    structure(missing_value(length(argnames)),
+                              names=argnames)))
     unlist(mply(expander)(...), recursive=FALSE)
   }
 }

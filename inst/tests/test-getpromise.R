@@ -69,11 +69,11 @@ test_that("get dotslists handles missing arguments", {
 
 test_that("error on missing thing", {
   f <- function(x) arg_env(y)
-  expect_error(f(), "not found")
+  expect_error(f(), "not")
   f <- function(x) arg_expr(y)
-  expect_error(f(), "not found")
+  expect_error(f(), "not")
   f <- function(x) arg_dots(y)
-  expect_error(f(), "not found")
+  expect_error(f(), "not")
 })
 
 test_that("getting promises handles DDVAL (..1 etc)", {
