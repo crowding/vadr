@@ -1,6 +1,3 @@
-#' @include cache.R
-NULL
-
 ##' Given a list of names, build an environment such that evaluating
 ##' any expression using those names just gets you the expression
 ##' back.
@@ -76,6 +73,15 @@ make_unique_names <- function(new, context) {
   uniq[(length(context)+1):(length(context)+length(new))]
 }
 
+#' @import memo
+# Use a global cache for all macros
+cache <- lru_cache(10000)
+
+#Macro expansions may employ "...", and there's no way for the
+#compiler to tell here. This stops the "... may be used in an
+#incorrect context" warning.
+cacheenv <- (function(...) environment())()
+
 #' Turn an expression-substituting function into a
 #' nonstandard-evaluating function.
 #'
@@ -105,28 +111,31 @@ make_unique_names <- function(new, context) {
 #' @author Peter Meilstrup
 #' @seealso qq
 #' @import compiler
+#' @import memo
 #' @export
 macro <- function(fn, cache=TRUE, JIT=cache) {
-  if(cache) {
-    cached <- macro_cache(fn, JIT)
-    g <- function(...) {
-      # parent.frame(2) because wrap
-      fr <- if (nargs() > 0) arg_env(..1, environment()) else parent.frame(1)
-      eval(cached(...), fr)
+
+  if(JIT)
+    jitted <- function(...) {
+      expr <- fn(...)
+      compile(expr, cacheenv, options=list(suppressUndefined=TRUE))
     }
-    f <- g
-    # f <- wrap_formals(g, fn)
-  } else {
-    g <- function(...) {
-      # parent.frame(2) because of wrapping
-      fr <- if (nargs() > 0) arg_env(..1, environment()) else parent.frame(1)
-      args <- dots_expressions(...)
-      expr <- do.call(fn, args, quote=TRUE)
-      eval(expr, fr)
-    }
-    f <- g
-    # f <- wrap_formals(g, fn)
+  else jitted <- fn
+
+  if(cache)
+    expand <- memo(jitted, key=pointer_key)
+  else
+    expand <- jitted
+
+  g <- function(...) {
+    ## parent_frame(2) when wrap_formals is used.
+    fr <- if (nargs() > 0) arg_env(..1, environment()) else parent.frame(1)
+    args <- dots_expressions(...)
+    expr <- do.call(expand, args, quote=TRUE)
+    eval(expr, fr)
   }
+  f <- g
+  ## f <- wrap_formals(g, fn)
 
   class(f) <- c("macro", class(fn))
   attr(f, "orig") <- fn

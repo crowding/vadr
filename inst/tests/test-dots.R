@@ -1,5 +1,7 @@
 context("dots")
 
+library(stringr)
+
 `%is%` <- expect_equal
 
 unwind_protect <- function(body, unwind) {
@@ -185,14 +187,19 @@ test_that("dots_expressions", {
 })
 
 test_that("expression mutator", local({
+  #Problem here that is a function of optimization level.
+  #Not sure that I can do anything about it.
 
   f <- function(...) {
-    ##this will be called as f(20, 5)
-    ##where the 5 comes from f2() and the 20 comes from f1()
-    ##we change the expressions before they are evaluated, into
-    ## temp1 <- 66 and temp2 <- 666
+    ## this will be called as f(20, 5)
+    ## where the 5 comes from f2() and the 20 comes from f1()
+    ## we change the expressions before they are evaluated, into
+    ## temp1 <- 6 and temp2 <- 66
+    ## which should be in turn evaluated in the scopes those
+    ## arguments came from.
+    ## So e1$temp1 == 6 and e2$temp2 = 66
     x <- dots(...)
-    expressions(x) <- list_quote(temp1 <- 6, temp2 <- 66)
+    expressions(x) <- list_quote(temp1 <- "6", temp2 <- "66")
     list %()% x
     unpack(x)
   }
@@ -200,23 +207,22 @@ test_that("expression mutator", local({
   e2 <- NULL
   f1 <- function(...) {
     where <- "f1"
-    temp1 <- 40
-    temp2 <- 30
+    temp1 <- "40"
+    temp2 <- "30"
     e1 <<- environment()
-    f(20, ...)
+    f(("20"), ...) #note parens to stop optimization
   }
   f2 <- function(...) {
     where <- "f2"
-    temp1 <- 2
-    temp2 <- 3
+    temp1 <- "2"
+    temp2 <- "3"
     e2 <<- environment()
-    x <- f1(5, ...)
+    x <- f1(("5"), ...) #note parens to stop optimization
   }
   test <- f2()
 
-  browser()
-  e2$temp1 %is% 6
-  e1$temp2 %is% 66
+  e1$temp1 %is% "6"
+  e2$temp2 %is% "66"
 
   #it is an error to set expressions for fulfilled promises
   forced <- function(...) {list(...); dots(...)}
@@ -269,6 +275,16 @@ test_that("list_quote", {
   b <- f(x, y, z, foo, wat=bar)
   expect_equal(a, alist(a, b, d=c, d, e))
   expect_equal(b, alist(a+b, z, foo, wat=bar))
+})
+
+test_that("list_quote is pointer-stable", {
+  f <- function() {
+    x <- list_quote(a, c+d)
+    x <- str_match(capture.output(.Internal(inspect(x))),
+                   "^  @([0-9a-f]*) 06 LANGSXP")[,2]
+    x[!is.na(x)]
+  }
+  expect_equal(f(), f())
 })
 
 ## DOTS OBJECT, CALLING AND CURRYING -------------------------------------

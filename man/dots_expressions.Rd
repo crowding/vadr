@@ -12,9 +12,9 @@ expressions(x)
 
 \method{expressions}{...}(x)
 
-list_quote(...)
-
 dots_expressions(...)
+
+list_quote(...)
 
 expressions(x) <- value
 }

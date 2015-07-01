@@ -20,21 +20,19 @@ Suggests:
     microbenchmark (>= 1.1.3),
     digest (>= 0.5.2),
     roxygen2 (>= 2.2.2),
-    knitr (>= 1.2)
+    knitr (>= 1.2),
+    stringr
 Imports:
     compiler (>= 2.15.2),
     memo (>= 0.1)
 Collate:
     'ammoc.R'
-    'lru.R'
-    'cache.R'
     'macro.R'
     'anaphora.R'
     'bind.R'
     'chain.R'
     'dots.R'
     'fun.R'
-    'getPointer.R'
     'getpromise.R'
     'indexing.R'
     'mply.R'

@@ -105,6 +105,36 @@ SEXP _dots_names(SEXP dots) {
   return(made ? names : R_NilValue);
 }
 
+SEXP _dots_expressions(SEXP dots) {
+  SEXP names, s, expressions;
+  int i, length;
+
+  if ((TYPEOF(dots) == VECSXP) && (LENGTH(dots) == 0))
+    return R_NilValue;
+  else if ((TYPEOF(dots) != DOTSXP) && (TYPEOF(dots) != LISTSXP))
+    error("Expected dotlist or pairlist, got %d", TYPEOF(dots));
+  
+  names = PROTECT(_dots_names(dots));
+  length = _dots_length(dots);
+  PROTECT(expressions = allocVector(VECSXP, length));
+
+  for (s = dots, i = 0; i < length; s = CDR(s), i++) {
+    SEXP item = CAR(s);
+    // if we have an unevluated promise whose code is another promise, descend
+    while ((PRENV(item) != R_NilValue) && (TYPEOF(PRCODE(item)) == PROMSXP)) {
+      item = PRCODE(item);
+    }
+    SET_VECTOR_ELT(expressions, i, PREXPR(item));    
+  }
+
+  if (names != R_NilValue)
+    setAttrib(expressions, R_NamesSymbol, names);
+
+  UNPROTECT(2);
+  
+  return(expressions);
+}
+
 SEXP _as_dots_literal(SEXP list) {
   assert_type(list, VECSXP);
   int len = LENGTH(list);
@@ -189,6 +219,21 @@ SEXP _list_to_dotslist(SEXP list) {
   setAttrib(output, R_ClassSymbol, ScalarString(mkChar("...")));
   UNPROTECT(1);
   return output;
+}
+
+/* measure the length of a dots object. */
+int _dots_length(SEXP dots) {
+  SEXP s; int length;
+  switch (TYPEOF(dots)) {
+  case VECSXP:
+    if (LENGTH(dots) == 0) return 0;
+    break;
+  case DOTSXP:
+    for (s = dots, length = 0; s != R_NilValue; s = CDR(s)) length++;
+    return length;
+  }
+  error("Expected a dots object");
+  return 0;
 }
 
 /*

@@ -72,16 +72,20 @@ expressions.... <- function(x) {
 
 #' @export
 #' @rdname dots_expressions
-#' @return For \code{list_quote}, a list containing the unevaluated
-#' expressions of each argument.
-list_quote <- function(...) as.list(substitute(alist(...))[-1])
-
-#' @export
-#' @rdname dots_expressions
 #' @param ... Any arguments.
 #' @note dots_expressions is the same as \code{\link{list_quote}}.
 #' @usage dots_expressions(...)
-dots_expressions <- list_quote
+#' @useDynLib vadr _dots_expressions
+dots_expressions <- function(...) {
+  if (nargs() > 0) .Call(`_dots_expressions`, get("..."))
+  else list()
+}
+
+#' @export
+#' @rdname dots_expressions
+#' @return For \code{list_quote}, a list containing the unevaluated
+#' expressions of each argument.
+list_quote <- dots_expressions
 
 #' @export
 #' @param value A list of expressions.
