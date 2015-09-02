@@ -1,6 +1,46 @@
 vadr
 ======
 
+The Death Star is blowing up. `vadr` is being split into a few
+smaller, more focused packages that will actually make it to CRAN.
+
+```
+* memo  * fexpr  * interp
+|       |        |
++---+---+--------+
+    |
+    * macro
+    |
+    +-- * chain
+    .
+    .
+    .
+    +-- * match
+    |   |
+    |   * syntax
+    |
+    +-- * iter
+```
+
+### (vadr's pieces)
+
+* [`memo`](https://github.com/crowding/memo): An in-memory cache (used for macro expansions)
+* [`fexpr`](https://github.com/crowding/fexpr): to !ols to manipulate R promises, unevaluated arguments, missing arguments and `...` lists.
+* `interp`: Ruby-style string interpolation.
+* `macro`: Common Lisp style macros and quasiquotation operators for R.
+* `chain`: Pipeline-style computations, faster and more expressive than magrittr.
+
+### (future developments):
+
+* `match`: Python-style destructuring binds and ML_style pattern matching
+* `iter`: Python-style list comprehensions and iterators
+* `syntax`: Scheme-style hygeinic(ish) macros
+
+Original documentation follows...
+
+vadr
+=====
+
 > _R has been seduced by the dark S of the Force. It is more PHP now
 > than Lisp. Its mind is twisted and evil._
 

@@ -175,6 +175,7 @@ names.... <- function(x) .Call(`_dots_names`, x)
 #' @rdname dots_names
 #' @usage names(x) <- value
 #' @param value A character vector containing new names to be applied.
+#' @S3method "names<-" "..."
 `names<-....` <- function(x, value) {
   temp <- .Call(`_dotslist_to_list`, x)
   names(temp) <- value
