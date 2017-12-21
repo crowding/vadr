@@ -312,7 +312,7 @@ c %()% d
 
 ## Quasiquotation
 
-`qq` implements quaqsiquotation, which is a way to build expressions and code out of data. `qq` is more capable than `substitute` or `bquote` and faster than the latter.  Think 'string substitution' as above, but for syntactically correct code. See the `qq` vignette for more details.
+`qq` implements quasiquotation, which is a way to build expressions and code out of data. `qq` is more capable than `substitute` or `bquote` and faster than the latter.  Think 'string substitution' as above, but for syntactically correct code. See the `qq` vignette for more details.
 
 ## Macros
 
